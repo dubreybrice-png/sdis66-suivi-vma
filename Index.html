@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <base target="_top">
+  <style>
+    /* ═══ RESET & VARIABLES ═══ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #C8102E;
+      --primary-dark: #A00D24;
+      --secondary: #1D2951;
+      --secondary-light: #2a3a6a;
+      --bg: #f0f2f5;
+      --card-bg: #ffffff;
+      --text: #2d3436;
+      --text-light: #636e72;
+      --border: #dfe6e9;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+      --radius: 10px;
+      --green: #00b894;
+      --orange: #fdcb6e;
+      --blue: #0984e3;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ═══ HEADER ═══ */
+    .header {
+      background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header h1 { font-size: 1.2em; font-weight: 700; letter-spacing: .3px; }
+    .header-nav { display: flex; gap: 8px; }
+    .header-nav a {
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      font-size: 0.85em;
+      padding: 7px 14px;
+      border-radius: 6px;
+      transition: all .2s;
+    }
+    .header-nav a:hover { background: rgba(255,255,255,0.15); color: #fff; }
+    .header-nav a.active { background: var(--primary); color: #fff; }
+
+    /* ═══ CONTAINER ═══ */
+    .container { max-width: 1280px; margin: 0 auto; padding: 24px; }
+
+    /* ═══ HOME — CIS GRID ═══ */
+    .page-intro { margin-bottom: 24px; }
+    .page-intro h2 { font-size: 1.4em; color: var(--secondary); margin-bottom: 4px; }
+    .page-intro p { color: var(--text-light); font-size: 0.92em; }
+
+    .cis-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 14px;
+    }
+    .cis-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: all .2s;
+      border-left: 4px solid var(--secondary);
+      text-decoration: none;
+      color: var(--text);
+      display: block;
+    }
+    .cis-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+      border-left-color: var(--primary);
+    }
+    .cis-card.vue-complete {
+      border-left-color: var(--primary);
+      background: linear-gradient(135deg, #fff 0%, #fff0f0 100%);
+    }
+    .cis-card h3 { font-size: 0.95em; margin-bottom: 4px; }
+    .cis-card .count { font-size: 0.8em; color: var(--text-light); }
+
+    /* ═══ DETAIL PAGE ═══ */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .page-title { font-size: 1.5em; font-weight: 700; color: var(--secondary); }
+    .page-subtitle { font-size: 0.88em; color: var(--text-light); margin-top: 2px; }
+
+    /* ═══ BUTTONS ═══ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.84em;
+      font-weight: 600;
+      transition: all .2s;
+      text-decoration: none;
+      line-height: 1.4;
+    }
+    .btn-primary  { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-outline  { background: transparent; color: var(--secondary); border: 1.5px solid var(--border); }
+    .btn-outline:hover { background: var(--secondary); color: #fff; }
+
+    /* ═══ SEARCH ═══ */
+    .search-box {
+      width: 100%;
+      max-width: 420px;
+      padding: 10px 16px 10px 40px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.9em;
+      transition: border-color .2s;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23636e72' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") 12px center no-repeat;
+    }
+    .search-box:focus { outline: none; border-color: var(--primary); }
+
+    /* ═══ STATS ═══ */
+    .stats { display: flex; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
+    .stat-card {
+      background: var(--card-bg);
+      padding: 14px 20px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      min-width: 140px;
+    }
+    .stat-value { font-size: 1.7em; font-weight: 700; color: var(--secondary); }
+    .stat-label { font-size: 0.78em; color: var(--text-light); margin-top: 2px; }
+    .stat-card.danger .stat-value { color: var(--primary); }
+
+    /* ═══ TABLE ═══ */
+    .table-wrap {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow-x: auto;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--secondary); color: #fff; }
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.82em;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      white-space: nowrap;
+    }
+    td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.88em; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #f8f9fa; }
+    tr.overdue { background: #fff5f5; }
+    tr.overdue td:first-child { border-left: 3px solid var(--primary); padding-left: 13px; }
+
+    /* ═══ BADGES ═══ */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.75em;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-vma        { background: #ff6b6b; color: #fff; }
+    .badge-biennale   { background: #00b894; color: #fff; }
+    .badge-prevention { background: #0984e3; color: #fff; }
+    .badge-default    { background: #dfe6e9; color: #636e72; }
+
+    /* ═══ LOADING ═══ */
+    .loading { text-align: center; padding: 80px 20px; color: var(--text-light); }
+    .spinner {
+      display: inline-block;
+      width: 44px; height: 44px;
+      border: 4px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin-bottom: 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ═══ ERROR ═══ */
+    .error-box { text-align: center; padding: 60px 20px; }
+    .error-box h2 { color: var(--primary); margin-bottom: 8px; }
+
+    /* ═══ RESPONSIVE ═══ */
+    @media (max-width: 768px) {
+      .header { flex-direction: column; gap: 8px; text-align: center; }
+      .container { padding: 16px; }
+      .cis-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 10px; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+      th, td { padding: 8px 10px; font-size: 0.8em; }
+      .stats { gap: 8px; }
+      .stat-card { min-width: 110px; padding: 10px 14px; }
+    }
+
+    /* ═══ PRINT / PDF ═══ */
+    .no-print {}
+    @media print {
+      .header, .no-print { display: none !important; }
+      .container { padding: 0; max-width: 100%; }
+      .table-wrap { box-shadow: none; border-radius: 0; }
+      .stat-card { box-shadow: none; border: 1px solid #ccc; }
+    }
+
+    /* ═══ PDF HEADER (cloned for export) ═══ */
+    .pdf-header {
+      text-align: center;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--secondary);
+    }
+    .pdf-header h2 { color: var(--secondary); font-size: 1.3em; }
+    .pdf-header p  { color: var(--text-light); font-size: 0.85em; margin-top: 4px; }
+  </style>
+</head>
+
+<body>
+  <!-- ═══ HEADER ═══ -->
+  <div class="header">
+    <h1>🏥 SDIS 66 — Suivi VMA</h1>
+    <nav class="header-nav">
+      <a href="<?= baseUrl ?>" id="nav-home">🏠 Accueil</a>
+      <a href="<?= baseUrl ?>?cis=all" id="nav-all">📋 Vue complète</a>
+    </nav>
+  </div>
+
+  <!-- ═══ MAIN CONTENT ═══ -->
+  <div class="container" id="app">
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>Chargement des données…</div>
+    </div>
+  </div>
+
+  <!-- html2pdf.js pour l'export PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <script>
+    /* ═══ VARIABLES INJECTÉES PAR LE SERVEUR ═══ */
+    var BASE_URL  = <?!= JSON.stringify(baseUrl) ?>;
+    var CIS_PARAM = <?!= JSON.stringify(cisParam) ?>;
+
+    /* ═══ INIT ═══ */
+    document.addEventListener('DOMContentLoaded', function () {
+      // Highlight navigation
+      if (CIS_PARAM === 'all')     document.getElementById('nav-all').classList.add('active');
+      else if (!CIS_PARAM)         document.getElementById('nav-home').classList.add('active');
+
+      // Route
+      if (!CIS_PARAM || CIS_PARAM === '') {
+        google.script.run
+          .withSuccessHandler(renderHomePage)
+          .withFailureHandler(showError)
+          .getPageData('home');
+      } else {
+        google.script.run
+          .withSuccessHandler(renderDetailPage)
+          .withFailureHandler(showError)
+          .getPageData(CIS_PARAM);
+      }
+    });
+
+    /* ═══════════════════════════════════════════════
+       PAGE D'ACCUEIL
+       ═══════════════════════════════════════════════ */
+    function renderHomePage(data) {
+      var cisList     = data.cisList || [];
+      var cisCounts   = data.cisCounts || {};
+      var totalAgents = data.totalAgents || 0;
+
+      var h = '';
+      h += '<div class="page-intro">';
+      h += '  <h2>Sélectionnez un centre</h2>';
+      h += '  <p>' + totalAgents + ' agents répartis dans ' + cisList.length + ' centres</p>';
+      h += '</div>';
+
+      h += '<div class="cis-grid">';
+
+      // Carte « Vue complète »
+      h += '<a href="' + BASE_URL + '?cis=all" class="cis-card vue-complete">';
+      h += '  <h3>📋 Vue complète</h3>';
+      h += '  <span class="count">' + totalAgents + ' agents</span>';
+      h += '</a>';
+
+      for (var i = 0; i < cisList.length; i++) {
+        var cis   = cisList[i];
+        var count = cisCounts[cis] || 0;
+        h += '<a href="' + BASE_URL + '?cis=' + encodeURIComponent(cis) + '" class="cis-card">';
+        h += '  <h3>🏛️ ' + esc(cis) + '</h3>';
+        h += '  <span class="count">' + count + ' agent(s)</span>';
+        h += '</a>';
+      }
+
+      h += '</div>';
+      document.getElementById('app').innerHTML = h;
+    }
+
+    /* ═══════════════════════════════════════════════
+       PAGE DÉTAIL CIS / VUE COMPLÈTE
+       ═══════════════════════════════════════════════ */
+    function renderDetailPage(data) {
+      var agents  = data.agents || [];
+      var cisName = data.cisName || '';
+      var isAll   = (CIS_PARAM === 'all');
+
+      var now = Date.now();
+      var overdueCount = 0;
+      agents.forEach(function (a) {
+        if (a.datePerteCompetenceRaw && a.datePerteCompetenceRaw < now) overdueCount++;
+      });
+
+      var h = '';
+
+      /* ── En-tête ── */
+      h += '<div class="page-header">';
+      h += '  <div>';
+      h += '    <div class="page-title">' + (isAll ? '📋 ' : '🏛️ ') + esc(cisName) + '</div>';
+      h += '    <div class="page-subtitle">' + agents.length + ' agent(s)';
+      if (overdueCount > 0) {
+        h += ' — <span style="color:var(--primary);font-weight:600">' + overdueCount + ' en dépassement</span>';
+      }
+      h += '</div>';
+      h += '  </div>';
+      h += '  <div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;">';
+      h += '    <a href="' + BASE_URL + '" class="btn btn-outline">← Retour</a>';
+      h += '    <button onclick="downloadPdf()" class="btn btn-primary">📥 Télécharger pour imprimer</button>';
+      h += '  </div>';
+      h += '</div>';
+
+      /* ── Barre de recherche (vue complète seulement) ── */
+      if (isAll) {
+        h += '<div class="no-print" style="margin-bottom:16px;">';
+        h += '  <input type="text" class="search-box" id="searchInput" placeholder="Rechercher un agent, centre, type…" oninput="filterTable()">';
+        h += '</div>';
+      }
+
+      /* ── Statistiques ── */
+      h += '<div class="stats no-print">';
+      h += '  <div class="stat-card"><div class="stat-value">' + agents.length + '</div><div class="stat-label">Total agents</div></div>';
+      h += '  <div class="stat-card danger"><div class="stat-value">' + overdueCount + '</div><div class="stat-label">En dépassement</div></div>';
+      h += '</div>';
+
+      /* ── Tableau ── */
+      h += '<div class="table-wrap" id="tableContainer">';
+      h += '<table id="agentTable">';
+      h += '<thead><tr>';
+      h += '  <th style="width:40px">#</th>';
+      h += '  <th>NOM Prénom</th>';
+      if (isAll) h += '<th>Centre</th>';
+      h += '  <th>Date perte de compétence VMA</th>';
+      h += '  <th>Type de visite</th>';
+      h += '</tr></thead>';
+      h += '<tbody id="tableBody">';
+
+      for (var i = 0; i < agents.length; i++) {
+        var a = agents[i];
+        var isOverdue = a.datePerteCompetenceRaw && a.datePerteCompetenceRaw < now;
+        var searchStr = (a.nomPrenom + ' ' + a.centrePrincipal + ' ' + a.centreSecondaire + ' ' + a.typeVisite + ' ' + a.datePerteCompetence).toLowerCase();
+
+        h += '<tr class="agent-row' + (isOverdue ? ' overdue' : '') + '" data-search="' + esc(searchStr) + '">';
+        h += '  <td class="row-num">' + (i + 1) + '</td>';
+        h += '  <td><strong>' + esc(a.nomPrenom) + '</strong></td>';
+        if (isAll) {
+          h += '<td>' + esc(a.centrePrincipal);
+          if (a.centreSecondaire) h += ' <span style="color:var(--text-light);font-size:.8em">/ ' + esc(a.centreSecondaire) + '</span>';
+          h += '</td>';
+        }
+        h += '  <td>' + (a.datePerteCompetence || '—') + (isOverdue ? ' ⚠️' : '') + '</td>';
+        h += '  <td>' + badgeHtml(a.typeVisite) + '</td>';
+        h += '</tr>';
+      }
+
+      h += '</tbody></table></div>';
+
+      document.getElementById('app').innerHTML = h;
+    }
+
+    /* ═══════════════════════════════════════════════
+       BADGES TYPE DE VISITE
+       ═══════════════════════════════════════════════ */
+    function badgeHtml(type) {
+      if (!type) return '<span class="badge badge-default">Non défini</span>';
+      var cls = 'badge-default';
+      if (type === 'VMA tous les ans')           cls = 'badge-vma';
+      else if (type === 'Visite médicale biennale') cls = 'badge-biennale';
+      else if (type === 'Visite prévention')        cls = 'badge-prevention';
+      return '<span class="badge ' + cls + '">' + esc(type) + '</span>';
+    }
+
+    /* ═══════════════════════════════════════════════
+       RECHERCHE (vue complète)
+       ═══════════════════════════════════════════════ */
+    function filterTable() {
+      var query = document.getElementById('searchInput').value.toLowerCase().trim();
+      var rows  = document.querySelectorAll('.agent-row');
+      var num   = 0;
+
+      for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var data = row.getAttribute('data-search') || '';
+        if (data.indexOf(query) !== -1) {
+          row.style.display = '';
+          num++;
+          row.querySelector('.row-num').textContent = num;
+        } else {
+          row.style.display = 'none';
+        }
+      }
+    }
+
+    /* ═══════════════════════════════════════════════
+       EXPORT PDF
+       ═══════════════════════════════════════════════ */
+    function downloadPdf() {
+      var table = document.getElementById('tableContainer');
+      if (!table) return;
+
+      // Créer un wrapper avec en-tête pour le PDF
+      var wrapper = document.createElement('div');
+      var cisLabel = (CIS_PARAM === 'all') ? 'Vue complète' : CIS_PARAM;
+      var today = new Date().toLocaleDateString('fr-FR');
+
+      wrapper.innerHTML =
+        '<div class="pdf-header">' +
+        '  <h2>SDIS 66 — Suivi VMA — ' + esc(cisLabel) + '</h2>' +
+        '  <p>Généré le ' + today + '</p>' +
+        '</div>';
+      wrapper.appendChild(table.cloneNode(true));
+
+      var filename = 'SDIS66_VMA_' + cisLabel.replace(/[^a-zA-Z0-9\u00C0-\u024F]/g, '_') + '.pdf';
+
+      html2pdf().set({
+        margin:      [8, 8, 8, 8],
+        filename:    filename,
+        image:       { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF:       { unit: 'mm', format: 'a4', orientation: 'landscape' },
+        pagebreak:   { mode: ['avoid-all', 'css', 'legacy'] }
+      }).from(wrapper).save();
+    }
+
+    /* ═══════════════════════════════════════════════
+       UTILITAIRES
+       ═══════════════════════════════════════════════ */
+    function esc(text) {
+      if (!text) return '';
+      var d = document.createElement('div');
+      d.textContent = text;
+      return d.innerHTML;
+    }
+
+    function showError(err) {
+      var msg = (err && err.message) ? err.message : 'Erreur inconnue';
+      document.getElementById('app').innerHTML =
+        '<div class="error-box">' +
+        '  <h2>❌ Erreur</h2>' +
+        '  <p>' + esc(msg) + '</p>' +
+        '  <a href="' + BASE_URL + '" class="btn btn-primary" style="margin-top:16px">Retour à l\'accueil</a>' +
+        '</div>';
+    }
+  </script>
+</body>
+</html>
