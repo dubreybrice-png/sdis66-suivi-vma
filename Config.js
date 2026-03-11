@@ -14,7 +14,9 @@ var CONFIG = {
     SPECIALITE:   'données spécialité',
     SPORT:        'Sport',
     EXAMENS:      'Examens',
-    INACTIFS:     'Inactifs'
+    INACTIFS:     'Inactifs',
+    VACCINS:      'Vaccins',
+    SERO:         'Sero'
   },
 
   /* ── Colonnes onglets Copie retard / Copie a venir (0-based) ── */
@@ -55,6 +57,22 @@ var CONFIG = {
     COMMENTAIRE:    6,  // G
     STATUT:         7,  // H
     GERE_PAR:       8   // I — Géré par (Cécile/Célia)
+  },
+
+  /* ── Colonnes onglet Vaccins (0-based) ── */
+  COLS_VACCINS: {
+    DATE:           3,  // D
+    IMMUNISE:       4,  // E — "oui" si immunisé
+    NOM_VACCIN:     5,  // F — nom du vaccin
+    MATRICULE:      6,  // G
+    NON_REPONDEUR:  8   // I — "oui" si non répondeur
+  },
+
+  /* ── Colonnes onglet Sero (0-based) ── */
+  COLS_SERO: {
+    MATRICULE:  3,  // D
+    RESULTAT:   4,  // E
+    TYPE:       5   // F — type de sérologie
   },
 
   /* ── Épreuves sportives reconnues ── */

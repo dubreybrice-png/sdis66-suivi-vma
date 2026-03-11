@@ -99,6 +99,85 @@ function getSportData_() {
 }
 
 /* ═══════════════════════════════════════════════════════
+   VACCINS
+   ═══════════════════════════════════════════════════════ */
+
+/**
+ * Construit { matricule: { hb: [{date, dateRaw, nom}], dtp: [{date, dateRaw, nom}], immunise: bool, nonRepondeur: bool } }
+ * HB = nom contient "Hépatite B" (insensible casse)
+ * DTP = nom contient Boostrix / DTP / DTPC / Revaxis
+ */
+function getVaccinData_() {
+  var data = getSheetData_(CONFIG.SHEETS.VACCINS);
+  var map = {};
+
+  data.forEach(function (row) {
+    var matricule = (row[CONFIG.COLS_VACCINS.MATRICULE] || '').toString().trim();
+    if (!matricule) return;
+
+    var nomVaccin = (row[CONFIG.COLS_VACCINS.NOM_VACCIN] || '').toString().trim();
+    if (!nomVaccin) return;
+
+    var dateVal = row[CONFIG.COLS_VACCINS.DATE];
+    var dateRaw = (dateVal instanceof Date && !isNaN(dateVal.getTime())) ? dateVal.getTime() : null;
+
+    var immunise = (row[CONFIG.COLS_VACCINS.IMMUNISE] || '').toString().trim().toLowerCase() === 'oui';
+    var nonRepondeur = (row[CONFIG.COLS_VACCINS.NON_REPONDEUR] || '').toString().trim().toLowerCase() === 'oui';
+
+    if (!map[matricule]) map[matricule] = { hb: [], dtp: [], immunise: false, nonRepondeur: false };
+
+    var entry = { date: formatDate_(dateVal), dateRaw: dateRaw, nom: nomVaccin };
+    var nomLower = nomVaccin.toLowerCase();
+
+    // Classification HB / DTP
+    if (nomLower.indexOf('hépatite b') !== -1 || nomLower.indexOf('hepatite b') !== -1) {
+      map[matricule].hb.push(entry);
+    }
+    if (nomLower.indexOf('boostrix') !== -1 || nomLower.indexOf('dtp') !== -1 || nomLower.indexOf('revaxis') !== -1) {
+      map[matricule].dtp.push(entry);
+    }
+
+    if (immunise) map[matricule].immunise = true;
+    if (nonRepondeur) map[matricule].nonRepondeur = true;
+  });
+
+  // Trier chronologiquement (plus ancien d'abord)
+  Object.keys(map).forEach(function (key) {
+    map[key].hb.sort(function (a, b) { return (a.dateRaw || 0) - (b.dateRaw || 0); });
+    map[key].dtp.sort(function (a, b) { return (a.dateRaw || 0) - (b.dateRaw || 0); });
+  });
+
+  return map;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SÉROLOGIES
+   ═══════════════════════════════════════════════════════ */
+
+/**
+ * Construit { matricule: [{type, resultat}] }
+ * Types HB intéressants : "Ac anti HBc", "Ac anti HBs", "Ag HBs"
+ */
+function getSeroData_() {
+  var data = getSheetData_(CONFIG.SHEETS.SERO);
+  var map = {};
+
+  data.forEach(function (row) {
+    var matricule = (row[CONFIG.COLS_SERO.MATRICULE] || '').toString().trim();
+    if (!matricule) return;
+
+    var type = (row[CONFIG.COLS_SERO.TYPE] || '').toString().trim();
+    var resultat = (row[CONFIG.COLS_SERO.RESULTAT] || '').toString().trim();
+    if (!type) return;
+
+    if (!map[matricule]) map[matricule] = [];
+    map[matricule].push({ type: type, resultat: resultat });
+  });
+
+  return map;
+}
+
+/* ═══════════════════════════════════════════════════════
    EXAMENS COMPLÉMENTAIRES (CRUD)
    ═══════════════════════════════════════════════════════ */
 
@@ -439,6 +518,8 @@ function getPageData() {
   var sportData = getSportData_();
   var examens   = getAllExamens();
   var inactifs  = getInactiveMatricules_();
+  var vaccinData = getVaccinData_();
+  var seroData   = getSeroData_();
 
   // Séparer actifs / inactifs et rattacher sport
   var activeAgents   = [];
@@ -457,7 +538,9 @@ function getPageData() {
     agents:         activeAgents,
     inactiveAgents: inactiveAgents,
     examens:        examens,
-    totalAgents:    activeAgents.length
+    totalAgents:    activeAgents.length,
+    vaccins:        vaccinData,
+    seros:          seroData
   };
 }
 
