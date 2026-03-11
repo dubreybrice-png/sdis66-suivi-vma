@@ -72,15 +72,18 @@ function getSportData_() {
   data.forEach(function (row) {
     var matricule = (row[CONFIG.COLS_SPORT.MATRICULE] || '').toString().trim();
     var testName  = (row[CONFIG.COLS_SPORT.TEST_NAME] || '').toString().replace(/\s+/g, ' ').trim();
+    var resultat  = (row[CONFIG.COLS_SPORT.RESULTAT] || '').toString().trim();
 
-    if (!matricule || CONFIG.SPORT_TESTS.indexOf(testName) === -1) return;
+    // Ignorer si pas de matricule, test non reconnu, ou pas de résultat
+    if (!matricule || CONFIG.SPORT_TESTS.indexOf(testName) === -1 || !resultat) return;
 
-    var dateVal  = row[CONFIG.COLS_SPORT.DATE];
-    var resultat = (row[CONFIG.COLS_SPORT.RESULTAT] || '').toString().trim();
+    var dateVal = row[CONFIG.COLS_SPORT.DATE];
+    var dateRaw = (dateVal instanceof Date && !isNaN(dateVal.getTime())) ? dateVal.getTime() : null;
 
     if (!map[matricule]) map[matricule] = [];
     map[matricule].push({
       date:     formatDate_(dateVal),
+      dateRaw:  dateRaw,
       testName: testName,
       resultat: resultat
     });
@@ -203,9 +206,15 @@ function determineVisitType_(agent, specialties) {
   if (agentSpe && agentSpe.length > 0) {
     for (var i = 0; i < agentSpe.length; i++) {
       var spe = agentSpe[i];
-      if (CONFIG.VMA_SPECIALTIES.indexOf(spe) !== -1) return 'VMA tous les ans';
-      if (spe === 'Grimp' && agent.age >= CONFIG.VMA_GRIMP_AGE) return 'VMA tous les ans';
-      if (spe.toLowerCase() === 'diabétique') return 'VMA tous les ans';
+      if (CONFIG.VMA_SPECIALTIES.indexOf(spe) !== -1) {
+        return { type: 'VMA tous les ans', raison: 'Spécialité : ' + spe };
+      }
+      if (spe === 'Grimp' && agent.age >= CONFIG.VMA_GRIMP_AGE) {
+        return { type: 'VMA tous les ans', raison: 'Spécialité : Grimp (≥ ' + CONFIG.VMA_GRIMP_AGE + ' ans)' };
+      }
+      if (spe.toLowerCase() === 'diabétique') {
+        return { type: 'VMA tous les ans', raison: 'Spécialité : Diabétique' };
+      }
     }
     // Dans données spécialité mais aucune règle VMA matchée
     // (ex. Grimp < 43) → on tombe dans les règles d'âge ci-dessous
@@ -213,16 +222,23 @@ function determineVisitType_(agent, specialties) {
 
   /* ── Règles d'âge (tous les agents non-VMA) ── */
   var birthYear = agent.birthYear;
-  if (!birthYear) return 'Non déterminé';
+  if (!birthYear) return { type: 'Non déterminé', raison: 'Date de naissance inconnue' };
 
   var isBirthEven = birthYear % 2 === 0;
+  var pariteLabel = isBirthEven ? 'paire' : 'impaire';
 
   if (agent.age >= CONFIG.AGE_THRESHOLD) {
-    // ≥ 39 ans
-    return isBirthEven ? 'Visite médicale biennale' : 'Visite prévention';
+    if (isBirthEven) {
+      return { type: 'Visite médicale biennale', raison: 'Maintien activité ≥ ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
+    } else {
+      return { type: 'Visite prévention', raison: 'Maintien activité ≥ ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
+    }
   } else {
-    // < 39 ans
-    return isBirthEven ? 'Visite médicale biennale' : 'Visite médicale 2027';
+    if (isBirthEven) {
+      return { type: 'Visite médicale biennale', raison: 'Volontaire de -' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
+    } else {
+      return { type: 'Visite médicale 2027', raison: 'Volontaire de -' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
+    }
   }
 }
 
@@ -281,11 +297,14 @@ function getAllAgents() {
       perteYear:              perteYear,
       visitYear:              visitYear,
       typeVisite:             '',
+      typeVisiteRaison:       '',
       sport:                  []
     };
 
-    agent.typeVisite = determineVisitType_(agent, specialties);
-    agentsMap[key]   = agent;
+    var visitResult = determineVisitType_(agent, specialties);
+    agent.typeVisite       = visitResult.type;
+    agent.typeVisiteRaison = visitResult.raison;
+    agentsMap[key]         = agent;
   });
 
   // Tri chronologique par date de perte de compétence
