@@ -117,7 +117,7 @@
     .sport-icon-ring.sport-ok { }
     .sport-icon-ring.sport-overdue { border: 3px solid #e74c3c; animation: blink-red 1s infinite; }
 
-    /* ═══ VISIT TYPE TOOLTIP (CSS hover — small, no lag) ═══ */
+    /* ═══ VISIT TYPE TOOLTIP ═══ */
     .visit-badge-wrap { position: relative; display: inline-block; cursor: help; }
     .visit-tooltip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: var(--secondary); color: #fff; border-radius: 6px; padding: 8px 12px; font-size: 0.78em; white-space: nowrap; z-index: 300; margin-bottom: 6px; font-weight: 500; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
     .visit-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: var(--secondary); }
@@ -175,7 +175,7 @@
     /* ═══ ARCHIVE CHECKBOX ═══ */
     .archive-cb { width: 15px; height: 15px; cursor: pointer; accent-color: var(--primary); }
 
-    /* ═══ GLOBAL TOOLTIP (position:fixed — sport hover) ═══ */
+    /* ═══ GLOBAL TOOLTIP (position:fixed) ═══ */
     .global-tooltip {
       display: none; position: fixed; z-index: 9999;
       background: white; border-radius: 8px; box-shadow: 0 4px 24px rgba(0,0,0,0.18);
@@ -185,7 +185,7 @@
     .sport-entry { padding: 4px 0; border-bottom: 1px solid #eee; }
     .sport-entry:last-child { border-bottom: none; }
 
-    /* ═══ EXAM POPOVER (position:fixed — click-based) ═══ */
+    /* ═══ EXAM POPOVER (position:fixed) ═══ */
     .exam-popover {
       display: none; position: fixed; z-index: 9998;
       background: white; border-radius: 10px; box-shadow: 0 6px 30px rgba(0,0,0,0.22);
@@ -203,7 +203,7 @@
     .sort-icon { font-size: 0.8em; opacity: 0.5; margin-left: 3px; }
     .sort-active .sort-icon { opacity: 1; }
 
-    /* ═══ EXAM CARD (detail view in modals) ═══ */
+    /* ═══ EXAM CARD ═══ */
     .exam-card { background: var(--bg); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; border-left: 4px solid var(--blue); }
     .exam-card-overdue { border-left-color: var(--primary); background: #fff8f8; }
     .exam-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
@@ -213,9 +213,16 @@
     /* ═══ PERSON FILTER BANNER ═══ */
     .filter-banner { background: #e8f0fe; border: 1.5px solid var(--blue); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 
-    /* ═══ RESTORE BUTTON ═══ */
-    .restore-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border: 1.5px solid var(--green); border-radius: 6px; background: transparent; color: var(--green); cursor: pointer; font-size: 0.82em; font-weight: 600; transition: all .2s; }
-    .restore-btn:hover { background: var(--green); color: white; }
+    /* ═══ SPORT CELL (full page) ═══ */
+    .sport-cell { min-width: 100px; text-align: center; }
+    .sport-cell-old { background: #fff5f5 !important; }
+    .sport-cell-empty { color: var(--text-light); text-align: center; }
+
+    /* ═══ FILTER PANEL ═══ */
+    .filter-panel { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 16px; border: 1.5px solid var(--blue); }
+    .filter-rule-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+    .filter-rule-row select, .filter-rule-row input { padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 6px; font-size: 0.88em; font-family: inherit; }
+    .filter-rule-row select:focus, .filter-rule-row input:focus { outline: none; border-color: var(--primary); }
   </style>
 </head>
 
@@ -269,26 +276,18 @@
     </div>
   </div>
 
-  <!-- ═══ MODAL : SUIVI SPORT ═══ -->
-  <div class="modal-overlay" id="sportModal" style="display:none" onclick="if(event.target===this)closeModal('sportModal')">
-    <div class="modal modal-large">
-      <div class="modal-header"><h3>🏃 Suivi Sport — Épreuves sportives</h3><button class="modal-close" onclick="closeModal('sportModal')">✕</button></div>
-      <div class="modal-body" id="sportContent"></div>
-    </div>
-  </div>
-
-  <!-- ═══ MODAL : AGENTS INACTIFS ═══ -->
+  <!-- ═══ MODAL : AGENTS ARCHIVÉS ═══ -->
   <div class="modal-overlay" id="inactifsModal" style="display:none" onclick="if(event.target===this)closeModal('inactifsModal')">
     <div class="modal modal-large">
-      <div class="modal-header"><h3>👥 Agents inactifs</h3><button class="modal-close" onclick="closeModal('inactifsModal')">✕</button></div>
+      <div class="modal-header"><h3>👥 Agents archivés</h3><button class="modal-close" onclick="closeModal('inactifsModal')">✕</button></div>
       <div class="modal-body" id="inactifsContent"></div>
     </div>
   </div>
 
-  <!-- ═══ EXAM POPOVER (position:fixed, click-based) ═══ -->
+  <!-- ═══ EXAM POPOVER ═══ -->
   <div class="exam-popover" id="examPopover"></div>
 
-  <!-- ═══ GLOBAL TOOLTIP (position:fixed, hover-based) ═══ -->
+  <!-- ═══ GLOBAL TOOLTIP ═══ -->
   <div class="global-tooltip" id="globalTooltip"></div>
 
   <!-- html2pdf.js -->
@@ -307,18 +306,45 @@
     var currentExamMatricule = '';
     var currentExamType = '';
 
-    var activePersonFilter = null; // null, 'Cécile', 'Célia'
-    var sortStates = {}; // { main: {key,dir}, allExams: {key,dir}, overdue: {key,dir}, sport: {key,dir} }
+    var activePersonFilter = null;
+    var sortStates = {};
     var activePopoverExamId = null;
-
-    // Detail view state for exam modals
     var allExamsDetailMatricule = null;
     var overdueDetailMatricule = null;
+
+    /* ─── Sport full page state ─── */
+    var sportViewActive = false;
+    var sportFilterICP = false;
+    var sportFilterPanelOpen = false;
+    var sportFilterMaxActive = false;
+    var sportFilterMaxRules = [];
+    var savedSportFilterRules = [];
+
+    var SPORT_TESTS_META = [
+      { key: 'LUC LEGER', label: 'Luc Léger', short: 'Luc Léger' },
+      { key: 'AVIRON - Chaine de commandement', label: 'Rameur Chaîne Cdt', short: 'Rameur CC' },
+      { key: 'AVIRON - Filière incendie', label: 'Rameur Filière Inc.', short: 'Rameur FI' },
+      { key: 'Temps Cross Départemental', label: 'Cross Départemental', short: 'Cross Dép.' }
+    ];
+
+    function findTestMeta(key) {
+      for (var i = 0; i < SPORT_TESTS_META.length; i++) {
+        if (SPORT_TESTS_META[i].key === key) return SPORT_TESTS_META[i];
+      }
+      return null;
+    }
+
+    function parseNum(s) {
+      if (s === null || s === undefined || s === '' || s === '\u2014') return null;
+      var n = parseFloat(s.toString().replace(',', '.'));
+      return isNaN(n) ? null : n;
+    }
 
     /* ═══════════════════════════════════════════════
        INIT
        ═══════════════════════════════════════════════ */
     document.addEventListener('DOMContentLoaded', function () {
+      loadSavedFilterRules();
       google.script.run.withSuccessHandler(onDataLoaded).withFailureHandler(showError).getPageData();
     });
 
@@ -366,7 +392,7 @@
       if (view === 'main') renderMainPage();
       else if (view === 'allExams') renderAllExamsModal();
       else if (view === 'overdue') renderOverdueContent();
-      else if (view === 'sport') renderSportContent();
+      else if (view === 'sport') renderSportPage();
     }
 
     function sortIcon(view, key) {
@@ -413,16 +439,15 @@
        RENDER MAIN PAGE
        ═══════════════════════════════════════════════ */
     function renderMainPage() {
+      sportViewActive = false;
       hideExamPopover();
       var now = Date.now();
 
-      // Get displayed agents (apply person filter)
       var displayed = allAgents;
       if (activePersonFilter) {
         displayed = allAgents.filter(function (a) { return isAgentVisibleForFilter(a); });
       }
 
-      // Apply sort
       var ss = sortStates.main;
       if (ss && ss.key) {
         var keyFns = {
@@ -442,7 +467,6 @@
 
       var h = '';
 
-      /* ── En-tête ── */
       h += '<div class="page-header">';
       h += '<div>';
       h += '<div class="page-title">📋 Suivi VMA — Vue complète</div>';
@@ -452,16 +476,15 @@
       h += '<div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">';
       h += '<button onclick="showAllExams()" class="btn btn-info-outline">📋 Examens en cours (' + allExamens.length + ')</button>';
       if (overdueExamCount > 0) h += '<button onclick="showOverdueExams()" class="btn btn-danger-outline">⚠️ Examens en retard (' + overdueExamCount + ')</button>';
-      h += '<button onclick="showSportView()" class="btn btn-green-outline">🏃 Suivi Sport</button>';
+      h += '<button onclick="showSportPage()" class="btn btn-green-outline">🏃 Suivi Sport</button>';
       var ccCls = activePersonFilter === 'Cécile' ? ' person-active' : '';
       var clCls = activePersonFilter === 'Célia'  ? ' person-active' : '';
       h += '<button onclick="togglePersonFilter(\'Cécile\')" class="btn btn-outline' + ccCls + '">👤 Dossier Cécile</button>';
       h += '<button onclick="togglePersonFilter(\'Célia\')" class="btn btn-outline' + clCls + '">👤 Dossier Célia</button>';
-      if (inactiveAgents.length > 0) h += '<button onclick="showInactifs()" class="btn btn-inactive">👥 Inactifs (' + inactiveAgents.length + ')</button>';
+      h += '<button onclick="showArchivedAgents()" class="btn btn-inactive">👥 Archivés (' + inactiveAgents.length + ')</button>';
       h += '<button onclick="downloadPdf()" class="btn btn-primary">📥 PDF</button>';
       h += '</div></div>';
 
-      /* ── Person filter banner ── */
       if (activePersonFilter) {
         h += '<div class="filter-banner">';
         h += '<span>🔍 Filtre actif : <strong>Dossier de ' + esc(activePersonFilter) + '</strong> — agents suivis + non assignés</span>';
@@ -469,17 +492,14 @@
         h += '</div>';
       }
 
-      /* ── Recherche ── */
       h += '<div class="no-print" style="margin-bottom:16px;"><input type="text" class="search-box" id="searchInput" placeholder="Rechercher un agent, centre, type de visite…" oninput="filterTable()"></div>';
 
-      /* ── Stats ── */
       h += '<div class="stats no-print">';
       h += '<div class="stat-card"><div class="stat-value">' + displayed.length + '</div><div class="stat-label">Total agents</div></div>';
       h += '<div class="stat-card danger"><div class="stat-value">' + overdueCount + '</div><div class="stat-label">En dépassement VMA</div></div>';
       if (overdueExamCount > 0) h += '<div class="stat-card danger"><div class="stat-value">' + overdueExamCount + '</div><div class="stat-label">Examens en retard</div></div>';
       h += '</div>';
 
-      /* ── Tableau ── */
       h += '<div class="table-wrap" id="tableContainer"><table id="agentTable"><thead><tr>';
       h += '<th style="width:40px">#</th>';
       h += '<th style="width:40px" class="no-print"></th>';
@@ -511,7 +531,6 @@
       var h = '<tr class="agent-row' + (isOverdue ? ' overdue' : '') + '" data-search="' + esc(searchStr) + '" data-matricule="' + sm + '" id="row-' + sm + '">';
       h += '<td class="row-num">' + (index + 1) + '</td>';
 
-      /* + bouton examen */
       h += '<td class="add-exam-cell no-print"><span class="add-exam-wrap">';
       h += '<button class="add-exam-btn" onclick="toggleAddMenu(event,\'' + sm + '\')" title="Ajouter un examen">📄<sup style="font-size:9px;color:var(--green)">+</sup></button>';
       h += '<div class="add-exam-dropdown" id="addmenu-' + sm + '">';
@@ -521,7 +540,6 @@
       h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'autre\')">🅰️</button>';
       h += '</div></span></td>';
 
-      /* NOM + exam badges */
       h += '<td><strong>' + esc(a.nomPrenom) + '</strong>';
       if (agentExams.length > 0) {
         h += '<span class="exam-icons">';
@@ -536,25 +554,21 @@
       }
       h += '</td>';
 
-      /* Centre */
       h += '<td>' + esc(a.centrePrincipal);
       if (a.centreSecondaire && a.centreSecondaire !== a.centrePrincipal) h += ' <span style="color:var(--text-light);font-size:.8em">/ ' + esc(a.centreSecondaire) + '</span>';
       h += '</td>';
 
-      /* Date perte + sport icon */
       h += '<td>';
       if (a.sport && a.sport.length > 0) {
-        var latest = a.sport[0]; // already sorted desc
+        var latest = a.sport[0];
         var oneYearAgo = now - (365.25 * 24 * 60 * 60 * 1000);
         var isOld = !latest.dateRaw || latest.dateRaw < oneYearAgo;
         h += '<span class="sport-icon-ring ' + (isOld ? 'sport-overdue' : 'sport-ok') + '" onmouseenter="showSportTip(event,\'' + sm + '\')" onmouseleave="hideTip()">🏃</span>';
       }
-      h += (a.datePerteCompetence || '—') + '</td>';
+      h += (a.datePerteCompetence || '\u2014') + '</td>';
 
-      /* Type de visite */
       h += '<td>' + badgeHtml(a.typeVisite, a.typeVisiteRaison) + '</td>';
 
-      /* Archive */
       h += '<td class="no-print" style="text-align:center;"><input type="checkbox" class="archive-cb" onchange="archiveAgentAction(event,\'' + sm + '\',\'' + esc(a.nomPrenom).replace(/'/g, '\\x27') + '\')" title="Archiver"></td>';
       h += '</tr>';
       return h;
@@ -587,7 +601,7 @@
 
       h += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);"><strong>Géré par :</strong> ';
       h += '<select onchange="updateGereParPop(\'' + esc(exam.id) + '\',this.value)" style="padding:3px 6px;border-radius:4px;border:1px solid var(--border);font-size:0.9em;">';
-      h += '<option value=""' + (!exam.gerePar ? ' selected' : '') + '>—</option>';
+      h += '<option value=""' + (!exam.gerePar ? ' selected' : '') + '>\u2014</option>';
       h += '<option value="Cécile"' + (exam.gerePar === 'Cécile' ? ' selected' : '') + '>Cécile</option>';
       h += '<option value="Célia"' + (exam.gerePar === 'Célia' ? ' selected' : '') + '>Célia</option>';
       h += '</select></div>';
@@ -599,11 +613,9 @@
 
       el.innerHTML = h;
       el.style.display = 'block';
-
       var rect = event.currentTarget.getBoundingClientRect();
       el.style.top = (rect.bottom + 8) + 'px';
       el.style.left = Math.max(10, rect.left + rect.width / 2 - 155) + 'px';
-
       setTimeout(function () {
         var r = el.getBoundingClientRect();
         if (r.bottom > window.innerHeight) el.style.top = Math.max(10, rect.top - r.height - 8) + 'px';
@@ -642,19 +654,32 @@
       hideExamPopover(); buildIndexes(); renderMainPage();
     }
 
-    // Close popover on outside click
     document.addEventListener('click', function (e) {
       if (activePopoverExamId && !e.target.closest('#examPopover') && !e.target.closest('.exam-badge')) hideExamPopover();
       if (!e.target.closest('.add-exam-wrap')) document.querySelectorAll('.add-exam-dropdown').forEach(function (m) { m.style.display = 'none'; });
     });
 
     /* ═══════════════════════════════════════════════
-       GLOBAL TOOLTIP (hover, position:fixed — sport)
+       TOOLTIP (position:fixed)
        ═══════════════════════════════════════════════ */
+    function positionTooltip(event, html) {
+      var el = document.getElementById('globalTooltip');
+      el.innerHTML = html;
+      el.style.display = 'block';
+      var rect = event.currentTarget.getBoundingClientRect();
+      el.style.top = (rect.bottom + 8) + 'px';
+      el.style.left = Math.max(10, rect.left + rect.width / 2 - 140) + 'px';
+      setTimeout(function () {
+        var r = el.getBoundingClientRect();
+        if (r.bottom > window.innerHeight) el.style.top = Math.max(10, rect.top - r.height - 8) + 'px';
+        if (r.right > window.innerWidth - 10) el.style.left = (window.innerWidth - r.width - 10) + 'px';
+      }, 0);
+    }
+
     function showSportTip(event, matricule) {
       var agent = agentsByMatricule[matricule];
       if (!agent || !agent.sport || !agent.sport.length) return;
-      var sorted = agent.sport; // already sorted desc from backend
+      var sorted = agent.sport;
       var now = Date.now();
       var oneYearAgo = now - (365.25 * 24 * 60 * 60 * 1000);
       var isOld = !sorted[0].dateRaw || sorted[0].dateRaw < oneYearAgo;
@@ -667,18 +692,24 @@
         if (s.resultat) h += ' : <em>' + esc(s.resultat) + '</em>';
         h += '</div>';
       }
+      positionTooltip(event, h);
+    }
 
-      var el = document.getElementById('globalTooltip');
-      el.innerHTML = h;
-      el.style.display = 'block';
-      var rect = event.currentTarget.getBoundingClientRect();
-      el.style.top = (rect.bottom + 8) + 'px';
-      el.style.left = Math.max(10, rect.left + rect.width / 2 - 140) + 'px';
-      setTimeout(function () {
-        var r = el.getBoundingClientRect();
-        if (r.bottom > window.innerHeight) el.style.top = Math.max(10, rect.top - r.height - 8) + 'px';
-        if (r.right > window.innerWidth - 10) el.style.left = (window.innerWidth - r.width - 10) + 'px';
-      }, 0);
+    function showSportTestTip(event, matricule, testKey) {
+      var agent = agentsByMatricule[matricule];
+      if (!agent || !agent.sport) return;
+      var entries = agent.sport.filter(function (s) { return s.testName === testKey; });
+      if (entries.length === 0) return;
+      var tm = findTestMeta(testKey);
+      var label = tm ? tm.label : testKey;
+
+      var h = '<div style="font-weight:700;margin-bottom:8px;">🏃 ' + esc(label) + '</div>';
+      h += '<div style="margin-bottom:6px;font-weight:600;">' + esc(agent.nomPrenom) + '</div>';
+      for (var i = 0; i < entries.length; i++) {
+        var s = entries[i];
+        h += '<div class="sport-entry"><strong>' + esc(s.date) + '</strong> : <em>' + esc(s.resultat) + '</em></div>';
+      }
+      positionTooltip(event, h);
     }
 
     function hideTip() { document.getElementById('globalTooltip').style.display = 'none'; }
@@ -740,7 +771,8 @@
       var btn = document.getElementById('examSubmitBtn');
       btn.disabled = true; btn.textContent = 'Enregistrement…';
       google.script.run.withSuccessHandler(function (saved) {
-        allExamens.push(saved); buildIndexes(); closeExamModal(); renderMainPage();
+        allExamens.push(saved); buildIndexes(); closeExamModal();
+        if (sportViewActive) renderSportPage(); else renderMainPage();
         btn.disabled = false; btn.textContent = 'Enregistrer';
       }).withFailureHandler(function (err) {
         alert('Erreur : ' + (err.message || err)); btn.disabled = false; btn.textContent = 'Enregistrer';
@@ -936,7 +968,7 @@
       h += '<td>' + esc(e.detail || '') + '</td>';
       h += '<td>' + esc(e.dateDemande || '') + '</td>';
       h += '<td style="' + (isOv ? 'color:var(--primary);font-weight:600;' : '') + '">' + esc(e.dateResultat) + (isOv ? ' ⚠️' : '') + '</td>';
-      h += '<td>' + esc(e.gerePar || '—') + '</td>';
+      h += '<td>' + esc(e.gerePar || '\u2014') + '</td>';
       h += '<td>' + esc(e.commentaire || '') + '</td>';
       h += '</tr>';
       return h;
@@ -990,84 +1022,365 @@
     }
 
     /* ═══════════════════════════════════════════════
-       SUIVI SPORT MODAL
+       SPORT FULL PAGE
        ═══════════════════════════════════════════════ */
-    function showSportView() {
-      renderSportContent();
-      document.getElementById('sportModal').style.display = 'flex';
+    function buildSportAgentList() {
+      var now = Date.now();
+      var oneYearAgo = now - 365.25 * 24 * 3600000;
+
+      return allAgents.map(function (a) {
+        var sport = a.sport || [];
+        var byTest = {};
+        for (var j = 0; j < SPORT_TESTS_META.length; j++) { byTest[SPORT_TESTS_META[j].key] = null; }
+
+        // Sport already sorted desc per agent. First match per test = latest.
+        for (var k = 0; k < sport.length; k++) {
+          if (!byTest[sport[k].testName]) byTest[sport[k].testName] = sport[k];
+        }
+
+        // Check if any ICP test is > 1 year old or missing
+        var anyOld = false;
+        for (var m = 0; m < SPORT_TESTS_META.length; m++) {
+          var entry = byTest[SPORT_TESTS_META[m].key];
+          if (!entry || !entry.dateRaw || entry.dateRaw < oneYearAgo) { anyOld = true; break; }
+        }
+
+        return { agent: a, byTest: byTest, anyOld: anyOld, sportEntries: sport };
+      });
     }
 
-    function renderSportContent() {
-      var now = Date.now();
-      var oneYearAgo = now - (365.25 * 24 * 60 * 60 * 1000);
+    function showSportPage() {
+      // Close any open modals
+      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal'].forEach(function (id) {
+        document.getElementById(id).style.display = 'none';
+      });
+      sportViewActive = true;
+      sportFilterICP = false;
+      sportFilterPanelOpen = false;
+      sportFilterMaxActive = false;
+      sportFilterMaxRules = [];
+      loadSavedFilterRules();
+      renderSportPage();
+    }
 
-      // Build sport agent list
-      var list = allAgents.map(function (a) {
-        var sport = a.sport || [];
-        var latest = sport.length > 0 ? sport[0] : null;
-        return {
-          agent: a,
-          latestDate: latest ? latest.date : '—',
-          latestDateRaw: latest ? latest.dateRaw : null,
-          latestResult: latest ? latest.resultat : '—',
-          latestTest: latest ? latest.testName : '—',
-          isOld: !latest || !latest.dateRaw || latest.dateRaw < oneYearAgo,
-          sportEntries: sport
-        };
+    function backToMainPage() {
+      sportViewActive = false;
+      renderMainPage();
+    }
+
+    function renderSportPage() {
+      hideExamPopover();
+      hideTip();
+
+      var now = Date.now();
+      var oneYearAgo = now - 365.25 * 24 * 3600000;
+      var fullList = buildSportAgentList();
+      var totalOld = fullList.filter(function (x) { return x.anyOld; }).length;
+      var list = fullList.slice();
+
+      // ─── ICP > 1 an filter ───
+      if (sportFilterICP) {
+        list = list.filter(function (x) { return x.anyOld; });
+      }
+
+      // ─── Max filter (OR logic) ───
+      var validRules = sportFilterMaxRules.filter(function (r) {
+        return r.value !== '' && r.value !== undefined && !isNaN(parseFloat(r.value));
       });
 
-      // Apply sort
+      if (sportFilterMaxActive && validRules.length > 0) {
+        list = list.filter(function (x) {
+          for (var i = 0; i < validRules.length; i++) {
+            var r = validRules[i];
+            var entry = x.byTest[r.test];
+            if (!entry) continue;
+            var val = parseNum(entry.resultat);
+            if (val === null) continue;
+            var threshold = parseFloat(r.value);
+            if (isNaN(threshold)) continue;
+            var match = false;
+            switch (r.op) {
+              case '<':  match = val < threshold; break;
+              case '>':  match = val > threshold; break;
+              case '<=': match = val <= threshold; break;
+              case '>=': match = val >= threshold; break;
+              case '=':  match = val === threshold; break;
+            }
+            if (match) return true;
+          }
+          return false;
+        });
+      }
+
+      // ─── Sort ───
       var ss = sortStates.sport;
       if (ss && ss.key) {
         var kf = {
           nomPrenom: function (x) { return x.agent.nomPrenom || ''; },
-          centre: function (x) { return x.agent.centrePrincipal || ''; },
-          derniereICP: function (x) { return x.latestDateRaw; },
-          resultat: function (x) { return x.latestResult || ''; }
+          centre: function (x) { return x.agent.centrePrincipal || ''; }
         };
+        for (var ti = 0; ti < SPORT_TESTS_META.length; ti++) {
+          (function (t) {
+            kf[t.key] = function (x) {
+              var entry = x.byTest[t.key];
+              return entry ? parseNum(entry.resultat) : null;
+            };
+          })(SPORT_TESTS_META[ti]);
+        }
         if (kf[ss.key]) list = doSort(list, kf[ss.key], ss.dir);
       } else {
-        // Default: oldest first (most urgent at top)
+        // Default: oldest ICP first (most urgent)
         list.sort(function (a, b) {
-          if (!a.latestDateRaw && !b.latestDateRaw) return 0;
-          if (!a.latestDateRaw) return -1;
-          if (!b.latestDateRaw) return 1;
-          return a.latestDateRaw - b.latestDateRaw;
+          var aL = null, bL = null;
+          for (var i = 0; i < SPORT_TESTS_META.length; i++) {
+            var ae = a.byTest[SPORT_TESTS_META[i].key];
+            var be = b.byTest[SPORT_TESTS_META[i].key];
+            if (ae && ae.dateRaw && (!aL || ae.dateRaw > aL)) aL = ae.dateRaw;
+            if (be && be.dateRaw && (!bL || be.dateRaw > bL)) bL = be.dateRaw;
+          }
+          if (!aL && !bL) return 0;
+          if (!aL) return -1;
+          if (!bL) return 1;
+          return aL - bL;
         });
       }
 
-      var oldCount = list.filter(function (x) { return x.isOld; }).length;
+      /* ─── Build HTML ─── */
+      var h = '';
 
-      var h = '<p style="margin-bottom:14px;color:var(--text-light);font-size:0.88em;">' + allAgents.length + ' agent(s) — <span style="color:var(--primary);font-weight:600;">' + oldCount + ' avec épreuve &gt; 1 an ou sans épreuve</span> — survolez pour voir le détail</p>';
-      h += '<div class="table-wrap"><table><thead><tr>';
-      h += '<th>#</th>';
+      /* Header */
+      h += '<div class="page-header">';
+      h += '<div>';
+      h += '<div class="page-title">🏃 Suivi Sport — Épreuves sportives</div>';
+      h += '<div class="page-subtitle">' + list.length + ' agent(s) affiché(s)';
+      h += ' — <span style="color:var(--primary);font-weight:600;">' + totalOld + ' avec ICP &gt; 1 an ou sans épreuve</span></div>';
+      h += '</div>';
+      h += '<div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">';
+      h += '<button onclick="backToMainPage()" class="btn btn-outline">← Retour</button>';
+
+      var icpCls = sportFilterICP ? ' person-active' : '';
+      h += '<button onclick="toggleIcpFilter()" class="btn btn-danger-outline' + icpCls + '">⏰ ICP &gt; 1 an (' + totalOld + ')</button>';
+
+      var maxCls = sportFilterPanelOpen ? ' person-active' : '';
+      h += '<button onclick="toggleMaxFilterPanel()" class="btn btn-info-outline' + maxCls + '">📊 Filtre max</button>';
+
+      h += '<button onclick="showArchivedAgents()" class="btn btn-inactive">👁️ Archivés (' + inactiveAgents.length + ')</button>';
+      h += '</div></div>';
+
+      /* Active filter banners */
+      if (sportFilterICP) {
+        h += '<div class="filter-banner"><span>⏰ Filtre actif : <strong>ICP &gt; 1 an</strong> — agents dont une épreuve date de plus d\x27un an</span>';
+        h += '<button onclick="toggleIcpFilter()" class="btn btn-outline" style="padding:4px 12px;font-size:0.8em;">✕ Retirer</button></div>';
+      }
+      if (sportFilterMaxActive && validRules.length > 0) {
+        var desc = validRules.map(function (r) {
+          var tm = findTestMeta(r.test);
+          return (tm ? tm.short : r.test) + ' ' + r.op + ' ' + r.value;
+        }).join(' OU ');
+        h += '<div class="filter-banner"><span>📊 Filtre max actif : <strong>' + esc(desc) + '</strong></span>';
+        h += '<button onclick="clearMaxFilter()" class="btn btn-outline" style="padding:4px 12px;font-size:0.8em;">✕ Retirer</button></div>';
+      }
+
+      /* Filter panel */
+      if (sportFilterPanelOpen) {
+        h += renderFilterPanel();
+      }
+
+      /* Search */
+      h += '<div class="no-print" style="margin-bottom:16px;"><input type="text" class="search-box" id="sportSearchInput" placeholder="Rechercher un agent…" oninput="filterSportTable()"></div>';
+
+      /* Stats */
+      h += '<div class="stats no-print">';
+      h += '<div class="stat-card"><div class="stat-value">' + allAgents.length + '</div><div class="stat-label">Total agents</div></div>';
+      h += '<div class="stat-card danger"><div class="stat-value">' + totalOld + '</div><div class="stat-label">ICP &gt; 1 an</div></div>';
+      h += '<div class="stat-card"><div class="stat-value">' + list.length + '</div><div class="stat-label">Affichés</div></div>';
+      h += '</div>';
+
+      /* Table */
+      h += '<div class="table-wrap"><table id="sportTable"><thead><tr>';
+      h += '<th style="width:35px">#</th>';
+      h += '<th style="width:35px" class="no-print" title="Archiver">🗃️</th>';
       h += thSort('sport', 'nomPrenom', 'NOM Prénom');
       h += thSort('sport', 'centre', 'Centre');
-      h += thSort('sport', 'derniereICP', 'Dernière ICP');
-      h += thSort('sport', 'resultat', 'Résultat');
+      for (var ci = 0; ci < SPORT_TESTS_META.length; ci++) {
+        h += thSort('sport', SPORT_TESTS_META[ci].key, SPORT_TESTS_META[ci].short);
+      }
       h += '</tr></thead><tbody>';
 
       for (var i = 0; i < list.length; i++) {
         var x = list[i];
-        h += '<tr style="' + (x.isOld ? 'background:#fff5f5;' : '') + '" onmouseenter="showSportTip(event,\'' + esc(x.agent.matricule) + '\')" onmouseleave="hideTip()">';
-        h += '<td style="' + (x.isOld ? 'border-left:3px solid var(--primary);' : '') + '">' + (i + 1) + '</td>';
-        h += '<td><strong>' + esc(x.agent.nomPrenom) + '</strong></td>';
-        h += '<td>' + esc(x.agent.centrePrincipal || '') + '</td>';
-        h += '<td style="' + (x.isOld ? 'color:var(--primary);font-weight:600;' : '') + '">' + esc(x.latestDate) + (x.isOld && x.latestDateRaw ? ' ⚠️' : '') + '</td>';
-        h += '<td>' + esc(x.latestResult) + '</td>';
+        var a = x.agent;
+        var searchStr = (a.nomPrenom + ' ' + a.centrePrincipal + ' ' + (a.centreSecondaire || '')).toLowerCase();
+
+        h += '<tr class="sport-row" data-search="' + esc(searchStr) + '">';
+        h += '<td class="row-num">' + (i + 1) + '</td>';
+
+        /* Archive checkbox */
+        h += '<td class="no-print" style="text-align:center;"><input type="checkbox" class="archive-cb" onchange="archiveFromSport(event,\'' + esc(a.matricule) + '\',\'' + esc(a.nomPrenom).replace(/'/g, '\\x27') + '\')" title="Archiver"></td>';
+
+        h += '<td><strong>' + esc(a.nomPrenom) + '</strong></td>';
+        h += '<td>' + esc(a.centrePrincipal || '') + '</td>';
+
+        /* Test columns */
+        for (var ti2 = 0; ti2 < SPORT_TESTS_META.length; ti2++) {
+          var t = SPORT_TESTS_META[ti2];
+          var entry = x.byTest[t.key];
+          if (entry) {
+            var isOld = !entry.dateRaw || entry.dateRaw < oneYearAgo;
+            h += '<td class="sport-cell' + (isOld ? ' sport-cell-old' : '') + '" onmouseenter="showSportTestTip(event,\'' + esc(a.matricule) + '\',\'' + esc(t.key).replace(/'/g, '\\x27') + '\')" onmouseleave="hideTip()" style="cursor:help;">';
+            h += '<strong>' + esc(entry.resultat) + '</strong>';
+            h += '<div style="font-size:0.72em;color:var(--text-light);margin-top:2px;">' + esc(entry.date) + '</div>';
+            h += '</td>';
+          } else {
+            h += '<td class="sport-cell sport-cell-empty">\u2014</td>';
+          }
+        }
         h += '</tr>';
       }
-      h += '</tbody></table></div>';
 
-      document.getElementById('sportContent').innerHTML = h;
+      h += '</tbody></table></div>';
+      document.getElementById('app').innerHTML = h;
     }
 
     /* ═══════════════════════════════════════════════
-       ARCHIVE AGENT
+       SPORT FILTER PANEL
+       ═══════════════════════════════════════════════ */
+    function renderFilterPanel() {
+      var h = '<div class="filter-panel">';
+      h += '<div style="font-weight:700;font-size:1.05em;margin-bottom:14px;">📊 Filtres personnalisés — Critères OU</div>';
+
+      if (sportFilterMaxRules.length === 0) {
+        h += '<p style="color:var(--text-light);margin-bottom:12px;">Aucun critère défini. Ajoutez un critère pour filtrer les résultats.</p>';
+      }
+
+      for (var i = 0; i < sportFilterMaxRules.length; i++) {
+        var r = sportFilterMaxRules[i];
+        if (i > 0) h += '<div style="text-align:center;color:var(--blue);font-weight:700;margin:8px 0;font-size:0.9em;">OU</div>';
+
+        h += '<div class="filter-rule-row">';
+
+        /* Test selector */
+        h += '<select onchange="updateFilterRule(' + i + ',\'test\',this.value)" style="min-width:180px;">';
+        for (var j = 0; j < SPORT_TESTS_META.length; j++) {
+          var tm = SPORT_TESTS_META[j];
+          h += '<option value="' + esc(tm.key) + '"' + (r.test === tm.key ? ' selected' : '') + '>' + esc(tm.label) + '</option>';
+        }
+        h += '</select>';
+
+        /* Operator */
+        h += '<select onchange="updateFilterRule(' + i + ',\'op\',this.value)" style="width:65px;">';
+        var ops = ['<', '>', '<=', '>=', '='];
+        for (var k = 0; k < ops.length; k++) {
+          h += '<option value="' + ops[k] + '"' + (r.op === ops[k] ? ' selected' : '') + '>' + esc(ops[k]) + '</option>';
+        }
+        h += '</select>';
+
+        /* Value */
+        h += '<input type="number" step="any" value="' + (r.value !== undefined && r.value !== '' ? r.value : '') + '" oninput="updateFilterRule(' + i + ',\'value\',this.value)" placeholder="Valeur" style="width:100px;">';
+
+        /* Remove */
+        h += '<button onclick="removeFilterRule(' + i + ')" style="background:none;border:1.5px solid var(--primary);color:var(--primary);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:0.85em;font-weight:600;transition:all .2s;">✕</button>';
+        h += '</div>';
+      }
+
+      h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">';
+      h += '<button onclick="addFilterRule()" class="btn btn-outline" style="font-size:0.85em;">+ Ajouter un critère OU</button>';
+      h += '<button onclick="applyMaxFilter()" class="btn btn-primary" style="font-size:0.85em;">✅ Appliquer</button>';
+      h += '<button onclick="saveFilterRules()" class="btn btn-green-outline" style="font-size:0.85em;">💾 Enregistrer</button>';
+      h += '<button onclick="resetFilterRules()" class="btn btn-outline" style="font-size:0.85em;">🔄 Réinitialiser</button>';
+      h += '</div></div>';
+      return h;
+    }
+
+    function addFilterRule() {
+      sportFilterMaxRules.push({ test: SPORT_TESTS_META[0].key, op: '<', value: '' });
+      renderSportPage();
+    }
+
+    function removeFilterRule(idx) {
+      sportFilterMaxRules.splice(idx, 1);
+      renderSportPage();
+    }
+
+    function updateFilterRule(idx, field, value) {
+      if (sportFilterMaxRules[idx]) sportFilterMaxRules[idx][field] = value;
+    }
+
+    function applyMaxFilter() {
+      sportFilterMaxActive = true;
+      renderSportPage();
+    }
+
+    function clearMaxFilter() {
+      sportFilterMaxActive = false;
+      sportFilterMaxRules = [];
+      renderSportPage();
+    }
+
+    function saveFilterRules() {
+      try {
+        localStorage.setItem('sdis66_sport_filter_rules', JSON.stringify(sportFilterMaxRules));
+        savedSportFilterRules = JSON.parse(JSON.stringify(sportFilterMaxRules));
+        alert('✅ Critères enregistrés ! Ils seront pré-chargés au prochain clic sur « Filtre max ».');
+      } catch (e) {
+        alert('Erreur lors de l\x27enregistrement.');
+      }
+    }
+
+    function loadSavedFilterRules() {
+      try {
+        var s = localStorage.getItem('sdis66_sport_filter_rules');
+        if (s) savedSportFilterRules = JSON.parse(s);
+      } catch (e) { /* ignore */ }
+    }
+
+    function resetFilterRules() {
+      sportFilterMaxActive = false;
+      sportFilterMaxRules = [];
+      sportFilterPanelOpen = false;
+      renderSportPage();
+    }
+
+    function toggleIcpFilter() {
+      sportFilterICP = !sportFilterICP;
+      renderSportPage();
+    }
+
+    function toggleMaxFilterPanel() {
+      if (!sportFilterPanelOpen) {
+        sportFilterPanelOpen = true;
+        // Pre-load saved rules
+        if (savedSportFilterRules.length > 0 && sportFilterMaxRules.length === 0) {
+          sportFilterMaxRules = JSON.parse(JSON.stringify(savedSportFilterRules));
+          sportFilterMaxActive = true;
+        }
+        if (sportFilterMaxRules.length === 0) {
+          sportFilterMaxRules.push({ test: SPORT_TESTS_META[0].key, op: '<', value: '' });
+        }
+      } else {
+        sportFilterPanelOpen = false;
+        sportFilterMaxActive = false;
+      }
+      renderSportPage();
+    }
+
+    function filterSportTable() {
+      var q = document.getElementById('sportSearchInput').value.toLowerCase().trim();
+      var rows = document.querySelectorAll('.sport-row');
+      var n = 0;
+      for (var i = 0; i < rows.length; i++) {
+        var d = rows[i].getAttribute('data-search') || '';
+        if (d.indexOf(q) !== -1) { rows[i].style.display = ''; n++; rows[i].querySelector('.row-num').textContent = n; }
+        else rows[i].style.display = 'none';
+      }
+    }
+
+    /* ═══════════════════════════════════════════════
+       ARCHIVE / RESTORE (global)
        ═══════════════════════════════════════════════ */
     function archiveAgentAction(event, matricule, nomPrenom) {
       var cb = event.target;
-      if (!confirm('Archiver l\x27agent ' + nomPrenom + ' ?\n\nIl sera retiré de la liste.\nRestaurez-le via « Inactifs ».')) { cb.checked = false; return; }
+      if (!confirm('Archiver l\x27agent ' + nomPrenom + ' ?\n\nIl sera retiré de toutes les vues.\nRestaurez-le via « Agents archivés ».')) { cb.checked = false; return; }
       cb.disabled = true;
       google.script.run.withSuccessHandler(function () {
         for (var i = 0; i < allAgents.length; i++) {
@@ -1077,20 +1390,32 @@
       }).withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); cb.checked = false; cb.disabled = false; }).archiveAgent(matricule, nomPrenom);
     }
 
+    function archiveFromSport(event, matricule, nomPrenom) {
+      var cb = event.target;
+      if (!confirm('Archiver l\x27agent ' + nomPrenom + ' ?\n\nIl sera retiré de toutes les vues.')) { cb.checked = false; return; }
+      cb.disabled = true;
+      google.script.run.withSuccessHandler(function () {
+        for (var i = 0; i < allAgents.length; i++) {
+          if (allAgents[i].matricule === matricule) { inactiveAgents.push(allAgents.splice(i, 1)[0]); break; }
+        }
+        buildIndexes(); renderSportPage();
+      }).withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); cb.checked = false; cb.disabled = false; }).archiveAgent(matricule, nomPrenom);
+    }
+
     /* ═══════════════════════════════════════════════
-       INACTIFS MODAL
+       ARCHIVED AGENTS POPUP
        ═══════════════════════════════════════════════ */
-    function showInactifs() {
+    function showArchivedAgents() {
       var h = '';
       if (inactiveAgents.length === 0) {
-        h += '<div style="text-align:center;padding:40px;color:var(--text-light);"><div style="font-size:2.5em;margin-bottom:12px;">✅</div><p>Aucun agent inactif</p></div>';
+        h += '<div style="text-align:center;padding:40px;color:var(--text-light);"><div style="font-size:2.5em;margin-bottom:12px;">✅</div><p>Aucun agent archivé</p></div>';
       } else {
-        h += '<p style="margin-bottom:14px;color:var(--text-light);font-size:0.88em;">' + inactiveAgents.length + ' agent(s) archivé(s)</p>';
-        h += '<div class="table-wrap"><table><thead><tr><th>#</th><th>NOM Prénom</th><th>Centre</th><th>Type de visite</th><th>Action</th></tr></thead><tbody>';
+        h += '<p style="margin-bottom:14px;color:var(--text-light);font-size:0.88em;">' + inactiveAgents.length + ' agent(s) archivé(s) — <strong>décochez pour restaurer</strong></p>';
+        h += '<div class="table-wrap"><table><thead><tr><th>#</th><th>NOM Prénom</th><th>Centre</th><th>Archivé</th></tr></thead><tbody>';
         for (var i = 0; i < inactiveAgents.length; i++) {
           var a = inactiveAgents[i];
-          h += '<tr><td>' + (i + 1) + '</td><td><strong>' + esc(a.nomPrenom) + '</strong></td><td>' + esc(a.centrePrincipal || '') + '</td><td>' + badgeHtml(a.typeVisite, a.typeVisiteRaison) + '</td>';
-          h += '<td><button class="restore-btn" onclick="restoreAgentAction(\'' + esc(a.matricule) + '\')">↩️ Restaurer</button></td></tr>';
+          h += '<tr><td>' + (i + 1) + '</td><td><strong>' + esc(a.nomPrenom) + '</strong></td><td>' + esc(a.centrePrincipal || '') + '</td>';
+          h += '<td style="text-align:center;"><input type="checkbox" class="archive-cb" checked onchange="restoreFromArchive(event,\'' + esc(a.matricule) + '\')" title="Décocher pour restaurer"></td></tr>';
         }
         h += '</tbody></table></div>';
       }
@@ -1098,19 +1423,23 @@
       document.getElementById('inactifsModal').style.display = 'flex';
     }
 
-    function restoreAgentAction(matricule) {
-      if (!confirm('Restaurer cet agent ?')) return;
+    function restoreFromArchive(event, matricule) {
+      var cb = event.target;
+      if (!confirm('Restaurer cet agent ?')) { cb.checked = true; return; }
+      cb.disabled = true;
       google.script.run.withSuccessHandler(function () {
         for (var i = 0; i < inactiveAgents.length; i++) {
           if (inactiveAgents[i].matricule === matricule) { allAgents.push(inactiveAgents.splice(i, 1)[0]); break; }
         }
         allAgents.sort(function (a, b) {
           if (!a.datePerteCompetenceRaw && !b.datePerteCompetenceRaw) return 0;
-          if (!a.datePerteCompetenceRaw) return 1; if (!b.datePerteCompetenceRaw) return -1;
+          if (!a.datePerteCompetenceRaw) return 1;
+          if (!b.datePerteCompetenceRaw) return -1;
           return a.datePerteCompetenceRaw - b.datePerteCompetenceRaw;
         });
-        buildIndexes(); showInactifs(); renderMainPage();
-      }).withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); }).restoreAgent(matricule);
+        buildIndexes();
+        showArchivedAgents(); // refresh popup
+      }).withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); cb.checked = true; cb.disabled = false; }).restoreAgent(matricule);
     }
 
     /* ═══════════════════════════════════════════════
@@ -1118,11 +1447,12 @@
        ═══════════════════════════════════════════════ */
     function closeModal(id) {
       document.getElementById(id).style.display = 'none';
-      renderMainPage(); // refresh main page on modal close
+      if (sportViewActive) renderSportPage();
+      else renderMainPage();
     }
 
     /* ═══════════════════════════════════════════════
-       SEARCH FILTER
+       SEARCH FILTER (main view)
        ═══════════════════════════════════════════════ */
     function filterTable() {
       var q = document.getElementById('searchInput').value.toLowerCase().trim();

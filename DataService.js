@@ -72,10 +72,11 @@ function getSportData_() {
   data.forEach(function (row) {
     var matricule = (row[CONFIG.COLS_SPORT.MATRICULE] || '').toString().trim();
     var testName  = (row[CONFIG.COLS_SPORT.TEST_NAME] || '').toString().replace(/\s+/g, ' ').trim();
-    var resultat  = (row[CONFIG.COLS_SPORT.RESULTAT] || '').toString().trim();
+    var rawRes    = row[CONFIG.COLS_SPORT.RESULTAT];
+    var resultat  = (rawRes !== undefined && rawRes !== null && rawRes !== '') ? rawRes.toString().trim() : '';
 
     // Ignorer si pas de matricule, test non reconnu, ou pas de résultat
-    if (!matricule || CONFIG.SPORT_TESTS.indexOf(testName) === -1 || !resultat) return;
+    if (!matricule || CONFIG.SPORT_TESTS.indexOf(testName) === -1 || resultat === '') return;
 
     var dateVal = row[CONFIG.COLS_SPORT.DATE];
     var dateRaw = (dateVal instanceof Date && !isNaN(dateVal.getTime())) ? dateVal.getTime() : null;
