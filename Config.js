@@ -53,7 +53,8 @@ var CONFIG = {
     DATE_DEMANDE:   4,  // E
     DATE_RESULTAT:  5,  // F
     COMMENTAIRE:    6,  // G
-    STATUT:         7   // H
+    STATUT:         7,  // H
+    GERE_PAR:       8   // I — Géré par (Cécile/Célia)
   },
 
   /* ── Épreuves sportives reconnues ── */

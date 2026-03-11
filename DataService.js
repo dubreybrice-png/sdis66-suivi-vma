@@ -89,6 +89,11 @@ function getSportData_() {
     });
   });
 
+  // Trier par date décroissante (plus récent en premier)
+  Object.keys(map).forEach(function(key) {
+    map[key].sort(function(a, b) { return (b.dateRaw || 0) - (a.dateRaw || 0); });
+  });
+
   return map;
 }
 
@@ -102,9 +107,9 @@ function getExamensSheet_() {
   var sheet = ss.getSheetByName(CONFIG.SHEETS.EXAMENS);
   if (!sheet) {
     sheet = ss.insertSheet(CONFIG.SHEETS.EXAMENS);
-    sheet.getRange(1, 1, 1, 8).setValues([[
+    sheet.getRange(1, 1, 1, 9).setValues([[
       'ID', 'Matricule', 'Type', 'Détail examen',
-      'Date demande', 'Date résultat attendu', 'Commentaire', 'Statut'
+      'Date demande', 'Date résultat attendu', 'Commentaire', 'Statut', 'Géré par'
     ]]);
     sheet.setFrozenRows(1);
   }
@@ -179,17 +184,20 @@ function getAllExamens() {
     var statut = (row[CONFIG.COLS_EXAMENS.STATUT] || '').toString().trim();
     if (statut === 'cloture') return;
 
+    var dateDem = row[CONFIG.COLS_EXAMENS.DATE_DEMANDE];
     var dateRes = row[CONFIG.COLS_EXAMENS.DATE_RESULTAT];
     examens.push({
-      id:             (row[CONFIG.COLS_EXAMENS.ID] || '').toString(),
-      matricule:      (row[CONFIG.COLS_EXAMENS.MATRICULE] || '').toString().trim(),
-      type:           (row[CONFIG.COLS_EXAMENS.TYPE] || '').toString().trim(),
-      detail:         (row[CONFIG.COLS_EXAMENS.DETAIL] || '').toString().trim(),
-      dateDemande:    formatDate_(row[CONFIG.COLS_EXAMENS.DATE_DEMANDE]),
-      dateResultat:   formatDate_(dateRes),
-      dateResultatRaw:(dateRes instanceof Date && !isNaN(dateRes.getTime())) ? dateRes.getTime() : null,
-      commentaire:    (row[CONFIG.COLS_EXAMENS.COMMENTAIRE] || '').toString().trim(),
-      statut:         statut || 'ouvert'
+      id:              (row[CONFIG.COLS_EXAMENS.ID] || '').toString(),
+      matricule:       (row[CONFIG.COLS_EXAMENS.MATRICULE] || '').toString().trim(),
+      type:            (row[CONFIG.COLS_EXAMENS.TYPE] || '').toString().trim(),
+      detail:          (row[CONFIG.COLS_EXAMENS.DETAIL] || '').toString().trim(),
+      dateDemande:     formatDate_(dateDem),
+      dateDemandeRaw:  (dateDem instanceof Date && !isNaN(dateDem.getTime())) ? dateDem.getTime() : null,
+      dateResultat:    formatDate_(dateRes),
+      dateResultatRaw: (dateRes instanceof Date && !isNaN(dateRes.getTime())) ? dateRes.getTime() : null,
+      commentaire:     (row[CONFIG.COLS_EXAMENS.COMMENTAIRE] || '').toString().trim(),
+      statut:          statut || 'ouvert',
+      gerePar:         (row[CONFIG.COLS_EXAMENS.GERE_PAR] || '').toString().trim()
     });
   });
 
@@ -202,6 +210,10 @@ function saveExamen(examenData) {
   var id = Utilities.getUuid();
   var dateDemande  = examenData.dateDemande  ? new Date(examenData.dateDemande)  : new Date();
   var dateResultat = examenData.dateResultat ? new Date(examenData.dateResultat) : null;
+  var commentaire  = (examenData.commentaire || '').toString().trim();
+  if (commentaire) {
+    commentaire = formatDate_(new Date()) + ' \u2014 ' + commentaire;
+  }
 
   sheet.appendRow([
     id,
@@ -210,20 +222,23 @@ function saveExamen(examenData) {
     examenData.detail || '',
     dateDemande,
     dateResultat,
-    examenData.commentaire || '',
-    'ouvert'
+    commentaire,
+    'ouvert',
+    examenData.gerePar || ''
   ]);
 
   return {
-    id:             id,
-    matricule:      (examenData.matricule || '').toString().trim(),
-    type:           (examenData.type || '').toString().trim(),
-    detail:         (examenData.detail || '').toString().trim(),
-    dateDemande:    formatDate_(dateDemande),
-    dateResultat:   formatDate_(dateResultat),
-    dateResultatRaw:dateResultat ? dateResultat.getTime() : null,
-    commentaire:    (examenData.commentaire || '').toString().trim(),
-    statut:         'ouvert'
+    id:              id,
+    matricule:       (examenData.matricule || '').toString().trim(),
+    type:            (examenData.type || '').toString().trim(),
+    detail:          (examenData.detail || '').toString().trim(),
+    dateDemande:     formatDate_(dateDemande),
+    dateDemandeRaw:  dateDemande ? dateDemande.getTime() : null,
+    dateResultat:    formatDate_(dateResultat),
+    dateResultatRaw: dateResultat ? dateResultat.getTime() : null,
+    commentaire:     commentaire,
+    statut:          'ouvert',
+    gerePar:         (examenData.gerePar || '').toString().trim()
   };
 }
 
@@ -234,6 +249,19 @@ function closeExamen(examenId) {
   for (var i = 1; i < data.length; i++) {
     if (data[i][0].toString() === examenId) {
       sheet.getRange(i + 1, CONFIG.COLS_EXAMENS.STATUT + 1).setValue('cloture');
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Met à jour le champ 'géré par' d'un examen */
+function updateExamGerePar(examId, gerePar) {
+  var sheet = getExamensSheet_();
+  var data  = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0].toString() === examId) {
+      sheet.getRange(i + 1, CONFIG.COLS_EXAMENS.GERE_PAR + 1).setValue(gerePar || '');
       return true;
     }
   }

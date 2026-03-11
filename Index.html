@@ -22,26 +22,18 @@
       --orange: #fdcb6e;
       --blue: #0984e3;
     }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
+      background: var(--bg); color: var(--text); min-height: 100vh;
     }
 
     /* ═══ HEADER ═══ */
     .header {
       background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
-      color: #fff;
-      padding: 14px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      color: #fff; padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between;
       box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      position: sticky; top: 0; z-index: 100;
     }
     .header h1 { font-size: 1.2em; font-weight: 700; letter-spacing: .3px; }
 
@@ -49,83 +41,46 @@
     .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
 
     /* ═══ PAGE HEADER ═══ */
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
     .page-title { font-size: 1.5em; font-weight: 700; color: var(--secondary); }
     .page-subtitle { font-size: 0.88em; color: var(--text-light); margin-top: 2px; }
 
     /* ═══ BUTTONS ═══ */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 9px 18px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.84em;
-      font-weight: 600;
-      transition: all .2s;
-      text-decoration: none;
-      line-height: 1.4;
-    }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.84em; font-weight: 600; transition: all .2s; text-decoration: none; line-height: 1.4; }
     .btn-primary  { background: var(--primary); color: #fff; }
     .btn-primary:hover { background: var(--primary-dark); }
     .btn-outline  { background: transparent; color: var(--secondary); border: 1.5px solid var(--border); }
     .btn-outline:hover { background: var(--secondary); color: #fff; }
     .btn-danger-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
     .btn-danger-outline:hover { background: var(--primary); color: #fff; }
+    .btn-info-outline { background: transparent; color: var(--blue); border: 1.5px solid var(--blue); }
+    .btn-info-outline:hover { background: var(--blue); color: #fff; }
+    .btn-inactive { background: transparent; color: var(--text-light); border: 1.5px solid var(--border); }
+    .btn-inactive:hover { background: var(--secondary); color: #fff; }
+    .btn-green-outline { background: transparent; color: var(--green); border: 1.5px solid var(--green); }
+    .btn-green-outline:hover { background: var(--green); color: #fff; }
+    .btn.person-active { background: var(--secondary); color: #fff; border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(29,41,81,0.25); }
 
     /* ═══ SEARCH ═══ */
     .search-box {
-      width: 100%;
-      max-width: 480px;
-      padding: 10px 16px 10px 40px;
-      border: 2px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 0.9em;
-      transition: border-color .2s;
+      width: 100%; max-width: 480px; padding: 10px 16px 10px 40px;
+      border: 2px solid var(--border); border-radius: var(--radius); font-size: 0.9em; transition: border-color .2s;
       background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23636e72' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") 12px center no-repeat;
     }
     .search-box:focus { outline: none; border-color: var(--primary); }
 
     /* ═══ STATS ═══ */
     .stats { display: flex; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
-    .stat-card {
-      background: var(--card-bg);
-      padding: 14px 20px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      min-width: 140px;
-    }
+    .stat-card { background: var(--card-bg); padding: 14px 20px; border-radius: var(--radius); box-shadow: var(--shadow); min-width: 140px; }
     .stat-value { font-size: 1.7em; font-weight: 700; color: var(--secondary); }
     .stat-label { font-size: 0.78em; color: var(--text-light); margin-top: 2px; }
     .stat-card.danger .stat-value { color: var(--primary); }
 
     /* ═══ TABLE ═══ */
-    .table-wrap {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow-x: auto;
-    }
+    .table-wrap { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
     thead { background: var(--secondary); color: #fff; }
-    th {
-      padding: 12px 16px;
-      text-align: left;
-      font-weight: 600;
-      font-size: 0.82em;
-      text-transform: uppercase;
-      letter-spacing: .5px;
-      white-space: nowrap;
-    }
+    th { padding: 12px 16px; text-align: left; font-weight: 600; font-size: 0.82em; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
     td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.88em; vertical-align: middle; }
     tbody tr:last-child td { border-bottom: none; }
     tbody tr:hover { background: #f8f9fa; }
@@ -133,14 +88,7 @@
     tr.overdue td:first-child { border-left: 3px solid var(--primary); padding-left: 13px; }
 
     /* ═══ BADGES ═══ */
-    .badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-size: 0.75em;
-      font-weight: 600;
-      white-space: nowrap;
-    }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75em; font-weight: 600; white-space: nowrap; }
     .badge-vma        { background: #ff6b6b; color: #fff; }
     .badge-biennale   { background: #00b894; color: #fff; }
     .badge-prevention { background: #0984e3; color: #fff; }
@@ -149,270 +97,51 @@
 
     /* ═══ ADD EXAM DROPDOWN ═══ */
     .add-exam-wrap { position: relative; display: inline-block; vertical-align: middle; }
-    .add-exam-btn {
-      background: none;
-      border: 1.5px solid var(--border);
-      border-radius: 6px;
-      padding: 3px 7px;
-      cursor: pointer;
-      font-size: 15px;
-      line-height: 1;
-      transition: all .2s;
-      color: var(--text-light);
-    }
+    .add-exam-btn { background: none; border: 1.5px solid var(--border); border-radius: 6px; padding: 3px 7px; cursor: pointer; font-size: 15px; line-height: 1; transition: all .2s; color: var(--text-light); }
     .add-exam-btn:hover { background: var(--bg); border-color: var(--primary); color: var(--primary); }
-    .add-exam-dropdown {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.18);
-      padding: 8px;
-      gap: 6px;
-      z-index: 200;
-      margin-top: 4px;
-      white-space: nowrap;
-    }
-    .add-exam-dropdown button {
-      background: none;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      padding: 6px 10px;
-      cursor: pointer;
-      font-size: 16px;
-      transition: all .2s;
-      display: inline-block;
-    }
+    .add-exam-dropdown { display: none; position: absolute; top: 100%; left: 0; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); padding: 8px; gap: 6px; z-index: 200; margin-top: 4px; white-space: nowrap; }
+    .add-exam-dropdown button { background: none; border: 1.5px solid var(--border); border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 16px; transition: all .2s; display: inline-block; }
     .add-exam-dropdown button:hover { background: var(--bg); border-color: var(--primary); }
 
-    /* ═══ EXAM BADGES & TOOLTIPS ═══ */
+    /* ═══ EXAM BADGE ICONS ═══ */
     .exam-icons { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
     .exam-icon-wrap { position: relative; display: inline-block; }
-    .exam-badge {
-      display: inline-flex;
-      width: 26px; height: 26px;
-      border-radius: 50%;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      cursor: pointer;
-      transition: transform .2s;
-    }
+    .exam-badge { display: inline-flex; width: 26px; height: 26px; border-radius: 50%; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; transition: transform .2s; }
     .exam-badge:hover { transform: scale(1.2); }
     .exam-badge.green { background: #d4edda; border: 2px solid #00b894; }
     .exam-badge.red   { background: #ffe0e0; border: 2px solid #e74c3c; animation: blink-red 1s infinite; }
+    @keyframes blink-red { 0%, 60% { opacity: 1; } 61%, 100% { opacity: 0.3; } }
 
-    @keyframes blink-red {
-      0%, 60% { opacity: 1; }
-      61%, 100% { opacity: 0.3; }
-    }
+    /* ═══ SPORT ICON RING ═══ */
+    .sport-icon-ring { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; vertical-align: middle; margin-right: 4px; }
+    .sport-icon-ring.sport-ok { }
+    .sport-icon-ring.sport-overdue { border: 3px solid #e74c3c; animation: blink-red 1s infinite; }
 
-    .exam-tooltip {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
-      padding: 14px 16px;
-      width: 280px;
-      z-index: 300;
-      font-size: 0.82em;
-      margin-top: 8px;
-      line-height: 1.5;
-    }
-    .exam-tooltip::before {
-      content: '';
-      position: absolute;
-      bottom: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      border: 7px solid transparent;
-      border-bottom-color: white;
-    }
-    .exam-icon-wrap:hover .exam-tooltip { display: block; }
-
-    /* ═══ SPORT ICON & TOOLTIP ═══ */
-    .sport-wrap { position: relative; display: inline-block; margin-right: 4px; vertical-align: middle; cursor: pointer; }
-    .sport-icon { font-size: 15px; }
-    .sport-tooltip {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
-      padding: 14px 16px;
-      min-width: 280px;
-      z-index: 300;
-      font-size: 0.82em;
-      margin-top: 8px;
-      line-height: 1.5;
-    }
-    .sport-tooltip::before {
-      content: '';
-      position: absolute;
-      bottom: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      border: 7px solid transparent;
-      border-bottom-color: white;
-    }
-    .sport-wrap:hover .sport-tooltip { display: block; }
-    .sport-entry { padding: 4px 0; border-bottom: 1px solid #eee; }
-    .sport-entry:last-child { border-bottom: none; }
-    .sport-icon-ring {
-      display: inline-flex;
-      width: 28px; height: 28px;
-      border-radius: 50%;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-    }
-    .sport-icon-ring.sport-ok { /* no special ring */ }
-    .sport-icon-ring.sport-overdue {
-      border: 3px solid #e74c3c;
-      animation: blink-red 1s infinite;
-    }
-
-    /* ═══ VISIT TYPE TOOLTIP ═══ */
+    /* ═══ VISIT TYPE TOOLTIP (CSS hover — small, no lag) ═══ */
     .visit-badge-wrap { position: relative; display: inline-block; cursor: help; }
-    .visit-tooltip {
-      display: none;
-      position: absolute;
-      bottom: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--secondary);
-      color: #fff;
-      border-radius: 6px;
-      padding: 8px 12px;
-      font-size: 0.78em;
-      white-space: nowrap;
-      z-index: 300;
-      margin-bottom: 6px;
-      font-weight: 500;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    }
-    .visit-tooltip::after {
-      content: '';
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      border: 6px solid transparent;
-      border-top-color: var(--secondary);
-    }
+    .visit-tooltip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: var(--secondary); color: #fff; border-radius: 6px; padding: 8px 12px; font-size: 0.78em; white-space: nowrap; z-index: 300; margin-bottom: 6px; font-weight: 500; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+    .visit-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 6px solid transparent; border-top-color: var(--secondary); }
     .visit-badge-wrap:hover .visit-tooltip { display: block; }
 
-    /* ═══ EXAM TOOLTIP DELETE BTN ═══ */
-    .exam-delete-btn {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      background: none;
-      border: none;
-      font-size: 1.1em;
-      cursor: pointer;
-      color: var(--text-light);
-      padding: 2px 5px;
-      border-radius: 4px;
-      line-height: 1;
-      transition: all .2s;
-    }
-    .exam-delete-btn:hover { background: #ffe0e0; color: var(--primary); }
-
     /* ═══ MODAL ═══ */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    .modal {
-      background: white;
-      border-radius: var(--radius);
-      width: 92%;
-      max-width: 500px;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.25);
-    }
-    .modal-large { max-width: 960px; }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-    }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: white; border-radius: var(--radius); width: 92%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.25); }
+    .modal-large { max-width: 1060px; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
     .modal-header h3 { font-size: 1.1em; color: var(--secondary); }
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 1.4em;
-      cursor: pointer;
-      color: var(--text-light);
-      padding: 4px 8px;
-      border-radius: 4px;
-      transition: all .2s;
-    }
+    .modal-close { background: none; border: none; font-size: 1.4em; cursor: pointer; color: var(--text-light); padding: 4px 8px; border-radius: 4px; transition: all .2s; }
     .modal-close:hover { background: #f0f0f0; color: var(--primary); }
     .modal-body { padding: 20px; }
-    .modal-footer {
-      padding: 14px 20px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-    }
+    .modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
     .form-group { margin-bottom: 14px; }
-    .form-group label {
-      display: block;
-      font-size: 0.85em;
-      font-weight: 600;
-      margin-bottom: 5px;
-      color: var(--text);
-    }
-    .form-group input,
-    .form-group textarea,
-    .form-group select {
-      width: 100%;
-      padding: 9px 12px;
-      border: 1.5px solid var(--border);
-      border-radius: 6px;
-      font-size: 0.9em;
-      font-family: inherit;
-    }
-    .form-group input:focus,
-    .form-group textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
+    .form-group label { display: block; font-size: 0.85em; font-weight: 600; margin-bottom: 5px; color: var(--text); }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 6px; font-size: 0.9em; font-family: inherit; }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--primary); }
 
-    /* ═══ LOADING ═══ */
+    /* ═══ LOADING & ERROR ═══ */
     .loading { text-align: center; padding: 80px 20px; color: var(--text-light); }
-    .spinner {
-      display: inline-block;
-      width: 44px; height: 44px;
-      border: 4px solid var(--border);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-      margin-bottom: 16px;
-    }
+    .spinner { display: inline-block; width: 44px; height: 44px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 16px; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ═══ ERROR ═══ */
     .error-box { text-align: center; padding: 60px 20px; }
     .error-box h2 { color: var(--primary); margin-bottom: 8px; }
 
@@ -424,97 +153,68 @@
       th, td { padding: 8px 10px; font-size: 0.8em; }
       .stats { gap: 8px; }
       .stat-card { min-width: 110px; padding: 10px 14px; }
-      .exam-tooltip, .sport-tooltip { width: 220px; min-width: 220px; }
     }
 
     /* ═══ PRINT / PDF ═══ */
     .no-print {}
-    @media print {
-      .header, .no-print { display: none !important; }
-      .container { padding: 0; max-width: 100%; }
-      .table-wrap { box-shadow: none; border-radius: 0; }
-      .stat-card { box-shadow: none; border: 1px solid #ccc; }
-      .add-exam-cell { display: none; }
-      .exam-icons { display: none; }
-    }
-
-    .pdf-header {
-      text-align: center;
-      margin-bottom: 18px;
-      padding-bottom: 12px;
-      border-bottom: 2px solid var(--secondary);
-    }
+    @media print { .header, .no-print { display: none !important; } .container { padding: 0; max-width: 100%; } .table-wrap { box-shadow: none; border-radius: 0; } .stat-card { box-shadow: none; border: 1px solid #ccc; } .add-exam-cell, .exam-icons { display: none; } }
+    .pdf-header { text-align: center; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 2px solid var(--secondary); }
     .pdf-header h2 { color: var(--secondary); font-size: 1.3em; }
     .pdf-header p  { color: var(--text-light); font-size: 0.85em; margin-top: 4px; }
 
-    /* ═══ HIGHLIGHT (scroll-to) ═══ */
-    @keyframes highlight-row {
-      0% { background: #fff3cd; }
-      100% { background: transparent; }
-    }
+    /* ═══ HIGHLIGHT ═══ */
+    @keyframes highlight-row { 0% { background: #fff3cd; } 100% { background: transparent; } }
     .row-highlight { animation: highlight-row 2s ease-out; }
 
-    /* ═══ FILTER BUTTONS (Examens en cours modal) ═══ */
-    .filter-bar {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border);
-    }
-    .filter-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 6px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: 20px;
-      background: white;
-      cursor: pointer;
-      font-size: 0.82em;
-      font-weight: 600;
-      transition: all .2s;
-      color: var(--text);
-    }
+    /* ═══ FILTER BAR ═══ */
+    .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .filter-btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; border: 1.5px solid var(--border); border-radius: 20px; background: white; cursor: pointer; font-size: 0.82em; font-weight: 600; transition: all .2s; color: var(--text); }
     .filter-btn:hover { border-color: var(--secondary); background: #f8f9fa; }
     .filter-btn.active { background: var(--secondary); color: white; border-color: var(--secondary); }
 
     /* ═══ ARCHIVE CHECKBOX ═══ */
-    .archive-cb {
-      width: 15px;
-      height: 15px;
-      cursor: pointer;
-      accent-color: var(--primary);
-    }
+    .archive-cb { width: 15px; height: 15px; cursor: pointer; accent-color: var(--primary); }
 
-    /* ═══ INACTIVE BADGE ═══ */
-    .btn-inactive {
-      background: transparent;
-      color: var(--text-light);
-      border: 1.5px solid var(--border);
+    /* ═══ GLOBAL TOOLTIP (position:fixed — sport hover) ═══ */
+    .global-tooltip {
+      display: none; position: fixed; z-index: 9999;
+      background: white; border-radius: 8px; box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+      padding: 14px 16px; min-width: 280px; max-width: 360px;
+      font-size: 0.82em; line-height: 1.5;
     }
-    .btn-inactive:hover { background: var(--secondary); color: #fff; border-color: var(--secondary); }
-    .btn-info-outline {
-      background: transparent;
-      color: var(--blue);
-      border: 1.5px solid var(--blue);
+    .sport-entry { padding: 4px 0; border-bottom: 1px solid #eee; }
+    .sport-entry:last-child { border-bottom: none; }
+
+    /* ═══ EXAM POPOVER (position:fixed — click-based) ═══ */
+    .exam-popover {
+      display: none; position: fixed; z-index: 9998;
+      background: white; border-radius: 10px; box-shadow: 0 6px 30px rgba(0,0,0,0.22);
+      padding: 16px 18px; width: 310px;
+      font-size: 0.85em; line-height: 1.5;
     }
-    .btn-info-outline:hover { background: var(--blue); color: #fff; }
-    .restore-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 12px;
-      border: 1.5px solid var(--green);
-      border-radius: 6px;
-      background: transparent;
-      color: var(--green);
-      cursor: pointer;
-      font-size: 0.82em;
-      font-weight: 600;
-      transition: all .2s;
-    }
+    .exam-pop-actions { display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+    .exam-pop-actions button { flex: 1; padding: 6px 8px; border-radius: 6px; border: 1.5px solid var(--border); background: white; cursor: pointer; font-size: 0.85em; font-weight: 600; transition: all .2s; }
+    .exam-pop-actions .pop-close-btn:hover { background: var(--green); color: white; border-color: var(--green); }
+    .exam-pop-actions .pop-delete-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+    /* ═══ SORTABLE COLUMNS ═══ */
+    .sortable-th { cursor: pointer; user-select: none; }
+    .sortable-th:hover { background: rgba(255,255,255,0.15); }
+    .sort-icon { font-size: 0.8em; opacity: 0.5; margin-left: 3px; }
+    .sort-active .sort-icon { opacity: 1; }
+
+    /* ═══ EXAM CARD (detail view in modals) ═══ */
+    .exam-card { background: var(--bg); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; border-left: 4px solid var(--blue); }
+    .exam-card-overdue { border-left-color: var(--primary); background: #fff8f8; }
+    .exam-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+    .exam-card-line { margin-bottom: 4px; font-size: 0.92em; }
+    .exam-card select { padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); font-size: 0.9em; }
+
+    /* ═══ PERSON FILTER BANNER ═══ */
+    .filter-banner { background: #e8f0fe; border: 1.5px solid var(--blue); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+    /* ═══ RESTORE BUTTON ═══ */
+    .restore-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border: 1.5px solid var(--green); border-radius: 6px; background: transparent; color: var(--green); cursor: pointer; font-size: 0.82em; font-weight: 600; transition: all .2s; }
     .restore-btn:hover { background: var(--green); color: white; }
   </style>
 </head>
@@ -527,10 +227,7 @@
 
   <!-- ═══ MAIN CONTENT ═══ -->
   <div class="container" id="app">
-    <div class="loading">
-      <div class="spinner"></div>
-      <div>Chargement des données…</div>
-    </div>
+    <div class="loading"><div class="spinner"></div><div>Chargement des données…</div></div>
   </div>
 
   <!-- ═══ MODAL : AJOUT EXAMEN ═══ -->
@@ -541,21 +238,12 @@
         <button class="modal-close" onclick="closeExamModal()">✕</button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label>Type d'examen</label>
-          <input type="text" id="examDetail" placeholder="Ex : Bilan sanguin complet">
-        </div>
-        <div class="form-group">
-          <label>Date de la demande</label>
-          <input type="date" id="examDateDemande">
-        </div>
-        <div class="form-group">
-          <label>Date de résultat attendu</label>
-          <input type="date" id="examDateResultat">
-        </div>
-        <div class="form-group">
-          <label>Commentaire</label>
-          <textarea id="examCommentaire" rows="3" placeholder="Commentaire libre…"></textarea>
+        <div class="form-group"><label>Type d'examen</label><input type="text" id="examDetail" placeholder="Ex : Bilan sanguin complet"></div>
+        <div class="form-group"><label>Date de la demande</label><input type="date" id="examDateDemande"></div>
+        <div class="form-group"><label>Date de résultat attendu</label><input type="date" id="examDateResultat"></div>
+        <div class="form-group"><label>Commentaire</label><textarea id="examCommentaire" rows="3" placeholder="Commentaire libre…"></textarea></div>
+        <div class="form-group"><label>Géré par</label>
+          <select id="examGerePar"><option value="">— Non assigné —</option><option value="Cécile">Cécile</option><option value="Célia">Célia</option></select>
         </div>
       </div>
       <div class="modal-footer">
@@ -566,43 +254,50 @@
   </div>
 
   <!-- ═══ MODAL : EXAMENS EN RETARD ═══ -->
-  <div class="modal-overlay" id="overdueModal" style="display:none" onclick="if(event.target===this)closeOverdueModal()">
+  <div class="modal-overlay" id="overdueModal" style="display:none" onclick="if(event.target===this)closeModal('overdueModal')">
     <div class="modal modal-large">
-      <div class="modal-header">
-        <h3>⚠️ Examens en retard</h3>
-        <button class="modal-close" onclick="closeOverdueModal()">✕</button>
-      </div>
+      <div class="modal-header"><h3>⚠️ Examens en retard</h3><button class="modal-close" onclick="closeModal('overdueModal')">✕</button></div>
       <div class="modal-body" id="overdueContent"></div>
     </div>
   </div>
 
-  <!-- ═══ MODAL : EXAMENS EN COURS (tous) ═══ -->
-  <div class="modal-overlay" id="allExamsModal" style="display:none" onclick="if(event.target===this)closeAllExamsModal()">
+  <!-- ═══ MODAL : EXAMENS EN COURS ═══ -->
+  <div class="modal-overlay" id="allExamsModal" style="display:none" onclick="if(event.target===this)closeModal('allExamsModal')">
     <div class="modal modal-large">
-      <div class="modal-header">
-        <h3>📋 Examens en cours</h3>
-        <button class="modal-close" onclick="closeAllExamsModal()">✕</button>
-      </div>
+      <div class="modal-header"><h3>📋 Examens en cours</h3><button class="modal-close" onclick="closeModal('allExamsModal')">✕</button></div>
       <div class="modal-body" id="allExamsContent"></div>
     </div>
   </div>
 
-  <!-- ═══ MODAL : AGENTS INACTIFS ═══ -->
-  <div class="modal-overlay" id="inactifsModal" style="display:none" onclick="if(event.target===this)closeInactifsModal()">
+  <!-- ═══ MODAL : SUIVI SPORT ═══ -->
+  <div class="modal-overlay" id="sportModal" style="display:none" onclick="if(event.target===this)closeModal('sportModal')">
     <div class="modal modal-large">
-      <div class="modal-header">
-        <h3>👥 Agents inactifs</h3>
-        <button class="modal-close" onclick="closeInactifsModal()">✕</button>
-      </div>
+      <div class="modal-header"><h3>🏃 Suivi Sport — Épreuves sportives</h3><button class="modal-close" onclick="closeModal('sportModal')">✕</button></div>
+      <div class="modal-body" id="sportContent"></div>
+    </div>
+  </div>
+
+  <!-- ═══ MODAL : AGENTS INACTIFS ═══ -->
+  <div class="modal-overlay" id="inactifsModal" style="display:none" onclick="if(event.target===this)closeModal('inactifsModal')">
+    <div class="modal modal-large">
+      <div class="modal-header"><h3>👥 Agents inactifs</h3><button class="modal-close" onclick="closeModal('inactifsModal')">✕</button></div>
       <div class="modal-body" id="inactifsContent"></div>
     </div>
   </div>
 
-  <!-- html2pdf.js pour l'export PDF -->
+  <!-- ═══ EXAM POPOVER (position:fixed, click-based) ═══ -->
+  <div class="exam-popover" id="examPopover"></div>
+
+  <!-- ═══ GLOBAL TOOLTIP (position:fixed, hover-based) ═══ -->
+  <div class="global-tooltip" id="globalTooltip"></div>
+
+  <!-- html2pdf.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <script>
-    /* ═══ VARIABLES ═══ */
+    /* ═══════════════════════════════════════════════
+       VARIABLES
+       ═══════════════════════════════════════════════ */
     var BASE_URL = <?!= JSON.stringify(baseUrl) ?>;
     var allAgents = [];
     var allExamens = [];
@@ -612,12 +307,19 @@
     var currentExamMatricule = '';
     var currentExamType = '';
 
-    /* ═══ INIT ═══ */
+    var activePersonFilter = null; // null, 'Cécile', 'Célia'
+    var sortStates = {}; // { main: {key,dir}, allExams: {key,dir}, overdue: {key,dir}, sport: {key,dir} }
+    var activePopoverExamId = null;
+
+    // Detail view state for exam modals
+    var allExamsDetailMatricule = null;
+    var overdueDetailMatricule = null;
+
+    /* ═══════════════════════════════════════════════
+       INIT
+       ═══════════════════════════════════════════════ */
     document.addEventListener('DOMContentLoaded', function () {
-      google.script.run
-        .withSuccessHandler(onDataLoaded)
-        .withFailureHandler(showError)
-        .getPageData();
+      google.script.run.withSuccessHandler(onDataLoaded).withFailureHandler(showError).getPageData();
     });
 
     function onDataLoaded(data) {
@@ -640,117 +342,195 @@
     }
 
     /* ═══════════════════════════════════════════════
-       RENDU PAGE PRINCIPALE
+       SORT UTILITIES
+       ═══════════════════════════════════════════════ */
+    function doSort(arr, keyFn, dir) {
+      return arr.slice().sort(function (a, b) {
+        var va = keyFn(a), vb = keyFn(b);
+        if (va == null && vb == null) return 0;
+        if (va == null) return 1;
+        if (vb == null) return -1;
+        if (typeof va === 'string') { va = va.toLowerCase(); vb = (vb || '').toString().toLowerCase(); }
+        var cmp = va < vb ? -1 : (va > vb ? 1 : 0);
+        return dir === 'desc' ? -cmp : cmp;
+      });
+    }
+
+    function toggleSort(view, key) {
+      if (!sortStates[view]) sortStates[view] = {};
+      if (sortStates[view].key === key) {
+        sortStates[view].dir = sortStates[view].dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortStates[view] = { key: key, dir: 'asc' };
+      }
+      if (view === 'main') renderMainPage();
+      else if (view === 'allExams') renderAllExamsModal();
+      else if (view === 'overdue') renderOverdueContent();
+      else if (view === 'sport') renderSportContent();
+    }
+
+    function sortIcon(view, key) {
+      var s = sortStates[view];
+      if (!s || s.key !== key) return ' <span class="sort-icon">\u2195</span>';
+      return ' <span class="sort-icon" style="opacity:1">' + (s.dir === 'asc' ? '\u25B2' : '\u25BC') + '</span>';
+    }
+
+    function thSort(view, key, label, extra) {
+      var cls = (sortStates[view] && sortStates[view].key === key) ? 'sortable-th sort-active' : 'sortable-th';
+      return '<th class="' + cls + '" ' + (extra || '') + ' onclick="toggleSort(\'' + view + '\',\'' + key + '\')">' + label + sortIcon(view, key) + '</th>';
+    }
+
+    /* ═══════════════════════════════════════════════
+       PERSON FILTER
+       ═══════════════════════════════════════════════ */
+    function togglePersonFilter(person) {
+      if (person === null || activePersonFilter === person) activePersonFilter = null;
+      else activePersonFilter = person;
+      renderMainPage();
+    }
+
+    function isAgentVisibleForFilter(agent) {
+      if (!activePersonFilter) return true;
+      var exams = examensByMatricule[agent.matricule] || [];
+      if (exams.length === 0) return true;
+      var hasMine = false, hasOther = false, hasNone = false;
+      var other = activePersonFilter === 'Cécile' ? 'Célia' : 'Cécile';
+      exams.forEach(function (e) {
+        if (e.gerePar === activePersonFilter) hasMine = true;
+        else if (e.gerePar === other) hasOther = true;
+        else hasNone = true;
+      });
+      return hasMine || (!hasOther && hasNone) || (!hasMine && !hasOther);
+    }
+
+    function isExamVisibleForFilter(exam) {
+      if (!activePersonFilter) return true;
+      var other = activePersonFilter === 'Cécile' ? 'Célia' : 'Cécile';
+      return exam.gerePar !== other;
+    }
+
+    /* ═══════════════════════════════════════════════
+       RENDER MAIN PAGE
        ═══════════════════════════════════════════════ */
     function renderMainPage() {
+      hideExamPopover();
       var now = Date.now();
+
+      // Get displayed agents (apply person filter)
+      var displayed = allAgents;
+      if (activePersonFilter) {
+        displayed = allAgents.filter(function (a) { return isAgentVisibleForFilter(a); });
+      }
+
+      // Apply sort
+      var ss = sortStates.main;
+      if (ss && ss.key) {
+        var keyFns = {
+          nomPrenom: function (a) { return a.nomPrenom || ''; },
+          centre: function (a) { return a.centrePrincipal || ''; },
+          datePerte: function (a) { return a.datePerteCompetenceRaw; },
+          typeVisite: function (a) { return a.typeVisite || ''; }
+        };
+        if (keyFns[ss.key]) displayed = doSort(displayed, keyFns[ss.key], ss.dir);
+      }
+
       var overdueCount = 0;
-      allAgents.forEach(function (a) {
-        if (a.datePerteCompetenceRaw && a.datePerteCompetenceRaw < now) overdueCount++;
-      });
+      displayed.forEach(function (a) { if (a.datePerteCompetenceRaw && a.datePerteCompetenceRaw < now) overdueCount++; });
 
       var overdueExamCount = 0;
-      allExamens.forEach(function (e) {
-        if (e.dateResultatRaw && e.dateResultatRaw < now) overdueExamCount++;
-      });
+      allExamens.forEach(function (e) { if (e.dateResultatRaw && e.dateResultatRaw < now) overdueExamCount++; });
 
       var h = '';
 
       /* ── En-tête ── */
       h += '<div class="page-header">';
-      h += '  <div>';
-      h += '    <div class="page-title">📋 Suivi VMA — Vue complète</div>';
-      h += '    <div class="page-subtitle">' + allAgents.length + ' agent(s)';
-      if (overdueCount > 0) {
-        h += ' — <span style="color:var(--primary);font-weight:600">' + overdueCount + ' en dépassement</span>';
+      h += '<div>';
+      h += '<div class="page-title">📋 Suivi VMA — Vue complète</div>';
+      h += '<div class="page-subtitle">' + displayed.length + ' agent(s)';
+      if (overdueCount > 0) h += ' — <span style="color:var(--primary);font-weight:600">' + overdueCount + ' en dépassement</span>';
+      h += '</div></div>';
+      h += '<div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">';
+      h += '<button onclick="showAllExams()" class="btn btn-info-outline">📋 Examens en cours (' + allExamens.length + ')</button>';
+      if (overdueExamCount > 0) h += '<button onclick="showOverdueExams()" class="btn btn-danger-outline">⚠️ Examens en retard (' + overdueExamCount + ')</button>';
+      h += '<button onclick="showSportView()" class="btn btn-green-outline">🏃 Suivi Sport</button>';
+      var ccCls = activePersonFilter === 'Cécile' ? ' person-active' : '';
+      var clCls = activePersonFilter === 'Célia'  ? ' person-active' : '';
+      h += '<button onclick="togglePersonFilter(\'Cécile\')" class="btn btn-outline' + ccCls + '">👤 Dossier Cécile</button>';
+      h += '<button onclick="togglePersonFilter(\'Célia\')" class="btn btn-outline' + clCls + '">👤 Dossier Célia</button>';
+      if (inactiveAgents.length > 0) h += '<button onclick="showInactifs()" class="btn btn-inactive">👥 Inactifs (' + inactiveAgents.length + ')</button>';
+      h += '<button onclick="downloadPdf()" class="btn btn-primary">📥 PDF</button>';
+      h += '</div></div>';
+
+      /* ── Person filter banner ── */
+      if (activePersonFilter) {
+        h += '<div class="filter-banner">';
+        h += '<span>🔍 Filtre actif : <strong>Dossier de ' + esc(activePersonFilter) + '</strong> — agents suivis + non assignés</span>';
+        h += '<button onclick="togglePersonFilter(null)" class="btn btn-outline" style="padding:4px 12px;font-size:0.8em;">✕ Retirer le filtre</button>';
+        h += '</div>';
       }
-      h += '</div>';
-      h += '  </div>';
-      h += '  <div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;">';
-      h += '    <button onclick="showAllExams()" class="btn btn-info-outline">📋 Examens en cours (' + allExamens.length + ')</button>';
-      if (overdueExamCount > 0) {
-        h += '    <button onclick="showOverdueExams()" class="btn btn-danger-outline">⚠️ Examens en retard (' + overdueExamCount + ')</button>';
-      }
-      if (inactiveAgents.length > 0) {
-        h += '    <button onclick="showInactifs()" class="btn btn-inactive">👥 Voir les inactifs (' + inactiveAgents.length + ')</button>';
-      }
-      h += '    <button onclick="downloadPdf()" class="btn btn-primary">📥 Télécharger pour imprimer</button>';
-      h += '  </div>';
-      h += '</div>';
 
       /* ── Recherche ── */
-      h += '<div class="no-print" style="margin-bottom:16px;">';
-      h += '  <input type="text" class="search-box" id="searchInput" placeholder="Rechercher un agent, centre, type de visite…" oninput="filterTable()">';
-      h += '</div>';
+      h += '<div class="no-print" style="margin-bottom:16px;"><input type="text" class="search-box" id="searchInput" placeholder="Rechercher un agent, centre, type de visite…" oninput="filterTable()"></div>';
 
-      /* ── Statistiques ── */
+      /* ── Stats ── */
       h += '<div class="stats no-print">';
-      h += '  <div class="stat-card"><div class="stat-value">' + allAgents.length + '</div><div class="stat-label">Total agents</div></div>';
-      h += '  <div class="stat-card danger"><div class="stat-value">' + overdueCount + '</div><div class="stat-label">En dépassement VMA</div></div>';
-      if (overdueExamCount > 0) {
-        h += '  <div class="stat-card danger"><div class="stat-value">' + overdueExamCount + '</div><div class="stat-label">Examens en retard</div></div>';
-      }
+      h += '<div class="stat-card"><div class="stat-value">' + displayed.length + '</div><div class="stat-label">Total agents</div></div>';
+      h += '<div class="stat-card danger"><div class="stat-value">' + overdueCount + '</div><div class="stat-label">En dépassement VMA</div></div>';
+      if (overdueExamCount > 0) h += '<div class="stat-card danger"><div class="stat-value">' + overdueExamCount + '</div><div class="stat-label">Examens en retard</div></div>';
       h += '</div>';
 
       /* ── Tableau ── */
-      h += '<div class="table-wrap" id="tableContainer">';
-      h += '<table id="agentTable">';
-      h += '<thead><tr>';
-      h += '  <th style="width:40px">#</th>';
-      h += '  <th style="width:40px" class="no-print"></th>';
-      h += '  <th>NOM Prénom</th>';
-      h += '  <th>Centre</th>';
-      h += '  <th>Date perte de compétence VMA</th>';
-      h += '  <th>Type de visite</th>';
-      h += '  <th style="width:40px" class="no-print" title="Archiver">🗃️</th>';
-      h += '</tr></thead>';
-      h += '<tbody id="tableBody">';
+      h += '<div class="table-wrap" id="tableContainer"><table id="agentTable"><thead><tr>';
+      h += '<th style="width:40px">#</th>';
+      h += '<th style="width:40px" class="no-print"></th>';
+      h += thSort('main', 'nomPrenom', 'NOM Prénom');
+      h += thSort('main', 'centre', 'Centre');
+      h += thSort('main', 'datePerte', 'Date perte compétence VMA');
+      h += thSort('main', 'typeVisite', 'Type de visite');
+      h += '<th style="width:40px" class="no-print" title="Archiver">🗃️</th>';
+      h += '</tr></thead><tbody id="tableBody">';
 
-      for (var i = 0; i < allAgents.length; i++) {
-        h += renderAgentRow(allAgents[i], i);
+      for (var i = 0; i < displayed.length; i++) {
+        h += renderAgentRow(displayed[i], i);
       }
-
       h += '</tbody></table></div>';
 
       document.getElementById('app').innerHTML = h;
     }
 
     /* ═══════════════════════════════════════════════
-       RENDU D'UNE LIGNE AGENT
+       RENDER AGENT ROW
        ═══════════════════════════════════════════════ */
     function renderAgentRow(a, index) {
       var now = Date.now();
       var isOverdue = a.datePerteCompetenceRaw && a.datePerteCompetenceRaw < now;
-      var agentExams = examensByMatricule[a.matricule] || [];
+      var agentExams = (examensByMatricule[a.matricule] || []).filter(function (e) { return isExamVisibleForFilter(e); });
       var searchStr = (a.nomPrenom + ' ' + a.centrePrincipal + ' ' + a.centreSecondaire + ' ' + a.typeVisite + ' ' + a.datePerteCompetence).toLowerCase();
-      var safeMatricule = esc(a.matricule);
+      var sm = esc(a.matricule);
 
-      var h = '';
-      h += '<tr class="agent-row' + (isOverdue ? ' overdue' : '') + '" data-search="' + esc(searchStr) + '" data-matricule="' + safeMatricule + '" id="row-' + safeMatricule + '">';
-
-      /* # */
+      var h = '<tr class="agent-row' + (isOverdue ? ' overdue' : '') + '" data-search="' + esc(searchStr) + '" data-matricule="' + sm + '" id="row-' + sm + '">';
       h += '<td class="row-num">' + (index + 1) + '</td>';
 
-      /* Bouton ajout examen */
-      h += '<td class="add-exam-cell no-print">';
-      h += '<span class="add-exam-wrap">';
-      h += '  <button class="add-exam-btn" onclick="toggleAddMenu(event, \'' + safeMatricule + '\')" title="Ajouter un examen">📄<sup style="font-size:9px;color:var(--green)">+</sup></button>';
-      h += '  <div class="add-exam-dropdown" id="addmenu-' + safeMatricule + '">';
-      h += '    <button onclick="event.stopPropagation();openAddExam(\'' + safeMatricule + '\',\'biologie\')" title="Ajouter une biologie">🧪</button>';
-      h += '    <button onclick="event.stopPropagation();openAddExam(\'' + safeMatricule + '\',\'imagerie\')" title="Ajouter une imagerie">☢️</button>';
-      h += '    <button onclick="event.stopPropagation();openAddExam(\'' + safeMatricule + '\',\'avis_specialise\')" title="Ajouter un avis spécialisé">🩺</button>';
-      h += '    <button onclick="event.stopPropagation();openAddExam(\'' + safeMatricule + '\',\'autre\')" title="Ajouter un autre examen">🅰️</button>';
-      h += '  </div>';
-      h += '</span>';
-      h += '</td>';
+      /* + bouton examen */
+      h += '<td class="add-exam-cell no-print"><span class="add-exam-wrap">';
+      h += '<button class="add-exam-btn" onclick="toggleAddMenu(event,\'' + sm + '\')" title="Ajouter un examen">📄<sup style="font-size:9px;color:var(--green)">+</sup></button>';
+      h += '<div class="add-exam-dropdown" id="addmenu-' + sm + '">';
+      h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'biologie\')">🧪</button>';
+      h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'imagerie\')">☢️</button>';
+      h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'avis_specialise\')">🩺</button>';
+      h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'autre\')">🅰️</button>';
+      h += '</div></span></td>';
 
-      /* NOM Prénom + icônes examens */
-      h += '<td>';
-      h += '<strong>' + esc(a.nomPrenom) + '</strong>';
+      /* NOM + exam badges */
+      h += '<td><strong>' + esc(a.nomPrenom) + '</strong>';
       if (agentExams.length > 0) {
         h += '<span class="exam-icons">';
         for (var j = 0; j < agentExams.length; j++) {
-          h += examBadgeHtml(agentExams[j]);
+          var ex = agentExams[j];
+          var isExOverdue = ex.dateResultatRaw && ex.dateResultatRaw < now;
+          var cc = isExOverdue ? 'red' : 'green';
+          var icons = { biologie: '🧪', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+          h += '<span class="exam-icon-wrap"><span class="exam-badge ' + cc + '" onclick="toggleExamPopover(event,\'' + esc(ex.id) + '\')">' + (icons[ex.type] || '📋') + '</span></span>';
         }
         h += '</span>';
       }
@@ -758,602 +538,627 @@
 
       /* Centre */
       h += '<td>' + esc(a.centrePrincipal);
-      if (a.centreSecondaire && a.centreSecondaire !== a.centrePrincipal) {
-        h += ' <span style="color:var(--text-light);font-size:.8em">/ ' + esc(a.centreSecondaire) + '</span>';
-      }
+      if (a.centreSecondaire && a.centreSecondaire !== a.centrePrincipal) h += ' <span style="color:var(--text-light);font-size:.8em">/ ' + esc(a.centreSecondaire) + '</span>';
       h += '</td>';
 
-      /* Date perte compétence + icône sport */
+      /* Date perte + sport icon */
       h += '<td>';
       if (a.sport && a.sport.length > 0) {
-        h += sportIconHtml(a.sport);
+        var latest = a.sport[0]; // already sorted desc
+        var oneYearAgo = now - (365.25 * 24 * 60 * 60 * 1000);
+        var isOld = !latest.dateRaw || latest.dateRaw < oneYearAgo;
+        h += '<span class="sport-icon-ring ' + (isOld ? 'sport-overdue' : 'sport-ok') + '" onmouseenter="showSportTip(event,\'' + sm + '\')" onmouseleave="hideTip()">🏃</span>';
       }
-      h += (a.datePerteCompetence || '—');
-      h += '</td>';
+      h += (a.datePerteCompetence || '—') + '</td>';
 
       /* Type de visite */
       h += '<td>' + badgeHtml(a.typeVisite, a.typeVisiteRaison) + '</td>';
 
       /* Archive */
-      h += '<td class="no-print" style="text-align:center;">';
-      h += '<input type="checkbox" class="archive-cb" onchange="archiveAgentAction(event,\'' + safeMatricule + '\',\'' + esc(a.nomPrenom).replace(/'/g, '\\x27') + '\')" title="Archiver cet agent">';
-      h += '</td>';
-
+      h += '<td class="no-print" style="text-align:center;"><input type="checkbox" class="archive-cb" onchange="archiveAgentAction(event,\'' + sm + '\',\'' + esc(a.nomPrenom).replace(/'/g, '\\x27') + '\')" title="Archiver"></td>';
       h += '</tr>';
       return h;
     }
 
     /* ═══════════════════════════════════════════════
-       BADGE EXAMEN (icône + tooltip hover)
+       EXAM POPOVER (click-based, position:fixed)
        ═══════════════════════════════════════════════ */
-    function examBadgeHtml(exam) {
+    function toggleExamPopover(event, examId) {
+      event.stopPropagation();
+      if (activePopoverExamId === examId) { hideExamPopover(); return; }
+
+      var exam = null;
+      for (var i = 0; i < allExamens.length; i++) { if (allExamens[i].id === examId) { exam = allExamens[i]; break; } }
+      if (!exam) return;
+
+      activePopoverExamId = examId;
+      var el = document.getElementById('examPopover');
       var now = Date.now();
-      var isOverdue = exam.dateResultatRaw && exam.dateResultatRaw < now;
-      var colorClass = isOverdue ? 'red' : 'green';
-
-      var icons  = { biologie: '🧪', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+      var isOv = exam.dateResultatRaw && exam.dateResultatRaw < now;
+      var icons = { biologie: '🧪', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
       var labels = { biologie: 'Biologie', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre examen' };
-      var icon  = icons[exam.type]  || '📋';
-      var label = labels[exam.type] || exam.type;
 
-      var h = '';
-      h += '<span class="exam-icon-wrap">';
-      h += '  <span class="exam-badge ' + colorClass + '">' + icon + '</span>';
-      h += '  <div class="exam-tooltip" style="position:relative;">';
-      h += '    <button class="exam-delete-btn" onclick="event.stopPropagation();deleteExamAction(\'' + esc(exam.id) + '\')" title="Supprimer cet examen">✕</button>';
-      h += '    <div style="font-weight:700;margin-bottom:8px;font-size:1.05em;padding-right:20px;">' + icon + ' ' + esc(label) + '</div>';
-      if (exam.detail) {
-        h += '    <div style="margin-bottom:4px;"><strong>Examen :</strong> ' + esc(exam.detail) + '</div>';
-      }
-      h += '    <div style="margin-bottom:4px;"><strong>Demandé le :</strong> ' + esc(exam.dateDemande) + '</div>';
-      h += '    <div style="margin-bottom:4px;"><strong>Résultat attendu :</strong> ' + esc(exam.dateResultat) + '</div>';
-      if (exam.commentaire) {
-        h += '    <div style="margin-bottom:4px;"><strong>Commentaire :</strong> ' + esc(exam.commentaire) + '</div>';
-      }
-      if (isOverdue) {
-        h += '    <div style="color:var(--primary);font-weight:600;margin:6px 0;">⚠️ Résultat en retard</div>';
-      }
-      h += '    <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);">';
-      h += '      <label style="cursor:pointer;font-size:0.92em;display:flex;align-items:center;gap:6px;">';
-      h += '        <input type="checkbox" onchange="closeExamAction(event,\'' + esc(exam.id) + '\')">';
-      h += '        Clôturer cet examen';
-      h += '      </label>';
-      h += '    </div>';
-      h += '  </div>';
-      h += '</span>';
-      return h;
+      var h = '<div style="font-weight:700;font-size:1.05em;margin-bottom:8px;">' + (icons[exam.type] || '📋') + ' ' + esc(labels[exam.type] || exam.type) + '</div>';
+      if (exam.detail) h += '<div style="margin-bottom:4px;"><strong>Examen :</strong> ' + esc(exam.detail) + '</div>';
+      h += '<div style="margin-bottom:4px;"><strong>Demandé le :</strong> ' + esc(exam.dateDemande) + '</div>';
+      h += '<div style="margin-bottom:4px;"><strong>Résultat attendu :</strong> <span style="' + (isOv ? 'color:var(--primary);font-weight:600' : '') + '">' + esc(exam.dateResultat) + (isOv ? ' ⚠️' : '') + '</span></div>';
+      if (exam.commentaire) h += '<div style="margin-bottom:4px;"><strong>Commentaire :</strong> ' + esc(exam.commentaire) + '</div>';
+      if (isOv) h += '<div style="color:var(--primary);font-weight:600;margin:6px 0;">⚠️ Résultat en retard</div>';
+
+      h += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);"><strong>Géré par :</strong> ';
+      h += '<select onchange="updateGereParPop(\'' + esc(exam.id) + '\',this.value)" style="padding:3px 6px;border-radius:4px;border:1px solid var(--border);font-size:0.9em;">';
+      h += '<option value=""' + (!exam.gerePar ? ' selected' : '') + '>—</option>';
+      h += '<option value="Cécile"' + (exam.gerePar === 'Cécile' ? ' selected' : '') + '>Cécile</option>';
+      h += '<option value="Célia"' + (exam.gerePar === 'Célia' ? ' selected' : '') + '>Célia</option>';
+      h += '</select></div>';
+
+      h += '<div class="exam-pop-actions">';
+      h += '<button class="pop-close-btn" onclick="closeExamFromPop(\'' + esc(exam.id) + '\')">✅ Clôturer</button>';
+      h += '<button class="pop-delete-btn" onclick="deleteExamFromPop(\'' + esc(exam.id) + '\')">🗑️ Supprimer</button>';
+      h += '</div>';
+
+      el.innerHTML = h;
+      el.style.display = 'block';
+
+      var rect = event.currentTarget.getBoundingClientRect();
+      el.style.top = (rect.bottom + 8) + 'px';
+      el.style.left = Math.max(10, rect.left + rect.width / 2 - 155) + 'px';
+
+      setTimeout(function () {
+        var r = el.getBoundingClientRect();
+        if (r.bottom > window.innerHeight) el.style.top = Math.max(10, rect.top - r.height - 8) + 'px';
+        if (r.right > window.innerWidth - 10) el.style.left = (window.innerWidth - r.width - 10) + 'px';
+      }, 0);
     }
 
+    function hideExamPopover() {
+      activePopoverExamId = null;
+      document.getElementById('examPopover').style.display = 'none';
+    }
+
+    function closeExamFromPop(examId) {
+      if (!confirm('Clôturer cet examen ?')) return;
+      hideExamPopover();
+      google.script.run.withSuccessHandler(function () {
+        allExamens = allExamens.filter(function (e) { return e.id !== examId; });
+        buildIndexes(); renderMainPage();
+      }).withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); }).closeExamen(examId);
+    }
+
+    function deleteExamFromPop(examId) {
+      if (!confirm('Supprimer définitivement cet examen ?')) return;
+      hideExamPopover();
+      google.script.run.withSuccessHandler(function () {
+        allExamens = allExamens.filter(function (e) { return e.id !== examId; });
+        buildIndexes(); renderMainPage();
+      }).withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); }).closeExamen(examId);
+    }
+
+    function updateGereParPop(examId, val) {
+      for (var i = 0; i < allExamens.length; i++) {
+        if (allExamens[i].id === examId) { allExamens[i].gerePar = val; break; }
+      }
+      google.script.run.withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); }).updateExamGerePar(examId, val);
+      hideExamPopover(); buildIndexes(); renderMainPage();
+    }
+
+    // Close popover on outside click
+    document.addEventListener('click', function (e) {
+      if (activePopoverExamId && !e.target.closest('#examPopover') && !e.target.closest('.exam-badge')) hideExamPopover();
+      if (!e.target.closest('.add-exam-wrap')) document.querySelectorAll('.add-exam-dropdown').forEach(function (m) { m.style.display = 'none'; });
+    });
+
     /* ═══════════════════════════════════════════════
-       ICÔNE SPORT (tooltip hover)
+       GLOBAL TOOLTIP (hover, position:fixed — sport)
        ═══════════════════════════════════════════════ */
-    function sportIconHtml(sportArr) {
-      // Trouver la date la plus récente
+    function showSportTip(event, matricule) {
+      var agent = agentsByMatricule[matricule];
+      if (!agent || !agent.sport || !agent.sport.length) return;
+      var sorted = agent.sport; // already sorted desc from backend
       var now = Date.now();
       var oneYearAgo = now - (365.25 * 24 * 60 * 60 * 1000);
-      var latestDate = 0;
-      for (var i = 0; i < sportArr.length; i++) {
-        if (sportArr[i].dateRaw && sportArr[i].dateRaw > latestDate) latestDate = sportArr[i].dateRaw;
-      }
-      var isOld = !latestDate || latestDate < oneYearAgo;
-      var ringClass = isOld ? 'sport-overdue' : 'sport-ok';
+      var isOld = !sorted[0].dateRaw || sorted[0].dateRaw < oneYearAgo;
 
-      var h = '';
-      h += '<span class="sport-wrap">';
-      h += '  <span class="sport-icon-ring ' + ringClass + '">🏃</span>';
-      h += '  <div class="sport-tooltip">';
-      h += '    <div style="font-weight:700;margin-bottom:8px;">🏃 Épreuves sportives</div>';
-      if (isOld) {
-        h += '    <div style="color:var(--primary);font-weight:600;margin-bottom:8px;">⚠️ Dernière épreuve il y a plus d\x27un an</div>';
-      }
-      for (var j = 0; j < sportArr.length; j++) {
-        var s = sportArr[j];
-        h += '<div class="sport-entry">';
-        h += '  <strong>' + esc(s.date) + '</strong> — ' + esc(s.testName);
+      var h = '<div style="font-weight:700;margin-bottom:8px;">🏃 Épreuves sportives</div>';
+      if (isOld) h += '<div style="color:var(--primary);font-weight:600;margin-bottom:8px;">⚠️ Dernière épreuve il y a plus d\x27un an</div>';
+      for (var i = 0; i < sorted.length; i++) {
+        var s = sorted[i];
+        h += '<div class="sport-entry"><strong>' + esc(s.date) + '</strong> — ' + esc(s.testName);
         if (s.resultat) h += ' : <em>' + esc(s.resultat) + '</em>';
         h += '</div>';
       }
-      h += '  </div>';
-      h += '</span>';
-      return h;
+
+      var el = document.getElementById('globalTooltip');
+      el.innerHTML = h;
+      el.style.display = 'block';
+      var rect = event.currentTarget.getBoundingClientRect();
+      el.style.top = (rect.bottom + 8) + 'px';
+      el.style.left = Math.max(10, rect.left + rect.width / 2 - 140) + 'px';
+      setTimeout(function () {
+        var r = el.getBoundingClientRect();
+        if (r.bottom > window.innerHeight) el.style.top = Math.max(10, rect.top - r.height - 8) + 'px';
+        if (r.right > window.innerWidth - 10) el.style.left = (window.innerWidth - r.width - 10) + 'px';
+      }, 0);
     }
 
+    function hideTip() { document.getElementById('globalTooltip').style.display = 'none'; }
+
     /* ═══════════════════════════════════════════════
-       BADGES TYPE DE VISITE
+       VISIT TYPE BADGE
        ═══════════════════════════════════════════════ */
     function badgeHtml(type, raison) {
       if (!type) return '<span class="badge badge-default">Non défini</span>';
       var cls = 'badge-default';
-      if (type === 'VMA tous les ans')              cls = 'badge-vma';
+      if (type === 'VMA tous les ans') cls = 'badge-vma';
       else if (type === 'Visite médicale biennale') cls = 'badge-biennale';
-      else if (type === 'Visite prévention')        cls = 'badge-prevention';
-      else if (type === 'Visite médicale 2027')     cls = 'badge-2027';
-
-      var h = '<span class="visit-badge-wrap">';
-      h += '<span class="badge ' + cls + '">' + esc(type) + '</span>';
-      if (raison) {
-        h += '<span class="visit-tooltip">' + esc(raison) + '</span>';
-      }
-      h += '</span>';
-      return h;
+      else if (type === 'Visite prévention') cls = 'badge-prevention';
+      else if (type === 'Visite médicale 2027') cls = 'badge-2027';
+      var h = '<span class="visit-badge-wrap"><span class="badge ' + cls + '">' + esc(type) + '</span>';
+      if (raison) h += '<span class="visit-tooltip">' + esc(raison) + '</span>';
+      return h + '</span>';
     }
 
     /* ═══════════════════════════════════════════════
-       DROPDOWN AJOUT EXAMEN
+       ADD EXAM DROPDOWN & MODAL
        ═══════════════════════════════════════════════ */
     function toggleAddMenu(event, matricule) {
       event.stopPropagation();
-      var allMenus = document.querySelectorAll('.add-exam-dropdown');
-      var target   = document.getElementById('addmenu-' + matricule);
-      var isOpen   = target && target.style.display === 'flex';
-
-      allMenus.forEach(function (m) { m.style.display = 'none'; });
-      if (target && !isOpen) target.style.display = 'flex';
+      var all = document.querySelectorAll('.add-exam-dropdown');
+      var t = document.getElementById('addmenu-' + matricule);
+      var open = t && t.style.display === 'flex';
+      all.forEach(function (m) { m.style.display = 'none'; });
+      if (t && !open) t.style.display = 'flex';
     }
 
-    // Fermer les menus au clic extérieur
-    document.addEventListener('click', function (e) {
-      if (!e.target.closest('.add-exam-wrap')) {
-        document.querySelectorAll('.add-exam-dropdown').forEach(function (m) { m.style.display = 'none'; });
-      }
-    });
-
-    /* ═══════════════════════════════════════════════
-       MODAL AJOUT EXAMEN
-       ═══════════════════════════════════════════════ */
     function openAddExam(matricule, type) {
-      currentExamMatricule = matricule;
-      currentExamType = type;
-
-      var typeLabels = {
-        biologie:        'Ajouter une biologie',
-        imagerie:        'Ajouter une imagerie',
-        avis_specialise: 'Ajouter un avis spécialisé',
-        autre:           'Ajouter un autre examen'
-      };
-
-      document.getElementById('examModalTitle').textContent = typeLabels[type] || 'Ajouter un examen';
+      currentExamMatricule = matricule; currentExamType = type;
+      var tl = { biologie: 'Ajouter une biologie', imagerie: 'Ajouter une imagerie', avis_specialise: 'Ajouter un avis spécialisé', autre: 'Ajouter un autre examen' };
+      document.getElementById('examModalTitle').textContent = tl[type] || 'Ajouter un examen';
       document.getElementById('examDetail').value = '';
       document.getElementById('examDateDemande').value = new Date().toISOString().split('T')[0];
       document.getElementById('examDateResultat').value = '';
       document.getElementById('examCommentaire').value = '';
-
+      document.getElementById('examGerePar').value = activePersonFilter || '';
       var agent = agentsByMatricule[matricule];
-      if (agent) {
-        document.getElementById('examModalTitle').textContent += ' — ' + agent.nomPrenom;
-      }
-
+      if (agent) document.getElementById('examModalTitle').textContent += ' — ' + agent.nomPrenom;
       document.getElementById('examModal').style.display = 'flex';
-
-      // Fermer le dropdown
       document.querySelectorAll('.add-exam-dropdown').forEach(function (m) { m.style.display = 'none'; });
     }
 
-    function closeExamModal() {
-      document.getElementById('examModal').style.display = 'none';
-    }
+    function closeExamModal() { document.getElementById('examModal').style.display = 'none'; }
 
     function submitExam() {
       var data = {
-        matricule:   currentExamMatricule,
-        type:        currentExamType,
-        detail:      document.getElementById('examDetail').value,
+        matricule: currentExamMatricule, type: currentExamType,
+        detail: document.getElementById('examDetail').value,
         dateDemande: document.getElementById('examDateDemande').value,
-        dateResultat:document.getElementById('examDateResultat').value,
-        commentaire: document.getElementById('examCommentaire').value
+        dateResultat: document.getElementById('examDateResultat').value,
+        commentaire: document.getElementById('examCommentaire').value,
+        gerePar: document.getElementById('examGerePar').value
       };
-
-      if (!data.dateResultat) {
-        alert('Veuillez saisir une date de résultat attendu.');
-        return;
-      }
-
+      if (!data.dateResultat) { alert('Veuillez saisir une date de résultat attendu.'); return; }
       var btn = document.getElementById('examSubmitBtn');
-      btn.disabled = true;
-      btn.textContent = 'Enregistrement…';
-
-      google.script.run
-        .withSuccessHandler(function (savedExam) {
-          allExamens.push(savedExam);
-          buildIndexes();
-          closeExamModal();
-          renderMainPage();
-          btn.disabled = false;
-          btn.textContent = 'Enregistrer';
-        })
-        .withFailureHandler(function (err) {
-          alert('Erreur : ' + (err.message || 'Erreur inconnue'));
-          btn.disabled = false;
-          btn.textContent = 'Enregistrer';
-        })
-        .saveExamen(data);
+      btn.disabled = true; btn.textContent = 'Enregistrement…';
+      google.script.run.withSuccessHandler(function (saved) {
+        allExamens.push(saved); buildIndexes(); closeExamModal(); renderMainPage();
+        btn.disabled = false; btn.textContent = 'Enregistrer';
+      }).withFailureHandler(function (err) {
+        alert('Erreur : ' + (err.message || err)); btn.disabled = false; btn.textContent = 'Enregistrer';
+      }).saveExamen(data);
     }
 
     /* ═══════════════════════════════════════════════
-       CLÔTURE EXAMEN
+       CLOSE / DELETE EXAM (from detail modals)
        ═══════════════════════════════════════════════ */
-    function closeExamAction(event, examId) {
-      var checkbox = event.target;
-      if (!confirm('Clôturer cet examen ?')) {
-        checkbox.checked = false;
-        return;
-      }
-
-      google.script.run
-        .withSuccessHandler(function () {
-          allExamens = allExamens.filter(function (e) { return e.id !== examId; });
-          buildIndexes();
-          renderMainPage();
-        })
-        .withFailureHandler(function (err) {
-          alert('Erreur : ' + (err.message || 'Erreur inconnue'));
-          checkbox.checked = false;
-        })
-        .closeExamen(examId);
+    function closeExamAction(examId, callback) {
+      if (!confirm('Clôturer cet examen ?')) return;
+      google.script.run.withSuccessHandler(function () {
+        allExamens = allExamens.filter(function (e) { return e.id !== examId; });
+        buildIndexes(); if (callback) callback();
+      }).withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); }).closeExamen(examId);
     }
 
-    function deleteExamAction(examId) {
+    function deleteExamAction(examId, callback) {
       if (!confirm('Supprimer définitivement cet examen ?')) return;
+      google.script.run.withSuccessHandler(function () {
+        allExamens = allExamens.filter(function (e) { return e.id !== examId; });
+        buildIndexes(); if (callback) callback();
+      }).withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); }).closeExamen(examId);
+    }
 
-      google.script.run
-        .withSuccessHandler(function () {
-          allExamens = allExamens.filter(function (e) { return e.id !== examId; });
-          buildIndexes();
-          renderMainPage();
-        })
-        .withFailureHandler(function (err) {
-          alert('Erreur : ' + (err.message || 'Erreur inconnue'));
-        })
-        .closeExamen(examId);
+    function updateGereParAction(examId, val, callback) {
+      for (var i = 0; i < allExamens.length; i++) {
+        if (allExamens[i].id === examId) { allExamens[i].gerePar = val; break; }
+      }
+      buildIndexes();
+      google.script.run.withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); }).updateExamGerePar(examId, val);
+      if (callback) callback();
     }
 
     /* ═══════════════════════════════════════════════
-       MODAL EXAMENS EN RETARD
+       EXAMENS EN COURS MODAL
        ═══════════════════════════════════════════════ */
-    function showOverdueExams() {
-      var now = Date.now();
-      var overdue = allExamens.filter(function (e) {
-        return e.dateResultatRaw && e.dateResultatRaw < now;
-      }).sort(function (a, b) {
-        return (a.dateResultatRaw || 0) - (b.dateResultatRaw || 0);
-      });
-
-      var h = '';
-
-      if (overdue.length === 0) {
-        h += '<div style="text-align:center;padding:40px 20px;color:var(--text-light);">';
-        h += '  <div style="font-size:2.5em;margin-bottom:12px;">✅</div>';
-        h += '  <p style="font-size:1.05em;">Aucun examen en retard</p>';
-        h += '</div>';
-      } else {
-        h += '<p style="margin-bottom:14px;color:var(--text-light);font-size:0.88em;">' + overdue.length + ' examen(s) en retard — cliquez sur une ligne pour localiser l\'agent</p>';
-        h += '<div class="table-wrap">';
-        h += '<table>';
-        h += '<thead><tr>';
-        h += '  <th>#</th><th>Agent</th><th>Centre</th><th>Type</th><th>Détail</th><th>Date attendue</th><th>Commentaire</th>';
-        h += '</tr></thead>';
-        h += '<tbody>';
-
-        for (var i = 0; i < overdue.length; i++) {
-          var e = overdue[i];
-          var agent = agentsByMatricule[e.matricule] || {};
-          h += '<tr style="cursor:pointer" onclick="scrollToAgent(\'' + esc(e.matricule) + '\')">';
-          h += '  <td>' + (i + 1) + '</td>';
-          h += '  <td><strong>' + esc(agent.nomPrenom || e.matricule) + '</strong></td>';
-          h += '  <td>' + esc(agent.centrePrincipal || '') + '</td>';
-          h += '  <td>' + examTypeLabel(e.type) + '</td>';
-          h += '  <td>' + esc(e.detail || '') + '</td>';
-          h += '  <td style="color:var(--primary);font-weight:600;">' + esc(e.dateResultat) + '</td>';
-          h += '  <td>' + esc(e.commentaire || '') + '</td>';
-          h += '</tr>';
-        }
-
-        h += '</tbody></table></div>';
-      }
-
-      document.getElementById('overdueContent').innerHTML = h;
-      document.getElementById('overdueModal').style.display = 'flex';
-    }
-
-    function examTypeLabel(type) {
-      var labels = {
-        biologie:        '🧪 Biologie',
-        imagerie:        '☢️ Imagerie',
-        avis_specialise: '🩺 Avis spécialisé',
-        autre:           '🅰️ Autre'
-      };
-      return labels[type] || type;
-    }
-
-    function scrollToAgent(matricule) {
-      closeOverdueModal();
-      var row = document.getElementById('row-' + matricule);
-      if (row) {
-        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        row.classList.add('row-highlight');
-        setTimeout(function () { row.classList.remove('row-highlight'); }, 2500);
-      }
-    }
-
-    function closeOverdueModal() {
-      document.getElementById('overdueModal').style.display = 'none';
-    }
-
-    /* ═══════════════════════════════════════════════
-       MODAL EXAMENS EN COURS (TOUS)
-       ═══════════════════════════════════════════════ */
-    var currentExamFilter = 'all';
+    var currentExamFilterType = 'all';
 
     function showAllExams() {
-      currentExamFilter = 'all';
+      currentExamFilterType = 'all';
+      allExamsDetailMatricule = null;
       renderAllExamsModal();
       document.getElementById('allExamsModal').style.display = 'flex';
     }
 
-    function filterExamsByType(type) {
-      currentExamFilter = type;
-      renderAllExamsModal();
-    }
+    function filterAllExams(type) { currentExamFilterType = type; allExamsDetailMatricule = null; renderAllExamsModal(); }
 
     function renderAllExamsModal() {
-      var filtered = allExamens;
-      if (currentExamFilter !== 'all') {
-        filtered = allExamens.filter(function (e) { return e.type === currentExamFilter; });
-      }
+      if (allExamsDetailMatricule) { renderAgentExamsDetail('allExamsContent', allExamsDetailMatricule, 'backToAllExamsList'); return; }
 
-      // Tri par date résultat attendu
-      filtered.sort(function (a, b) {
-        return (a.dateResultatRaw || Infinity) - (b.dateResultatRaw || Infinity);
-      });
+      var filtered = allExamens;
+      if (currentExamFilterType !== 'all') filtered = allExamens.filter(function (e) { return e.type === currentExamFilterType; });
+
+      var ss = sortStates.allExams;
+      if (ss && ss.key) {
+        var kf = examSortKeyFns();
+        if (kf[ss.key]) filtered = doSort(filtered, kf[ss.key], ss.dir);
+      } else {
+        filtered = filtered.slice().sort(function (a, b) { return (a.dateResultatRaw || Infinity) - (b.dateResultatRaw || Infinity); });
+      }
 
       var now = Date.now();
-      var h = '';
-
-      /* ── Barre de filtres ── */
-      h += '<div class="filter-bar">';
-      h += '  <button class="filter-btn' + (currentExamFilter === 'all' ? ' active' : '') + '" onclick="filterExamsByType(\'all\')">📋 Tous (' + allExamens.length + ')</button>';
-
-      var counts = { biologie: 0, imagerie: 0, avis_specialise: 0, autre: 0 };
-      allExamens.forEach(function (e) { if (counts.hasOwnProperty(e.type)) counts[e.type]++; });
-
-      h += '  <button class="filter-btn' + (currentExamFilter === 'biologie' ? ' active' : '') + '" onclick="filterExamsByType(\'biologie\')">🧪 Biologie (' + counts.biologie + ')</button>';
-      h += '  <button class="filter-btn' + (currentExamFilter === 'imagerie' ? ' active' : '') + '" onclick="filterExamsByType(\'imagerie\')">☢️ Imagerie (' + counts.imagerie + ')</button>';
-      h += '  <button class="filter-btn' + (currentExamFilter === 'avis_specialise' ? ' active' : '') + '" onclick="filterExamsByType(\'avis_specialise\')">🩺 Avis spécialisé (' + counts.avis_specialise + ')</button>';
-      h += '  <button class="filter-btn' + (currentExamFilter === 'autre' ? ' active' : '') + '" onclick="filterExamsByType(\'autre\')">🅰️ Autre (' + counts.autre + ')</button>';
-      h += '</div>';
+      var h = renderExamFilterBar(currentExamFilterType, 'filterAllExams');
 
       if (filtered.length === 0) {
-        h += '<div style="text-align:center;padding:40px 20px;color:var(--text-light);">';
-        h += '  <div style="font-size:2.5em;margin-bottom:12px;">📭</div>';
-        h += '  <p style="font-size:1.05em;">Aucun examen dans cette catégorie</p>';
-        h += '</div>';
+        h += '<div style="text-align:center;padding:40px;color:var(--text-light);"><div style="font-size:2.5em;margin-bottom:12px;">📭</div><p>Aucun examen dans cette catégorie</p></div>';
       } else {
-        h += '<p style="margin-bottom:14px;color:var(--text-light);font-size:0.88em;">' + filtered.length + ' examen(s) en cours — cliquez sur une ligne pour localiser l\'agent</p>';
-        h += '<div class="table-wrap">';
-        h += '<table>';
-        h += '<thead><tr>';
-        h += '  <th>#</th><th>Agent</th><th>Centre</th><th>Type</th><th>Détail</th><th>Demandé le</th><th>Résultat attendu</th><th>Commentaire</th>';
-        h += '</tr></thead>';
-        h += '<tbody>';
-
+        h += '<p style="margin-bottom:14px;color:var(--text-light);font-size:0.88em;">' + filtered.length + ' examen(s) — cliquez sur une ligne pour voir les examens de l\x27agent</p>';
+        h += '<div class="table-wrap"><table><thead><tr>';
+        h += '<th>#</th>';
+        h += thSort('allExams', 'agent', 'Agent');
+        h += thSort('allExams', 'centre', 'Centre');
+        h += thSort('allExams', 'type', 'Type');
+        h += thSort('allExams', 'detail', 'Détail');
+        h += thSort('allExams', 'dateDemande', 'Demandé le');
+        h += thSort('allExams', 'dateResultat', 'Résultat attendu');
+        h += thSort('allExams', 'gerePar', 'Géré par');
+        h += thSort('allExams', 'commentaire', 'Commentaire');
+        h += '</tr></thead><tbody>';
         for (var i = 0; i < filtered.length; i++) {
-          var e = filtered[i];
-          var agent = agentsByMatricule[e.matricule] || {};
-          var isOverdue = e.dateResultatRaw && e.dateResultatRaw < now;
-
-          h += '<tr style="cursor:pointer' + (isOverdue ? ';background:#fff5f5' : '') + '" onclick="scrollToAgentFromModal(\'' + esc(e.matricule) + '\',\'allExamsModal\')">';
-          h += '  <td>' + (i + 1) + '</td>';
-          h += '  <td><strong>' + esc(agent.nomPrenom || e.matricule) + '</strong></td>';
-          h += '  <td>' + esc(agent.centrePrincipal || '') + '</td>';
-          h += '  <td>' + examTypeLabel(e.type) + '</td>';
-          h += '  <td>' + esc(e.detail || '') + '</td>';
-          h += '  <td>' + esc(e.dateDemande || '') + '</td>';
-          h += '  <td style="' + (isOverdue ? 'color:var(--primary);font-weight:600;' : '') + '">' + esc(e.dateResultat) + (isOverdue ? ' ⚠️' : '') + '</td>';
-          h += '  <td>' + esc(e.commentaire || '') + '</td>';
-          h += '</tr>';
+          h += renderExamTableRow(filtered[i], i, now, 'openAllExamsDetail');
         }
-
         h += '</tbody></table></div>';
       }
-
       document.getElementById('allExamsContent').innerHTML = h;
     }
 
-    function closeAllExamsModal() {
-      document.getElementById('allExamsModal').style.display = 'none';
-    }
+    function openAllExamsDetail(matricule) { allExamsDetailMatricule = matricule; renderAllExamsModal(); }
+    function backToAllExamsList() { allExamsDetailMatricule = null; renderAllExamsModal(); }
 
     /* ═══════════════════════════════════════════════
-       ARCHIVAGE AGENT
+       EXAMENS EN RETARD MODAL
        ═══════════════════════════════════════════════ */
-    function archiveAgentAction(event, matricule, nomPrenom) {
-      var checkbox = event.target;
-      if (!confirm('Archiver l\'agent ' + nomPrenom + ' ?\n\nIl sera retiré de la liste principale.\nVous pourrez le restaurer via « Voir les inactifs ».')) {
-        checkbox.checked = false;
-        return;
+    var overdueFilterType = 'all';
+
+    function showOverdueExams() {
+      overdueFilterType = 'all';
+      overdueDetailMatricule = null;
+      renderOverdueContent();
+      document.getElementById('overdueModal').style.display = 'flex';
+    }
+
+    function filterOverdue(type) { overdueFilterType = type; overdueDetailMatricule = null; renderOverdueContent(); }
+
+    function renderOverdueContent() {
+      if (overdueDetailMatricule) { renderAgentExamsDetail('overdueContent', overdueDetailMatricule, 'backToOverdueList'); return; }
+
+      var now = Date.now();
+      var overdue = allExamens.filter(function (e) { return e.dateResultatRaw && e.dateResultatRaw < now; });
+      var filtered = overdue;
+      if (overdueFilterType !== 'all') filtered = overdue.filter(function (e) { return e.type === overdueFilterType; });
+
+      var ss = sortStates.overdue;
+      if (ss && ss.key) {
+        var kf = examSortKeyFns();
+        if (kf[ss.key]) filtered = doSort(filtered, kf[ss.key], ss.dir);
+      } else {
+        filtered = filtered.slice().sort(function (a, b) { return (a.dateResultatRaw || 0) - (b.dateResultatRaw || 0); });
       }
 
-      checkbox.disabled = true;
+      var h = renderExamFilterBar(overdueFilterType, 'filterOverdue', overdue);
 
-      google.script.run
-        .withSuccessHandler(function () {
-          // Déplacer agent de actif vers inactif côté client
-          var agentIdx = -1;
-          for (var i = 0; i < allAgents.length; i++) {
-            if (allAgents[i].matricule === matricule) { agentIdx = i; break; }
-          }
-          if (agentIdx >= 0) {
-            inactiveAgents.push(allAgents[agentIdx]);
-            allAgents.splice(agentIdx, 1);
-          }
-          buildIndexes();
-          renderMainPage();
-        })
-        .withFailureHandler(function (err) {
-          alert('Erreur : ' + (err.message || 'Erreur inconnue'));
-          checkbox.checked = false;
-          checkbox.disabled = false;
-        })
-        .archiveAgent(matricule, nomPrenom);
+      if (filtered.length === 0) {
+        h += '<div style="text-align:center;padding:40px;color:var(--text-light);"><div style="font-size:2.5em;margin-bottom:12px;">✅</div><p>Aucun examen en retard</p></div>';
+      } else {
+        h += '<p style="margin-bottom:14px;color:var(--text-light);font-size:0.88em;">' + filtered.length + ' examen(s) en retard — cliquez pour voir les examens de l\x27agent</p>';
+        h += '<div class="table-wrap"><table><thead><tr>';
+        h += '<th>#</th>';
+        h += thSort('overdue', 'agent', 'Agent');
+        h += thSort('overdue', 'centre', 'Centre');
+        h += thSort('overdue', 'type', 'Type');
+        h += thSort('overdue', 'detail', 'Détail');
+        h += thSort('overdue', 'dateDemande', 'Demandé le');
+        h += thSort('overdue', 'dateResultat', 'Date attendue');
+        h += thSort('overdue', 'gerePar', 'Géré par');
+        h += thSort('overdue', 'commentaire', 'Commentaire');
+        h += '</tr></thead><tbody>';
+        for (var i = 0; i < filtered.length; i++) {
+          h += renderExamTableRow(filtered[i], i, now, 'openOverdueDetail');
+        }
+        h += '</tbody></table></div>';
+      }
+      document.getElementById('overdueContent').innerHTML = h;
+    }
+
+    function openOverdueDetail(matricule) { overdueDetailMatricule = matricule; renderOverdueContent(); }
+    function backToOverdueList() { overdueDetailMatricule = null; renderOverdueContent(); }
+
+    /* ═══════════════════════════════════════════════
+       SHARED EXAM MODAL HELPERS
+       ═══════════════════════════════════════════════ */
+    function examTypeLabel(type) {
+      var l = { biologie: '🧪 Biologie', imagerie: '☢️ Imagerie', avis_specialise: '🩺 Avis spécialisé', autre: '🅰️ Autre' };
+      return l[type] || type;
+    }
+
+    function examSortKeyFns() {
+      return {
+        agent: function (e) { var a = agentsByMatricule[e.matricule]; return a ? a.nomPrenom : e.matricule; },
+        centre: function (e) { var a = agentsByMatricule[e.matricule]; return a ? a.centrePrincipal : ''; },
+        type: function (e) { return e.type || ''; },
+        detail: function (e) { return e.detail || ''; },
+        dateDemande: function (e) { return e.dateDemandeRaw; },
+        dateResultat: function (e) { return e.dateResultatRaw; },
+        gerePar: function (e) { return e.gerePar || ''; },
+        commentaire: function (e) { return e.commentaire || ''; }
+      };
+    }
+
+    function renderExamFilterBar(activeType, fnName, sourceExams) {
+      var src = sourceExams || allExamens;
+      var counts = { biologie: 0, imagerie: 0, avis_specialise: 0, autre: 0 };
+      src.forEach(function (e) { if (counts.hasOwnProperty(e.type)) counts[e.type]++; });
+      var h = '<div class="filter-bar">';
+      h += '<button class="filter-btn' + (activeType === 'all' ? ' active' : '') + '" onclick="' + fnName + '(\'all\')">📋 Tous (' + src.length + ')</button>';
+      h += '<button class="filter-btn' + (activeType === 'biologie' ? ' active' : '') + '" onclick="' + fnName + '(\'biologie\')">🧪 Biologie (' + counts.biologie + ')</button>';
+      h += '<button class="filter-btn' + (activeType === 'imagerie' ? ' active' : '') + '" onclick="' + fnName + '(\'imagerie\')">☢️ Imagerie (' + counts.imagerie + ')</button>';
+      h += '<button class="filter-btn' + (activeType === 'avis_specialise' ? ' active' : '') + '" onclick="' + fnName + '(\'avis_specialise\')">🩺 Avis spécialisé (' + counts.avis_specialise + ')</button>';
+      h += '<button class="filter-btn' + (activeType === 'autre' ? ' active' : '') + '" onclick="' + fnName + '(\'autre\')">🅰️ Autre (' + counts.autre + ')</button>';
+      h += '</div>';
+      return h;
+    }
+
+    function renderExamTableRow(e, idx, now, openDetailFn) {
+      var agent = agentsByMatricule[e.matricule] || {};
+      var isOv = e.dateResultatRaw && e.dateResultatRaw < now;
+      var h = '<tr style="cursor:pointer' + (isOv ? ';background:#fff5f5' : '') + '" onclick="' + openDetailFn + '(\'' + esc(e.matricule) + '\')">';
+      h += '<td>' + (idx + 1) + '</td>';
+      h += '<td><strong>' + esc(agent.nomPrenom || e.matricule) + '</strong></td>';
+      h += '<td>' + esc(agent.centrePrincipal || '') + '</td>';
+      h += '<td>' + examTypeLabel(e.type) + '</td>';
+      h += '<td>' + esc(e.detail || '') + '</td>';
+      h += '<td>' + esc(e.dateDemande || '') + '</td>';
+      h += '<td style="' + (isOv ? 'color:var(--primary);font-weight:600;' : '') + '">' + esc(e.dateResultat) + (isOv ? ' ⚠️' : '') + '</td>';
+      h += '<td>' + esc(e.gerePar || '—') + '</td>';
+      h += '<td>' + esc(e.commentaire || '') + '</td>';
+      h += '</tr>';
+      return h;
     }
 
     /* ═══════════════════════════════════════════════
-       MODAL AGENTS INACTIFS
+       AGENT EXAMS DETAIL VIEW (inside modals)
+       ═══════════════════════════════════════════════ */
+    function renderAgentExamsDetail(containerId, matricule, backFn) {
+      var agent = agentsByMatricule[matricule] || {};
+      var exams = (examensByMatricule[matricule] || []).slice();
+      exams.sort(function (a, b) { return (a.dateResultatRaw || Infinity) - (b.dateResultatRaw || Infinity); });
+
+      var refreshFn = containerId === 'allExamsContent' ? 'renderAllExamsModal' : 'renderOverdueContent';
+
+      var h = '<div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;">';
+      h += '<button class="btn btn-outline" onclick="' + backFn + '()">← Retour</button>';
+      h += '<h4 style="margin:0;">' + esc(agent.nomPrenom || matricule) + ' — ' + esc(agent.centrePrincipal || '') + '</h4>';
+      h += '</div>';
+
+      if (exams.length === 0) {
+        h += '<p style="color:var(--text-light);padding:20px 0;">Aucun examen en cours pour cet agent.</p>';
+      } else {
+        var now = Date.now();
+        for (var i = 0; i < exams.length; i++) {
+          var e = exams[i];
+          var isOv = e.dateResultatRaw && e.dateResultatRaw < now;
+          var icons = { biologie: '🧪', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+          var labels = { biologie: 'Biologie', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre examen' };
+
+          h += '<div class="exam-card' + (isOv ? ' exam-card-overdue' : '') + '">';
+          h += '<div class="exam-card-header"><span style="font-weight:700;font-size:1.05em;">' + (icons[e.type] || '📋') + ' ' + esc(labels[e.type] || e.type) + '</span>';
+          h += '<div style="display:flex;gap:6px;">';
+          h += '<button class="btn btn-primary" style="padding:4px 10px;font-size:0.78em;" onclick="closeExamAction(\'' + esc(e.id) + '\',' + refreshFn + ')">✅ Clôturer</button>';
+          h += '<button class="btn btn-danger-outline" style="padding:4px 10px;font-size:0.78em;" onclick="deleteExamAction(\'' + esc(e.id) + '\',' + refreshFn + ')">🗑️</button>';
+          h += '</div></div>';
+          if (e.detail) h += '<div class="exam-card-line"><strong>Examen :</strong> ' + esc(e.detail) + '</div>';
+          h += '<div class="exam-card-line"><strong>Demandé le :</strong> ' + esc(e.dateDemande) + '</div>';
+          h += '<div class="exam-card-line"><strong>Résultat attendu :</strong> <span style="' + (isOv ? 'color:var(--primary);font-weight:600' : '') + '">' + esc(e.dateResultat) + (isOv ? ' ⚠️' : '') + '</span></div>';
+          if (e.commentaire) h += '<div class="exam-card-line"><strong>Commentaire :</strong> ' + esc(e.commentaire) + '</div>';
+          h += '<div class="exam-card-line"><strong>Géré par :</strong> ';
+          h += '<select class="exam-card select" onchange="updateGereParAction(\'' + esc(e.id) + '\',this.value,' + refreshFn + ')">';
+          h += '<option value=""' + (!e.gerePar ? ' selected' : '') + '>— Non assigné —</option>';
+          h += '<option value="Cécile"' + (e.gerePar === 'Cécile' ? ' selected' : '') + '>Cécile</option>';
+          h += '<option value="Célia"' + (e.gerePar === 'Célia' ? ' selected' : '') + '>Célia</option>';
+          h += '</select></div>';
+          h += '</div>';
+        }
+      }
+      document.getElementById(containerId).innerHTML = h;
+    }
+
+    /* ═══════════════════════════════════════════════
+       SUIVI SPORT MODAL
+       ═══════════════════════════════════════════════ */
+    function showSportView() {
+      renderSportContent();
+      document.getElementById('sportModal').style.display = 'flex';
+    }
+
+    function renderSportContent() {
+      var now = Date.now();
+      var oneYearAgo = now - (365.25 * 24 * 60 * 60 * 1000);
+
+      // Build sport agent list
+      var list = allAgents.map(function (a) {
+        var sport = a.sport || [];
+        var latest = sport.length > 0 ? sport[0] : null;
+        return {
+          agent: a,
+          latestDate: latest ? latest.date : '—',
+          latestDateRaw: latest ? latest.dateRaw : null,
+          latestResult: latest ? latest.resultat : '—',
+          latestTest: latest ? latest.testName : '—',
+          isOld: !latest || !latest.dateRaw || latest.dateRaw < oneYearAgo,
+          sportEntries: sport
+        };
+      });
+
+      // Apply sort
+      var ss = sortStates.sport;
+      if (ss && ss.key) {
+        var kf = {
+          nomPrenom: function (x) { return x.agent.nomPrenom || ''; },
+          centre: function (x) { return x.agent.centrePrincipal || ''; },
+          derniereICP: function (x) { return x.latestDateRaw; },
+          resultat: function (x) { return x.latestResult || ''; }
+        };
+        if (kf[ss.key]) list = doSort(list, kf[ss.key], ss.dir);
+      } else {
+        // Default: oldest first (most urgent at top)
+        list.sort(function (a, b) {
+          if (!a.latestDateRaw && !b.latestDateRaw) return 0;
+          if (!a.latestDateRaw) return -1;
+          if (!b.latestDateRaw) return 1;
+          return a.latestDateRaw - b.latestDateRaw;
+        });
+      }
+
+      var oldCount = list.filter(function (x) { return x.isOld; }).length;
+
+      var h = '<p style="margin-bottom:14px;color:var(--text-light);font-size:0.88em;">' + allAgents.length + ' agent(s) — <span style="color:var(--primary);font-weight:600;">' + oldCount + ' avec épreuve &gt; 1 an ou sans épreuve</span> — survolez pour voir le détail</p>';
+      h += '<div class="table-wrap"><table><thead><tr>';
+      h += '<th>#</th>';
+      h += thSort('sport', 'nomPrenom', 'NOM Prénom');
+      h += thSort('sport', 'centre', 'Centre');
+      h += thSort('sport', 'derniereICP', 'Dernière ICP');
+      h += thSort('sport', 'resultat', 'Résultat');
+      h += '</tr></thead><tbody>';
+
+      for (var i = 0; i < list.length; i++) {
+        var x = list[i];
+        h += '<tr style="' + (x.isOld ? 'background:#fff5f5;' : '') + '" onmouseenter="showSportTip(event,\'' + esc(x.agent.matricule) + '\')" onmouseleave="hideTip()">';
+        h += '<td style="' + (x.isOld ? 'border-left:3px solid var(--primary);' : '') + '">' + (i + 1) + '</td>';
+        h += '<td><strong>' + esc(x.agent.nomPrenom) + '</strong></td>';
+        h += '<td>' + esc(x.agent.centrePrincipal || '') + '</td>';
+        h += '<td style="' + (x.isOld ? 'color:var(--primary);font-weight:600;' : '') + '">' + esc(x.latestDate) + (x.isOld && x.latestDateRaw ? ' ⚠️' : '') + '</td>';
+        h += '<td>' + esc(x.latestResult) + '</td>';
+        h += '</tr>';
+      }
+      h += '</tbody></table></div>';
+
+      document.getElementById('sportContent').innerHTML = h;
+    }
+
+    /* ═══════════════════════════════════════════════
+       ARCHIVE AGENT
+       ═══════════════════════════════════════════════ */
+    function archiveAgentAction(event, matricule, nomPrenom) {
+      var cb = event.target;
+      if (!confirm('Archiver l\x27agent ' + nomPrenom + ' ?\n\nIl sera retiré de la liste.\nRestaurez-le via « Inactifs ».')) { cb.checked = false; return; }
+      cb.disabled = true;
+      google.script.run.withSuccessHandler(function () {
+        for (var i = 0; i < allAgents.length; i++) {
+          if (allAgents[i].matricule === matricule) { inactiveAgents.push(allAgents.splice(i, 1)[0]); break; }
+        }
+        buildIndexes(); renderMainPage();
+      }).withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); cb.checked = false; cb.disabled = false; }).archiveAgent(matricule, nomPrenom);
+    }
+
+    /* ═══════════════════════════════════════════════
+       INACTIFS MODAL
        ═══════════════════════════════════════════════ */
     function showInactifs() {
       var h = '';
-
       if (inactiveAgents.length === 0) {
-        h += '<div style="text-align:center;padding:40px 20px;color:var(--text-light);">';
-        h += '  <div style="font-size:2.5em;margin-bottom:12px;">✅</div>';
-        h += '  <p style="font-size:1.05em;">Aucun agent inactif</p>';
-        h += '</div>';
+        h += '<div style="text-align:center;padding:40px;color:var(--text-light);"><div style="font-size:2.5em;margin-bottom:12px;">✅</div><p>Aucun agent inactif</p></div>';
       } else {
-        h += '<p style="margin-bottom:14px;color:var(--text-light);font-size:0.88em;">' + inactiveAgents.length + ' agent(s) archivé(s) — cliquez sur « Restaurer » pour remettre un agent actif</p>';
-        h += '<div class="table-wrap">';
-        h += '<table>';
-        h += '<thead><tr>';
-        h += '  <th>#</th><th>NOM Prénom</th><th>Centre</th><th>Type de visite</th><th>Action</th>';
-        h += '</tr></thead>';
-        h += '<tbody>';
-
+        h += '<p style="margin-bottom:14px;color:var(--text-light);font-size:0.88em;">' + inactiveAgents.length + ' agent(s) archivé(s)</p>';
+        h += '<div class="table-wrap"><table><thead><tr><th>#</th><th>NOM Prénom</th><th>Centre</th><th>Type de visite</th><th>Action</th></tr></thead><tbody>';
         for (var i = 0; i < inactiveAgents.length; i++) {
           var a = inactiveAgents[i];
-          h += '<tr>';
-          h += '  <td>' + (i + 1) + '</td>';
-          h += '  <td><strong>' + esc(a.nomPrenom) + '</strong></td>';
-          h += '  <td>' + esc(a.centrePrincipal || '') + '</td>';
-          h += '  <td>' + badgeHtml(a.typeVisite, a.typeVisiteRaison) + '</td>';
-          h += '  <td><button class="restore-btn" onclick="restoreAgentAction(\'' + esc(a.matricule) + '\')">↩️ Restaurer</button></td>';
-          h += '</tr>';
+          h += '<tr><td>' + (i + 1) + '</td><td><strong>' + esc(a.nomPrenom) + '</strong></td><td>' + esc(a.centrePrincipal || '') + '</td><td>' + badgeHtml(a.typeVisite, a.typeVisiteRaison) + '</td>';
+          h += '<td><button class="restore-btn" onclick="restoreAgentAction(\'' + esc(a.matricule) + '\')">↩️ Restaurer</button></td></tr>';
         }
-
         h += '</tbody></table></div>';
       }
-
       document.getElementById('inactifsContent').innerHTML = h;
       document.getElementById('inactifsModal').style.display = 'flex';
     }
 
     function restoreAgentAction(matricule) {
-      if (!confirm('Restaurer cet agent dans la liste active ?')) return;
-
-      google.script.run
-        .withSuccessHandler(function () {
-          // Déplacer agent de inactif vers actif côté client
-          var agentIdx = -1;
-          for (var i = 0; i < inactiveAgents.length; i++) {
-            if (inactiveAgents[i].matricule === matricule) { agentIdx = i; break; }
-          }
-          if (agentIdx >= 0) {
-            allAgents.push(inactiveAgents[agentIdx]);
-            inactiveAgents.splice(agentIdx, 1);
-            // Re-trier les agents actifs
-            allAgents.sort(function (a, b) {
-              if (!a.datePerteCompetenceRaw && !b.datePerteCompetenceRaw) return 0;
-              if (!a.datePerteCompetenceRaw) return 1;
-              if (!b.datePerteCompetenceRaw) return -1;
-              return a.datePerteCompetenceRaw - b.datePerteCompetenceRaw;
-            });
-          }
-          buildIndexes();
-          showInactifs(); // Rafraîchir la modal
-          renderMainPage();
-        })
-        .withFailureHandler(function (err) {
-          alert('Erreur : ' + (err.message || 'Erreur inconnue'));
-        })
-        .restoreAgent(matricule);
-    }
-
-    function closeInactifsModal() {
-      document.getElementById('inactifsModal').style.display = 'none';
-    }
-
-    function scrollToAgentFromModal(matricule, modalId) {
-      document.getElementById(modalId).style.display = 'none';
-      var row = document.getElementById('row-' + matricule);
-      if (row) {
-        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        row.classList.add('row-highlight');
-        setTimeout(function () { row.classList.remove('row-highlight'); }, 2500);
-      }
+      if (!confirm('Restaurer cet agent ?')) return;
+      google.script.run.withSuccessHandler(function () {
+        for (var i = 0; i < inactiveAgents.length; i++) {
+          if (inactiveAgents[i].matricule === matricule) { allAgents.push(inactiveAgents.splice(i, 1)[0]); break; }
+        }
+        allAgents.sort(function (a, b) {
+          if (!a.datePerteCompetenceRaw && !b.datePerteCompetenceRaw) return 0;
+          if (!a.datePerteCompetenceRaw) return 1; if (!b.datePerteCompetenceRaw) return -1;
+          return a.datePerteCompetenceRaw - b.datePerteCompetenceRaw;
+        });
+        buildIndexes(); showInactifs(); renderMainPage();
+      }).withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); }).restoreAgent(matricule);
     }
 
     /* ═══════════════════════════════════════════════
-       RECHERCHE
+       CLOSE MODAL HELPER
+       ═══════════════════════════════════════════════ */
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+      renderMainPage(); // refresh main page on modal close
+    }
+
+    /* ═══════════════════════════════════════════════
+       SEARCH FILTER
        ═══════════════════════════════════════════════ */
     function filterTable() {
-      var query = document.getElementById('searchInput').value.toLowerCase().trim();
-      var rows  = document.querySelectorAll('.agent-row');
-      var num   = 0;
-
+      var q = document.getElementById('searchInput').value.toLowerCase().trim();
+      var rows = document.querySelectorAll('.agent-row');
+      var n = 0;
       for (var i = 0; i < rows.length; i++) {
-        var row  = rows[i];
-        var data = row.getAttribute('data-search') || '';
-        if (data.indexOf(query) !== -1) {
-          row.style.display = '';
-          num++;
-          row.querySelector('.row-num').textContent = num;
-        } else {
-          row.style.display = 'none';
-        }
+        var d = rows[i].getAttribute('data-search') || '';
+        if (d.indexOf(q) !== -1) { rows[i].style.display = ''; n++; rows[i].querySelector('.row-num').textContent = n; }
+        else rows[i].style.display = 'none';
       }
     }
 
     /* ═══════════════════════════════════════════════
-       EXPORT PDF
+       PDF EXPORT
        ═══════════════════════════════════════════════ */
     function downloadPdf() {
       var table = document.getElementById('tableContainer');
       if (!table) return;
-
       var wrapper = document.createElement('div');
       var today = new Date().toLocaleDateString('fr-FR');
-
-      wrapper.innerHTML =
-        '<div class="pdf-header">' +
-        '  <h2>SDIS 66 — Suivi VMA — Vue complète</h2>' +
-        '  <p>Généré le ' + today + '</p>' +
-        '</div>';
-
-      var tableClone = table.cloneNode(true);
-      // Masquer les colonnes d'ajout examen dans le PDF
-      var addCells = tableClone.querySelectorAll('.add-exam-cell, .no-print');
-      for (var i = 0; i < addCells.length; i++) addCells[i].style.display = 'none';
-      // Masquer les icônes d'examen dans le PDF
-      var examIcons = tableClone.querySelectorAll('.exam-icons');
-      for (var j = 0; j < examIcons.length; j++) examIcons[j].style.display = 'none';
-
-      wrapper.appendChild(tableClone);
-
-      html2pdf().set({
-        margin:      [8, 8, 8, 8],
-        filename:    'SDIS66_VMA_Vue_Complete.pdf',
-        image:       { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF:       { unit: 'mm', format: 'a4', orientation: 'landscape' },
-        pagebreak:   { mode: ['avoid-all', 'css', 'legacy'] }
-      }).from(wrapper).save();
+      wrapper.innerHTML = '<div class="pdf-header"><h2>SDIS 66 — Suivi VMA — Vue complète</h2><p>Généré le ' + today + '</p></div>';
+      var clone = table.cloneNode(true);
+      clone.querySelectorAll('.add-exam-cell,.no-print').forEach(function (el) { el.style.display = 'none'; });
+      clone.querySelectorAll('.exam-icons').forEach(function (el) { el.style.display = 'none'; });
+      wrapper.appendChild(clone);
+      html2pdf().set({ margin: [8, 8, 8, 8], filename: 'SDIS66_VMA_Vue_Complete.pdf', image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }, pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } }).from(wrapper).save();
     }
 
     /* ═══════════════════════════════════════════════
-       UTILITAIRES
+       UTILITIES
        ═══════════════════════════════════════════════ */
-    function esc(text) {
-      if (!text) return '';
-      var d = document.createElement('div');
-      d.textContent = text;
-      return d.innerHTML;
-    }
+    function esc(text) { if (!text) return ''; var d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
 
     function showError(err) {
       var msg = (err && err.message) ? err.message : 'Erreur inconnue';
-      document.getElementById('app').innerHTML =
-        '<div class="error-box">' +
-        '  <h2>❌ Erreur</h2>' +
-        '  <p>' + esc(msg) + '</p>' +
-        '</div>';
+      document.getElementById('app').innerHTML = '<div class="error-box"><h2>❌ Erreur</h2><p>' + esc(msg) + '</p></div>';
     }
   </script>
 </body>
