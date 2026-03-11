@@ -11,7 +11,9 @@ var CONFIG = {
     RETARD:       'Copie retard',
     A_VENIR:      'Copie a venir',
     CIS_MAILING:  'cis / mailing',
-    SPECIALITE:   'données spécialité'
+    SPECIALITE:   'données spécialité',
+    SPORT:        'Sport',
+    EXAMENS:      'Examens'
   },
 
   /* ── Colonnes onglets Copie retard / Copie a venir (0-based) ── */
@@ -32,6 +34,34 @@ var CONFIG = {
     TYPE: 1,  // B — type de spécialité
     NOM:  2   // C — NOM Prénom
   },
+
+  /* ── Colonnes onglet Sport (0-based) ── */
+  COLS_SPORT: {
+    MATRICULE:  0,  // A
+    DATE:       1,  // B
+    TEST_NAME:  2,  // C
+    RESULTAT:   3   // D
+  },
+
+  /* ── Colonnes onglet Examens (0-based) ── */
+  COLS_EXAMENS: {
+    ID:             0,  // A
+    MATRICULE:      1,  // B
+    TYPE:           2,  // C
+    DETAIL:         3,  // D
+    DATE_DEMANDE:   4,  // E
+    DATE_RESULTAT:  5,  // F
+    COMMENTAIRE:    6,  // G
+    STATUT:         7   // H
+  },
+
+  /* ── Épreuves sportives reconnues ── */
+  SPORT_TESTS: [
+    'LUC LEGER',
+    'AVIRON - Chaine de commandement',
+    'AVIRON - Filière incendie',
+    'Temps Cross Départemental'
+  ],
 
   /* ── Règles métier ── */
   VMA_SPECIALTIES: ['Bruleur', 'SAV', 'SAL', 'caisson'],

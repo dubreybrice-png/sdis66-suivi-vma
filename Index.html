@@ -44,56 +44,11 @@
       z-index: 100;
     }
     .header h1 { font-size: 1.2em; font-weight: 700; letter-spacing: .3px; }
-    .header-nav { display: flex; gap: 8px; }
-    .header-nav a {
-      color: rgba(255,255,255,0.8);
-      text-decoration: none;
-      font-size: 0.85em;
-      padding: 7px 14px;
-      border-radius: 6px;
-      transition: all .2s;
-    }
-    .header-nav a:hover { background: rgba(255,255,255,0.15); color: #fff; }
-    .header-nav a.active { background: var(--primary); color: #fff; }
 
     /* ═══ CONTAINER ═══ */
-    .container { max-width: 1280px; margin: 0 auto; padding: 24px; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
 
-    /* ═══ HOME — CIS GRID ═══ */
-    .page-intro { margin-bottom: 24px; }
-    .page-intro h2 { font-size: 1.4em; color: var(--secondary); margin-bottom: 4px; }
-    .page-intro p { color: var(--text-light); font-size: 0.92em; }
-
-    .cis-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-      gap: 14px;
-    }
-    .cis-card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 18px 20px;
-      box-shadow: var(--shadow);
-      cursor: pointer;
-      transition: all .2s;
-      border-left: 4px solid var(--secondary);
-      text-decoration: none;
-      color: var(--text);
-      display: block;
-    }
-    .cis-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-      border-left-color: var(--primary);
-    }
-    .cis-card.vue-complete {
-      border-left-color: var(--primary);
-      background: linear-gradient(135deg, #fff 0%, #fff0f0 100%);
-    }
-    .cis-card h3 { font-size: 0.95em; margin-bottom: 4px; }
-    .cis-card .count { font-size: 0.8em; color: var(--text-light); }
-
-    /* ═══ DETAIL PAGE ═══ */
+    /* ═══ PAGE HEADER ═══ */
     .page-header {
       display: flex;
       justify-content: space-between;
@@ -124,11 +79,13 @@
     .btn-primary:hover { background: var(--primary-dark); }
     .btn-outline  { background: transparent; color: var(--secondary); border: 1.5px solid var(--border); }
     .btn-outline:hover { background: var(--secondary); color: #fff; }
+    .btn-danger-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+    .btn-danger-outline:hover { background: var(--primary); color: #fff; }
 
     /* ═══ SEARCH ═══ */
     .search-box {
       width: 100%;
-      max-width: 420px;
+      max-width: 480px;
       padding: 10px 16px 10px 40px;
       border: 2px solid var(--border);
       border-radius: var(--radius);
@@ -169,7 +126,7 @@
       letter-spacing: .5px;
       white-space: nowrap;
     }
-    td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.88em; }
+    td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.88em; vertical-align: middle; }
     tbody tr:last-child td { border-bottom: none; }
     tbody tr:hover { background: #f8f9fa; }
     tr.overdue { background: #fff5f5; }
@@ -187,7 +144,200 @@
     .badge-vma        { background: #ff6b6b; color: #fff; }
     .badge-biennale   { background: #00b894; color: #fff; }
     .badge-prevention { background: #0984e3; color: #fff; }
+    .badge-2027       { background: #a29bfe; color: #fff; }
     .badge-default    { background: #dfe6e9; color: #636e72; }
+
+    /* ═══ ADD EXAM DROPDOWN ═══ */
+    .add-exam-wrap { position: relative; display: inline-block; vertical-align: middle; }
+    .add-exam-btn {
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 7px;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1;
+      transition: all .2s;
+      color: var(--text-light);
+    }
+    .add-exam-btn:hover { background: var(--bg); border-color: var(--primary); color: var(--primary); }
+    .add-exam-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+      padding: 8px;
+      gap: 6px;
+      z-index: 200;
+      margin-top: 4px;
+      white-space: nowrap;
+    }
+    .add-exam-dropdown button {
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all .2s;
+      display: inline-block;
+    }
+    .add-exam-dropdown button:hover { background: var(--bg); border-color: var(--primary); }
+
+    /* ═══ EXAM BADGES & TOOLTIPS ═══ */
+    .exam-icons { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
+    .exam-icon-wrap { position: relative; display: inline-block; }
+    .exam-badge {
+      display: inline-flex;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      cursor: pointer;
+      transition: transform .2s;
+    }
+    .exam-badge:hover { transform: scale(1.2); }
+    .exam-badge.green { background: #d4edda; border: 2px solid #00b894; }
+    .exam-badge.red   { background: #ffe0e0; border: 2px solid #e74c3c; animation: blink-red 1s infinite; }
+
+    @keyframes blink-red {
+      0%, 60% { opacity: 1; }
+      61%, 100% { opacity: 0.3; }
+    }
+
+    .exam-tooltip {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+      padding: 14px 16px;
+      width: 280px;
+      z-index: 300;
+      font-size: 0.82em;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+    .exam-tooltip::before {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 7px solid transparent;
+      border-bottom-color: white;
+    }
+    .exam-icon-wrap:hover .exam-tooltip { display: block; }
+
+    /* ═══ SPORT ICON & TOOLTIP ═══ */
+    .sport-wrap { position: relative; display: inline-block; margin-right: 4px; vertical-align: middle; cursor: pointer; }
+    .sport-icon { font-size: 15px; }
+    .sport-tooltip {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+      padding: 14px 16px;
+      min-width: 280px;
+      z-index: 300;
+      font-size: 0.82em;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+    .sport-tooltip::before {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 7px solid transparent;
+      border-bottom-color: white;
+    }
+    .sport-wrap:hover .sport-tooltip { display: block; }
+    .sport-entry { padding: 4px 0; border-bottom: 1px solid #eee; }
+    .sport-entry:last-child { border-bottom: none; }
+
+    /* ═══ MODAL ═══ */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      background: white;
+      border-radius: var(--radius);
+      width: 92%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    }
+    .modal-large { max-width: 960px; }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-header h3 { font-size: 1.1em; color: var(--secondary); }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.4em;
+      cursor: pointer;
+      color: var(--text-light);
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all .2s;
+    }
+    .modal-close:hover { background: #f0f0f0; color: var(--primary); }
+    .modal-body { padding: 20px; }
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .form-group { margin-bottom: 14px; }
+    .form-group label {
+      display: block;
+      font-size: 0.85em;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: var(--text);
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9em;
+      font-family: inherit;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
 
     /* ═══ LOADING ═══ */
     .loading { text-align: center; padding: 80px 20px; color: var(--text-light); }
@@ -210,11 +360,11 @@
     @media (max-width: 768px) {
       .header { flex-direction: column; gap: 8px; text-align: center; }
       .container { padding: 16px; }
-      .cis-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 10px; }
       .page-header { flex-direction: column; align-items: flex-start; }
       th, td { padding: 8px 10px; font-size: 0.8em; }
       .stats { gap: 8px; }
       .stat-card { min-width: 110px; padding: 10px 14px; }
+      .exam-tooltip, .sport-tooltip { width: 220px; min-width: 220px; }
     }
 
     /* ═══ PRINT / PDF ═══ */
@@ -224,9 +374,10 @@
       .container { padding: 0; max-width: 100%; }
       .table-wrap { box-shadow: none; border-radius: 0; }
       .stat-card { box-shadow: none; border: 1px solid #ccc; }
+      .add-exam-cell { display: none; }
+      .exam-icons { display: none; }
     }
 
-    /* ═══ PDF HEADER (cloned for export) ═══ */
     .pdf-header {
       text-align: center;
       margin-bottom: 18px;
@@ -235,6 +386,13 @@
     }
     .pdf-header h2 { color: var(--secondary); font-size: 1.3em; }
     .pdf-header p  { color: var(--text-light); font-size: 0.85em; margin-top: 4px; }
+
+    /* ═══ HIGHLIGHT (scroll-to) ═══ */
+    @keyframes highlight-row {
+      0% { background: #fff3cd; }
+      100% { background: transparent; }
+    }
+    .row-highlight { animation: highlight-row 2s ease-out; }
   </style>
 </head>
 
@@ -242,10 +400,6 @@
   <!-- ═══ HEADER ═══ -->
   <div class="header">
     <h1>🏥 SDIS 66 — Suivi VMA</h1>
-    <nav class="header-nav">
-      <a href="<?= baseUrl ?>" id="nav-home">🏠 Accueil</a>
-      <a href="<?= baseUrl ?>?cis=all" id="nav-all">📋 Vue complète</a>
-    </nav>
   </div>
 
   <!-- ═══ MAIN CONTENT ═══ -->
@@ -256,81 +410,100 @@
     </div>
   </div>
 
+  <!-- ═══ MODAL : AJOUT EXAMEN ═══ -->
+  <div class="modal-overlay" id="examModal" style="display:none" onclick="if(event.target===this)closeExamModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="examModalTitle">Ajouter un examen</h3>
+        <button class="modal-close" onclick="closeExamModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Type d'examen</label>
+          <input type="text" id="examDetail" placeholder="Ex : Bilan sanguin complet">
+        </div>
+        <div class="form-group">
+          <label>Date de la demande</label>
+          <input type="date" id="examDateDemande">
+        </div>
+        <div class="form-group">
+          <label>Date de résultat attendu</label>
+          <input type="date" id="examDateResultat">
+        </div>
+        <div class="form-group">
+          <label>Commentaire</label>
+          <textarea id="examCommentaire" rows="3" placeholder="Commentaire libre…"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeExamModal()">Annuler</button>
+        <button class="btn btn-primary" id="examSubmitBtn" onclick="submitExam()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODAL : EXAMENS EN RETARD ═══ -->
+  <div class="modal-overlay" id="overdueModal" style="display:none" onclick="if(event.target===this)closeOverdueModal()">
+    <div class="modal modal-large">
+      <div class="modal-header">
+        <h3>⚠️ Examens en retard</h3>
+        <button class="modal-close" onclick="closeOverdueModal()">✕</button>
+      </div>
+      <div class="modal-body" id="overdueContent"></div>
+    </div>
+  </div>
+
   <!-- html2pdf.js pour l'export PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <script>
-    /* ═══ VARIABLES INJECTÉES PAR LE SERVEUR ═══ */
-    var BASE_URL  = <?!= JSON.stringify(baseUrl) ?>;
-    var CIS_PARAM = <?!= JSON.stringify(cisParam) ?>;
+    /* ═══ VARIABLES ═══ */
+    var BASE_URL = <?!= JSON.stringify(baseUrl) ?>;
+    var allAgents = [];
+    var allExamens = [];
+    var examensByMatricule = {};
+    var agentsByMatricule = {};
+    var currentExamMatricule = '';
+    var currentExamType = '';
 
     /* ═══ INIT ═══ */
     document.addEventListener('DOMContentLoaded', function () {
-      // Highlight navigation
-      if (CIS_PARAM === 'all')     document.getElementById('nav-all').classList.add('active');
-      else if (!CIS_PARAM)         document.getElementById('nav-home').classList.add('active');
-
-      // Route
-      if (!CIS_PARAM || CIS_PARAM === '') {
-        google.script.run
-          .withSuccessHandler(renderHomePage)
-          .withFailureHandler(showError)
-          .getPageData('home');
-      } else {
-        google.script.run
-          .withSuccessHandler(renderDetailPage)
-          .withFailureHandler(showError)
-          .getPageData(CIS_PARAM);
-      }
+      google.script.run
+        .withSuccessHandler(onDataLoaded)
+        .withFailureHandler(showError)
+        .getPageData();
     });
 
-    /* ═══════════════════════════════════════════════
-       PAGE D'ACCUEIL
-       ═══════════════════════════════════════════════ */
-    function renderHomePage(data) {
-      var cisList     = data.cisList || [];
-      var cisCounts   = data.cisCounts || {};
-      var totalAgents = data.totalAgents || 0;
+    function onDataLoaded(data) {
+      allAgents  = data.agents  || [];
+      allExamens = data.examens || [];
+      buildIndexes();
+      renderMainPage();
+    }
 
-      var h = '';
-      h += '<div class="page-intro">';
-      h += '  <h2>Sélectionnez un centre</h2>';
-      h += '  <p>' + totalAgents + ' agents répartis dans ' + cisList.length + ' centres</p>';
-      h += '</div>';
-
-      h += '<div class="cis-grid">';
-
-      // Carte « Vue complète »
-      h += '<a href="' + BASE_URL + '?cis=all" class="cis-card vue-complete">';
-      h += '  <h3>📋 Vue complète</h3>';
-      h += '  <span class="count">' + totalAgents + ' agents</span>';
-      h += '</a>';
-
-      for (var i = 0; i < cisList.length; i++) {
-        var cis   = cisList[i];
-        var count = cisCounts[cis] || 0;
-        h += '<a href="' + BASE_URL + '?cis=' + encodeURIComponent(cis) + '" class="cis-card">';
-        h += '  <h3>🏛️ ' + esc(cis) + '</h3>';
-        h += '  <span class="count">' + count + ' agent(s)</span>';
-        h += '</a>';
-      }
-
-      h += '</div>';
-      document.getElementById('app').innerHTML = h;
+    function buildIndexes() {
+      examensByMatricule = {};
+      allExamens.forEach(function (e) {
+        if (!examensByMatricule[e.matricule]) examensByMatricule[e.matricule] = [];
+        examensByMatricule[e.matricule].push(e);
+      });
+      agentsByMatricule = {};
+      allAgents.forEach(function (a) { agentsByMatricule[a.matricule] = a; });
     }
 
     /* ═══════════════════════════════════════════════
-       PAGE DÉTAIL CIS / VUE COMPLÈTE
+       RENDU PAGE PRINCIPALE
        ═══════════════════════════════════════════════ */
-    function renderDetailPage(data) {
-      var agents  = data.agents || [];
-      var cisName = data.cisName || '';
-      var isAll   = (CIS_PARAM === 'all');
-
+    function renderMainPage() {
       var now = Date.now();
       var overdueCount = 0;
-      agents.forEach(function (a) {
+      allAgents.forEach(function (a) {
         if (a.datePerteCompetenceRaw && a.datePerteCompetenceRaw < now) overdueCount++;
+      });
+
+      var overdueExamCount = 0;
+      allExamens.forEach(function (e) {
+        if (e.dateResultatRaw && e.dateResultatRaw < now) overdueExamCount++;
       });
 
       var h = '';
@@ -338,30 +511,35 @@
       /* ── En-tête ── */
       h += '<div class="page-header">';
       h += '  <div>';
-      h += '    <div class="page-title">' + (isAll ? '📋 ' : '🏛️ ') + esc(cisName) + '</div>';
-      h += '    <div class="page-subtitle">' + agents.length + ' agent(s)';
+      h += '    <div class="page-title">📋 Suivi VMA — Vue complète</div>';
+      h += '    <div class="page-subtitle">' + allAgents.length + ' agent(s)';
       if (overdueCount > 0) {
         h += ' — <span style="color:var(--primary);font-weight:600">' + overdueCount + ' en dépassement</span>';
       }
       h += '</div>';
       h += '  </div>';
       h += '  <div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;">';
-      h += '    <a href="' + BASE_URL + '" class="btn btn-outline">← Retour</a>';
+      if (overdueExamCount > 0) {
+        h += '    <button onclick="showOverdueExams()" class="btn btn-danger-outline">⚠️ Examens en retard (' + overdueExamCount + ')</button>';
+      } else {
+        h += '    <button onclick="showOverdueExams()" class="btn btn-outline">📋 Examens en cours</button>';
+      }
       h += '    <button onclick="downloadPdf()" class="btn btn-primary">📥 Télécharger pour imprimer</button>';
       h += '  </div>';
       h += '</div>';
 
-      /* ── Barre de recherche (vue complète seulement) ── */
-      if (isAll) {
-        h += '<div class="no-print" style="margin-bottom:16px;">';
-        h += '  <input type="text" class="search-box" id="searchInput" placeholder="Rechercher un agent, centre, type…" oninput="filterTable()">';
-        h += '</div>';
-      }
+      /* ── Recherche ── */
+      h += '<div class="no-print" style="margin-bottom:16px;">';
+      h += '  <input type="text" class="search-box" id="searchInput" placeholder="Rechercher un agent, centre, type de visite…" oninput="filterTable()">';
+      h += '</div>';
 
       /* ── Statistiques ── */
       h += '<div class="stats no-print">';
-      h += '  <div class="stat-card"><div class="stat-value">' + agents.length + '</div><div class="stat-label">Total agents</div></div>';
-      h += '  <div class="stat-card danger"><div class="stat-value">' + overdueCount + '</div><div class="stat-label">En dépassement</div></div>';
+      h += '  <div class="stat-card"><div class="stat-value">' + allAgents.length + '</div><div class="stat-label">Total agents</div></div>';
+      h += '  <div class="stat-card danger"><div class="stat-value">' + overdueCount + '</div><div class="stat-label">En dépassement VMA</div></div>';
+      if (overdueExamCount > 0) {
+        h += '  <div class="stat-card danger"><div class="stat-value">' + overdueExamCount + '</div><div class="stat-label">Examens en retard</div></div>';
+      }
       h += '</div>';
 
       /* ── Tableau ── */
@@ -369,29 +547,16 @@
       h += '<table id="agentTable">';
       h += '<thead><tr>';
       h += '  <th style="width:40px">#</th>';
+      h += '  <th style="width:40px" class="no-print"></th>';
       h += '  <th>NOM Prénom</th>';
-      if (isAll) h += '<th>Centre</th>';
+      h += '  <th>Centre</th>';
       h += '  <th>Date perte de compétence VMA</th>';
       h += '  <th>Type de visite</th>';
       h += '</tr></thead>';
       h += '<tbody id="tableBody">';
 
-      for (var i = 0; i < agents.length; i++) {
-        var a = agents[i];
-        var isOverdue = a.datePerteCompetenceRaw && a.datePerteCompetenceRaw < now;
-        var searchStr = (a.nomPrenom + ' ' + a.centrePrincipal + ' ' + a.centreSecondaire + ' ' + a.typeVisite + ' ' + a.datePerteCompetence).toLowerCase();
-
-        h += '<tr class="agent-row' + (isOverdue ? ' overdue' : '') + '" data-search="' + esc(searchStr) + '">';
-        h += '  <td class="row-num">' + (i + 1) + '</td>';
-        h += '  <td><strong>' + esc(a.nomPrenom) + '</strong></td>';
-        if (isAll) {
-          h += '<td>' + esc(a.centrePrincipal);
-          if (a.centreSecondaire) h += ' <span style="color:var(--text-light);font-size:.8em">/ ' + esc(a.centreSecondaire) + '</span>';
-          h += '</td>';
-        }
-        h += '  <td>' + (a.datePerteCompetence || '—') + (isOverdue ? ' ⚠️' : '') + '</td>';
-        h += '  <td>' + badgeHtml(a.typeVisite) + '</td>';
-        h += '</tr>';
+      for (var i = 0; i < allAgents.length; i++) {
+        h += renderAgentRow(allAgents[i], i);
       }
 
       h += '</tbody></table></div>';
@@ -400,19 +565,330 @@
     }
 
     /* ═══════════════════════════════════════════════
+       RENDU D'UNE LIGNE AGENT
+       ═══════════════════════════════════════════════ */
+    function renderAgentRow(a, index) {
+      var now = Date.now();
+      var isOverdue = a.datePerteCompetenceRaw && a.datePerteCompetenceRaw < now;
+      var agentExams = examensByMatricule[a.matricule] || [];
+      var searchStr = (a.nomPrenom + ' ' + a.centrePrincipal + ' ' + a.centreSecondaire + ' ' + a.typeVisite + ' ' + a.datePerteCompetence).toLowerCase();
+      var safeMatricule = esc(a.matricule);
+
+      var h = '';
+      h += '<tr class="agent-row' + (isOverdue ? ' overdue' : '') + '" data-search="' + esc(searchStr) + '" data-matricule="' + safeMatricule + '" id="row-' + safeMatricule + '">';
+
+      /* # */
+      h += '<td class="row-num">' + (index + 1) + '</td>';
+
+      /* Bouton ajout examen */
+      h += '<td class="add-exam-cell no-print">';
+      h += '<span class="add-exam-wrap">';
+      h += '  <button class="add-exam-btn" onclick="toggleAddMenu(event, \'' + safeMatricule + '\')" title="Ajouter un examen">📄<sup style="font-size:9px;color:var(--green)">+</sup></button>';
+      h += '  <div class="add-exam-dropdown" id="addmenu-' + safeMatricule + '">';
+      h += '    <button onclick="event.stopPropagation();openAddExam(\'' + safeMatricule + '\',\'biologie\')" title="Ajouter une biologie">🧪</button>';
+      h += '    <button onclick="event.stopPropagation();openAddExam(\'' + safeMatricule + '\',\'imagerie\')" title="Ajouter une imagerie">☢️</button>';
+      h += '    <button onclick="event.stopPropagation();openAddExam(\'' + safeMatricule + '\',\'avis_specialise\')" title="Ajouter un avis spécialisé">🩺</button>';
+      h += '    <button onclick="event.stopPropagation();openAddExam(\'' + safeMatricule + '\',\'autre\')" title="Ajouter un autre examen">🅰️</button>';
+      h += '  </div>';
+      h += '</span>';
+      h += '</td>';
+
+      /* NOM Prénom + icônes examens */
+      h += '<td>';
+      h += '<strong>' + esc(a.nomPrenom) + '</strong>';
+      if (agentExams.length > 0) {
+        h += '<span class="exam-icons">';
+        for (var j = 0; j < agentExams.length; j++) {
+          h += examBadgeHtml(agentExams[j]);
+        }
+        h += '</span>';
+      }
+      h += '</td>';
+
+      /* Centre */
+      h += '<td>' + esc(a.centrePrincipal);
+      if (a.centreSecondaire && a.centreSecondaire !== a.centrePrincipal) {
+        h += ' <span style="color:var(--text-light);font-size:.8em">/ ' + esc(a.centreSecondaire) + '</span>';
+      }
+      h += '</td>';
+
+      /* Date perte compétence + icône sport */
+      h += '<td>';
+      if (a.sport && a.sport.length > 0) {
+        h += sportIconHtml(a.sport);
+      }
+      h += (a.datePerteCompetence || '—');
+      h += '</td>';
+
+      /* Type de visite */
+      h += '<td>' + badgeHtml(a.typeVisite) + '</td>';
+
+      h += '</tr>';
+      return h;
+    }
+
+    /* ═══════════════════════════════════════════════
+       BADGE EXAMEN (icône + tooltip hover)
+       ═══════════════════════════════════════════════ */
+    function examBadgeHtml(exam) {
+      var now = Date.now();
+      var isOverdue = exam.dateResultatRaw && exam.dateResultatRaw < now;
+      var colorClass = isOverdue ? 'red' : 'green';
+
+      var icons  = { biologie: '🧪', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+      var labels = { biologie: 'Biologie', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre examen' };
+      var icon  = icons[exam.type]  || '📋';
+      var label = labels[exam.type] || exam.type;
+
+      var h = '';
+      h += '<span class="exam-icon-wrap">';
+      h += '  <span class="exam-badge ' + colorClass + '">' + icon + '</span>';
+      h += '  <div class="exam-tooltip">';
+      h += '    <div style="font-weight:700;margin-bottom:8px;font-size:1.05em;">' + icon + ' ' + esc(label) + '</div>';
+      if (exam.detail) {
+        h += '    <div style="margin-bottom:4px;"><strong>Examen :</strong> ' + esc(exam.detail) + '</div>';
+      }
+      h += '    <div style="margin-bottom:4px;"><strong>Demandé le :</strong> ' + esc(exam.dateDemande) + '</div>';
+      h += '    <div style="margin-bottom:4px;"><strong>Résultat attendu :</strong> ' + esc(exam.dateResultat) + '</div>';
+      if (exam.commentaire) {
+        h += '    <div style="margin-bottom:4px;"><strong>Commentaire :</strong> ' + esc(exam.commentaire) + '</div>';
+      }
+      if (isOverdue) {
+        h += '    <div style="color:var(--primary);font-weight:600;margin:6px 0;">⚠️ Résultat en retard</div>';
+      }
+      h += '    <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);">';
+      h += '      <label style="cursor:pointer;font-size:0.92em;display:flex;align-items:center;gap:6px;">';
+      h += '        <input type="checkbox" onchange="closeExamAction(event,\'' + esc(exam.id) + '\')">';
+      h += '        Clôturer cet examen';
+      h += '      </label>';
+      h += '    </div>';
+      h += '  </div>';
+      h += '</span>';
+      return h;
+    }
+
+    /* ═══════════════════════════════════════════════
+       ICÔNE SPORT (tooltip hover)
+       ═══════════════════════════════════════════════ */
+    function sportIconHtml(sportArr) {
+      var h = '';
+      h += '<span class="sport-wrap">';
+      h += '  <span class="sport-icon">🏃</span>';
+      h += '  <div class="sport-tooltip">';
+      h += '    <div style="font-weight:700;margin-bottom:8px;">🏃 Épreuves sportives</div>';
+      for (var i = 0; i < sportArr.length; i++) {
+        var s = sportArr[i];
+        h += '<div class="sport-entry">';
+        h += '  <strong>' + esc(s.date) + '</strong> — ' + esc(s.testName);
+        if (s.resultat) h += ' : <em>' + esc(s.resultat) + '</em>';
+        h += '</div>';
+      }
+      h += '  </div>';
+      h += '</span>';
+      return h;
+    }
+
+    /* ═══════════════════════════════════════════════
        BADGES TYPE DE VISITE
        ═══════════════════════════════════════════════ */
     function badgeHtml(type) {
       if (!type) return '<span class="badge badge-default">Non défini</span>';
       var cls = 'badge-default';
-      if (type === 'VMA tous les ans')           cls = 'badge-vma';
+      if (type === 'VMA tous les ans')              cls = 'badge-vma';
       else if (type === 'Visite médicale biennale') cls = 'badge-biennale';
       else if (type === 'Visite prévention')        cls = 'badge-prevention';
+      else if (type === 'Visite médicale 2027')     cls = 'badge-2027';
       return '<span class="badge ' + cls + '">' + esc(type) + '</span>';
     }
 
     /* ═══════════════════════════════════════════════
-       RECHERCHE (vue complète)
+       DROPDOWN AJOUT EXAMEN
+       ═══════════════════════════════════════════════ */
+    function toggleAddMenu(event, matricule) {
+      event.stopPropagation();
+      var allMenus = document.querySelectorAll('.add-exam-dropdown');
+      var target   = document.getElementById('addmenu-' + matricule);
+      var isOpen   = target && target.style.display === 'flex';
+
+      allMenus.forEach(function (m) { m.style.display = 'none'; });
+      if (target && !isOpen) target.style.display = 'flex';
+    }
+
+    // Fermer les menus au clic extérieur
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.add-exam-wrap')) {
+        document.querySelectorAll('.add-exam-dropdown').forEach(function (m) { m.style.display = 'none'; });
+      }
+    });
+
+    /* ═══════════════════════════════════════════════
+       MODAL AJOUT EXAMEN
+       ═══════════════════════════════════════════════ */
+    function openAddExam(matricule, type) {
+      currentExamMatricule = matricule;
+      currentExamType = type;
+
+      var typeLabels = {
+        biologie:        'Ajouter une biologie',
+        imagerie:        'Ajouter une imagerie',
+        avis_specialise: 'Ajouter un avis spécialisé',
+        autre:           'Ajouter un autre examen'
+      };
+
+      document.getElementById('examModalTitle').textContent = typeLabels[type] || 'Ajouter un examen';
+      document.getElementById('examDetail').value = '';
+      document.getElementById('examDateDemande').value = new Date().toISOString().split('T')[0];
+      document.getElementById('examDateResultat').value = '';
+      document.getElementById('examCommentaire').value = '';
+
+      var agent = agentsByMatricule[matricule];
+      if (agent) {
+        document.getElementById('examModalTitle').textContent += ' — ' + agent.nomPrenom;
+      }
+
+      document.getElementById('examModal').style.display = 'flex';
+
+      // Fermer le dropdown
+      document.querySelectorAll('.add-exam-dropdown').forEach(function (m) { m.style.display = 'none'; });
+    }
+
+    function closeExamModal() {
+      document.getElementById('examModal').style.display = 'none';
+    }
+
+    function submitExam() {
+      var data = {
+        matricule:   currentExamMatricule,
+        type:        currentExamType,
+        detail:      document.getElementById('examDetail').value,
+        dateDemande: document.getElementById('examDateDemande').value,
+        dateResultat:document.getElementById('examDateResultat').value,
+        commentaire: document.getElementById('examCommentaire').value
+      };
+
+      if (!data.dateResultat) {
+        alert('Veuillez saisir une date de résultat attendu.');
+        return;
+      }
+
+      var btn = document.getElementById('examSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Enregistrement…';
+
+      google.script.run
+        .withSuccessHandler(function (savedExam) {
+          allExamens.push(savedExam);
+          buildIndexes();
+          closeExamModal();
+          renderMainPage();
+          btn.disabled = false;
+          btn.textContent = 'Enregistrer';
+        })
+        .withFailureHandler(function (err) {
+          alert('Erreur : ' + (err.message || 'Erreur inconnue'));
+          btn.disabled = false;
+          btn.textContent = 'Enregistrer';
+        })
+        .saveExamen(data);
+    }
+
+    /* ═══════════════════════════════════════════════
+       CLÔTURE EXAMEN
+       ═══════════════════════════════════════════════ */
+    function closeExamAction(event, examId) {
+      var checkbox = event.target;
+      if (!confirm('Clôturer cet examen ?')) {
+        checkbox.checked = false;
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function () {
+          allExamens = allExamens.filter(function (e) { return e.id !== examId; });
+          buildIndexes();
+          renderMainPage();
+        })
+        .withFailureHandler(function (err) {
+          alert('Erreur : ' + (err.message || 'Erreur inconnue'));
+          checkbox.checked = false;
+        })
+        .closeExamen(examId);
+    }
+
+    /* ═══════════════════════════════════════════════
+       MODAL EXAMENS EN RETARD
+       ═══════════════════════════════════════════════ */
+    function showOverdueExams() {
+      var now = Date.now();
+      var overdue = allExamens.filter(function (e) {
+        return e.dateResultatRaw && e.dateResultatRaw < now;
+      }).sort(function (a, b) {
+        return (a.dateResultatRaw || 0) - (b.dateResultatRaw || 0);
+      });
+
+      var h = '';
+
+      if (overdue.length === 0) {
+        h += '<div style="text-align:center;padding:40px 20px;color:var(--text-light);">';
+        h += '  <div style="font-size:2.5em;margin-bottom:12px;">✅</div>';
+        h += '  <p style="font-size:1.05em;">Aucun examen en retard</p>';
+        h += '</div>';
+      } else {
+        h += '<p style="margin-bottom:14px;color:var(--text-light);font-size:0.88em;">' + overdue.length + ' examen(s) en retard — cliquez sur une ligne pour localiser l\'agent</p>';
+        h += '<div class="table-wrap">';
+        h += '<table>';
+        h += '<thead><tr>';
+        h += '  <th>#</th><th>Agent</th><th>Centre</th><th>Type</th><th>Détail</th><th>Date attendue</th><th>Commentaire</th>';
+        h += '</tr></thead>';
+        h += '<tbody>';
+
+        for (var i = 0; i < overdue.length; i++) {
+          var e = overdue[i];
+          var agent = agentsByMatricule[e.matricule] || {};
+          h += '<tr style="cursor:pointer" onclick="scrollToAgent(\'' + esc(e.matricule) + '\')">';
+          h += '  <td>' + (i + 1) + '</td>';
+          h += '  <td><strong>' + esc(agent.nomPrenom || e.matricule) + '</strong></td>';
+          h += '  <td>' + esc(agent.centrePrincipal || '') + '</td>';
+          h += '  <td>' + examTypeLabel(e.type) + '</td>';
+          h += '  <td>' + esc(e.detail || '') + '</td>';
+          h += '  <td style="color:var(--primary);font-weight:600;">' + esc(e.dateResultat) + '</td>';
+          h += '  <td>' + esc(e.commentaire || '') + '</td>';
+          h += '</tr>';
+        }
+
+        h += '</tbody></table></div>';
+      }
+
+      document.getElementById('overdueContent').innerHTML = h;
+      document.getElementById('overdueModal').style.display = 'flex';
+    }
+
+    function examTypeLabel(type) {
+      var labels = {
+        biologie:        '🧪 Biologie',
+        imagerie:        '☢️ Imagerie',
+        avis_specialise: '🩺 Avis spécialisé',
+        autre:           '🅰️ Autre'
+      };
+      return labels[type] || type;
+    }
+
+    function scrollToAgent(matricule) {
+      closeOverdueModal();
+      var row = document.getElementById('row-' + matricule);
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.classList.add('row-highlight');
+        setTimeout(function () { row.classList.remove('row-highlight'); }, 2500);
+      }
+    }
+
+    function closeOverdueModal() {
+      document.getElementById('overdueModal').style.display = 'none';
+    }
+
+    /* ═══════════════════════════════════════════════
+       RECHERCHE
        ═══════════════════════════════════════════════ */
     function filterTable() {
       var query = document.getElementById('searchInput').value.toLowerCase().trim();
@@ -420,7 +896,7 @@
       var num   = 0;
 
       for (var i = 0; i < rows.length; i++) {
-        var row = rows[i];
+        var row  = rows[i];
         var data = row.getAttribute('data-search') || '';
         if (data.indexOf(query) !== -1) {
           row.style.display = '';
@@ -439,23 +915,28 @@
       var table = document.getElementById('tableContainer');
       if (!table) return;
 
-      // Créer un wrapper avec en-tête pour le PDF
       var wrapper = document.createElement('div');
-      var cisLabel = (CIS_PARAM === 'all') ? 'Vue complète' : CIS_PARAM;
       var today = new Date().toLocaleDateString('fr-FR');
 
       wrapper.innerHTML =
         '<div class="pdf-header">' +
-        '  <h2>SDIS 66 — Suivi VMA — ' + esc(cisLabel) + '</h2>' +
+        '  <h2>SDIS 66 — Suivi VMA — Vue complète</h2>' +
         '  <p>Généré le ' + today + '</p>' +
         '</div>';
-      wrapper.appendChild(table.cloneNode(true));
 
-      var filename = 'SDIS66_VMA_' + cisLabel.replace(/[^a-zA-Z0-9\u00C0-\u024F]/g, '_') + '.pdf';
+      var tableClone = table.cloneNode(true);
+      // Masquer les colonnes d'ajout examen dans le PDF
+      var addCells = tableClone.querySelectorAll('.add-exam-cell, .no-print');
+      for (var i = 0; i < addCells.length; i++) addCells[i].style.display = 'none';
+      // Masquer les icônes d'examen dans le PDF
+      var examIcons = tableClone.querySelectorAll('.exam-icons');
+      for (var j = 0; j < examIcons.length; j++) examIcons[j].style.display = 'none';
+
+      wrapper.appendChild(tableClone);
 
       html2pdf().set({
         margin:      [8, 8, 8, 8],
-        filename:    filename,
+        filename:    'SDIS66_VMA_Vue_Complete.pdf',
         image:       { type: 'jpeg', quality: 0.95 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF:       { unit: 'mm', format: 'a4', orientation: 'landscape' },
@@ -479,7 +960,6 @@
         '<div class="error-box">' +
         '  <h2>❌ Erreur</h2>' +
         '  <p>' + esc(msg) + '</p>' +
-        '  <a href="' + BASE_URL + '" class="btn btn-primary" style="margin-top:16px">Retour à l\'accueil</a>' +
         '</div>';
     }
   </script>

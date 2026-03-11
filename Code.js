@@ -9,8 +9,7 @@
 
 function doGet(e) {
   var template = HtmlService.createTemplateFromFile('Index');
-  template.cisParam = (e && e.parameter && e.parameter.cis) ? e.parameter.cis : '';
-  template.baseUrl  = ScriptApp.getService().getUrl();
+  template.baseUrl = ScriptApp.getService().getUrl();
 
   return template.evaluate()
     .setTitle('SDIS 66 — Suivi VMA')
