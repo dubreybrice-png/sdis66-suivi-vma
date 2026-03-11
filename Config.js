@@ -13,7 +13,8 @@ var CONFIG = {
     CIS_MAILING:  'cis / mailing',
     SPECIALITE:   'données spécialité',
     SPORT:        'Sport',
-    EXAMENS:      'Examens'
+    EXAMENS:      'Examens',
+    INACTIFS:     'Inactifs'
   },
 
   /* ── Colonnes onglets Copie retard / Copie a venir (0-based) ── */

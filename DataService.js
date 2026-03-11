@@ -111,6 +111,63 @@ function getExamensSheet_() {
   return sheet;
 }
 
+/* ═══════════════════════════════════════════════════════
+   AGENTS INACTIFS (ARCHIVAGE)
+   ═══════════════════════════════════════════════════════ */
+
+/** Retourne (et crée si besoin) l'onglet Inactifs */
+function getInactifsSheet_() {
+  var ss = getSpreadsheet_();
+  var sheet = ss.getSheetByName(CONFIG.SHEETS.INACTIFS);
+  if (!sheet) {
+    sheet = ss.insertSheet(CONFIG.SHEETS.INACTIFS);
+    sheet.getRange(1, 1, 1, 3).setValues([['Matricule', 'NOM Prénom', 'Date archivage']]);
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+/** Retourne un Set des matricules inactifs */
+function getInactiveMatricules_() {
+  var sheet = getInactifsSheet_();
+  if (sheet.getLastRow() < 2) return {};
+  var data = sheet.getDataRange().getValues().slice(1);
+  var map = {};
+  data.forEach(function (row) {
+    var m = (row[0] || '').toString().trim();
+    if (m) map[m] = true;
+  });
+  return map;
+}
+
+/** Archive un agent (ajoute à l'onglet Inactifs) */
+function archiveAgent(matricule, nomPrenom) {
+  var sheet = getInactifsSheet_();
+  // Vérifier s'il est déjà archivé
+  if (sheet.getLastRow() >= 2) {
+    var data = sheet.getDataRange().getValues().slice(1);
+    for (var i = 0; i < data.length; i++) {
+      if (data[i][0].toString().trim() === matricule) return true; // déjà archivé
+    }
+  }
+  sheet.appendRow([matricule, nomPrenom || '', new Date()]);
+  return true;
+}
+
+/** Restaure un agent (supprime de l'onglet Inactifs) */
+function restoreAgent(matricule) {
+  var sheet = getInactifsSheet_();
+  if (sheet.getLastRow() < 2) return false;
+  var data = sheet.getDataRange().getValues();
+  for (var i = data.length - 1; i >= 1; i--) {
+    if (data[i][0].toString().trim() === matricule) {
+      sheet.deleteRow(i + 1);
+      return true;
+    }
+  }
+  return false;
+}
+
 /** Tous les examens ouverts */
 function getAllExamens() {
   var sheet = getExamensSheet_();
@@ -343,7 +400,8 @@ function getAgentsByCis(cisName) {
 
 /**
  * Données complètes pour la page web :
- *  - agents avec sport
+ *  - agents actifs (avec sport)
+ *  - agents inactifs (avec sport)
  *  - examens ouverts
  *  - totalAgents
  */
@@ -351,16 +409,26 @@ function getPageData() {
   var agents    = getAllAgents();
   var sportData = getSportData_();
   var examens   = getAllExamens();
+  var inactifs  = getInactiveMatricules_();
 
-  // Rattacher les données sport aux agents
+  // Séparer actifs / inactifs et rattacher sport
+  var activeAgents   = [];
+  var inactiveAgents = [];
+
   agents.forEach(function (a) {
     a.sport = sportData[a.matricule] || [];
+    if (inactifs[a.matricule]) {
+      inactiveAgents.push(a);
+    } else {
+      activeAgents.push(a);
+    }
   });
 
   return {
-    agents:      agents,
-    examens:     examens,
-    totalAgents: agents.length
+    agents:         activeAgents,
+    inactiveAgents: inactiveAgents,
+    examens:        examens,
+    totalAgents:    activeAgents.length
   };
 }
 

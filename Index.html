@@ -453,6 +453,69 @@
       100% { background: transparent; }
     }
     .row-highlight { animation: highlight-row 2s ease-out; }
+
+    /* ═══ FILTER BUTTONS (Examens en cours modal) ═══ */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .filter-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      background: white;
+      cursor: pointer;
+      font-size: 0.82em;
+      font-weight: 600;
+      transition: all .2s;
+      color: var(--text);
+    }
+    .filter-btn:hover { border-color: var(--secondary); background: #f8f9fa; }
+    .filter-btn.active { background: var(--secondary); color: white; border-color: var(--secondary); }
+
+    /* ═══ ARCHIVE CHECKBOX ═══ */
+    .archive-cb {
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+
+    /* ═══ INACTIVE BADGE ═══ */
+    .btn-inactive {
+      background: transparent;
+      color: var(--text-light);
+      border: 1.5px solid var(--border);
+    }
+    .btn-inactive:hover { background: var(--secondary); color: #fff; border-color: var(--secondary); }
+    .btn-info-outline {
+      background: transparent;
+      color: var(--blue);
+      border: 1.5px solid var(--blue);
+    }
+    .btn-info-outline:hover { background: var(--blue); color: #fff; }
+    .restore-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 12px;
+      border: 1.5px solid var(--green);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--green);
+      cursor: pointer;
+      font-size: 0.82em;
+      font-weight: 600;
+      transition: all .2s;
+    }
+    .restore-btn:hover { background: var(--green); color: white; }
   </style>
 </head>
 
@@ -513,6 +576,28 @@
     </div>
   </div>
 
+  <!-- ═══ MODAL : EXAMENS EN COURS (tous) ═══ -->
+  <div class="modal-overlay" id="allExamsModal" style="display:none" onclick="if(event.target===this)closeAllExamsModal()">
+    <div class="modal modal-large">
+      <div class="modal-header">
+        <h3>📋 Examens en cours</h3>
+        <button class="modal-close" onclick="closeAllExamsModal()">✕</button>
+      </div>
+      <div class="modal-body" id="allExamsContent"></div>
+    </div>
+  </div>
+
+  <!-- ═══ MODAL : AGENTS INACTIFS ═══ -->
+  <div class="modal-overlay" id="inactifsModal" style="display:none" onclick="if(event.target===this)closeInactifsModal()">
+    <div class="modal modal-large">
+      <div class="modal-header">
+        <h3>👥 Agents inactifs</h3>
+        <button class="modal-close" onclick="closeInactifsModal()">✕</button>
+      </div>
+      <div class="modal-body" id="inactifsContent"></div>
+    </div>
+  </div>
+
   <!-- html2pdf.js pour l'export PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -521,6 +606,7 @@
     var BASE_URL = <?!= JSON.stringify(baseUrl) ?>;
     var allAgents = [];
     var allExamens = [];
+    var inactiveAgents = [];
     var examensByMatricule = {};
     var agentsByMatricule = {};
     var currentExamMatricule = '';
@@ -535,8 +621,9 @@
     });
 
     function onDataLoaded(data) {
-      allAgents  = data.agents  || [];
-      allExamens = data.examens || [];
+      allAgents      = data.agents  || [];
+      allExamens     = data.examens || [];
+      inactiveAgents = data.inactiveAgents || [];
       buildIndexes();
       renderMainPage();
     }
@@ -549,6 +636,7 @@
       });
       agentsByMatricule = {};
       allAgents.forEach(function (a) { agentsByMatricule[a.matricule] = a; });
+      inactiveAgents.forEach(function (a) { agentsByMatricule[a.matricule] = a; });
     }
 
     /* ═══════════════════════════════════════════════
@@ -579,10 +667,12 @@
       h += '</div>';
       h += '  </div>';
       h += '  <div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;">';
+      h += '    <button onclick="showAllExams()" class="btn btn-info-outline">📋 Examens en cours (' + allExamens.length + ')</button>';
       if (overdueExamCount > 0) {
         h += '    <button onclick="showOverdueExams()" class="btn btn-danger-outline">⚠️ Examens en retard (' + overdueExamCount + ')</button>';
-      } else {
-        h += '    <button onclick="showOverdueExams()" class="btn btn-outline">📋 Examens en cours</button>';
+      }
+      if (inactiveAgents.length > 0) {
+        h += '    <button onclick="showInactifs()" class="btn btn-inactive">👥 Voir les inactifs (' + inactiveAgents.length + ')</button>';
       }
       h += '    <button onclick="downloadPdf()" class="btn btn-primary">📥 Télécharger pour imprimer</button>';
       h += '  </div>';
@@ -612,6 +702,7 @@
       h += '  <th>Centre</th>';
       h += '  <th>Date perte de compétence VMA</th>';
       h += '  <th>Type de visite</th>';
+      h += '  <th style="width:40px" class="no-print" title="Archiver">🗃️</th>';
       h += '</tr></thead>';
       h += '<tbody id="tableBody">';
 
@@ -682,6 +773,11 @@
 
       /* Type de visite */
       h += '<td>' + badgeHtml(a.typeVisite, a.typeVisiteRaison) + '</td>';
+
+      /* Archive */
+      h += '<td class="no-print" style="text-align:center;">';
+      h += '<input type="checkbox" class="archive-cb" onchange="archiveAgentAction(event,\'' + safeMatricule + '\',\'' + esc(a.nomPrenom).replace(/'/g, '\\x27') + '\')" title="Archiver cet agent">';
+      h += '</td>';
 
       h += '</tr>';
       return h;
@@ -981,6 +1077,207 @@
 
     function closeOverdueModal() {
       document.getElementById('overdueModal').style.display = 'none';
+    }
+
+    /* ═══════════════════════════════════════════════
+       MODAL EXAMENS EN COURS (TOUS)
+       ═══════════════════════════════════════════════ */
+    var currentExamFilter = 'all';
+
+    function showAllExams() {
+      currentExamFilter = 'all';
+      renderAllExamsModal();
+      document.getElementById('allExamsModal').style.display = 'flex';
+    }
+
+    function filterExamsByType(type) {
+      currentExamFilter = type;
+      renderAllExamsModal();
+    }
+
+    function renderAllExamsModal() {
+      var filtered = allExamens;
+      if (currentExamFilter !== 'all') {
+        filtered = allExamens.filter(function (e) { return e.type === currentExamFilter; });
+      }
+
+      // Tri par date résultat attendu
+      filtered.sort(function (a, b) {
+        return (a.dateResultatRaw || Infinity) - (b.dateResultatRaw || Infinity);
+      });
+
+      var now = Date.now();
+      var h = '';
+
+      /* ── Barre de filtres ── */
+      h += '<div class="filter-bar">';
+      h += '  <button class="filter-btn' + (currentExamFilter === 'all' ? ' active' : '') + '" onclick="filterExamsByType(\'all\')">📋 Tous (' + allExamens.length + ')</button>';
+
+      var counts = { biologie: 0, imagerie: 0, avis_specialise: 0, autre: 0 };
+      allExamens.forEach(function (e) { if (counts.hasOwnProperty(e.type)) counts[e.type]++; });
+
+      h += '  <button class="filter-btn' + (currentExamFilter === 'biologie' ? ' active' : '') + '" onclick="filterExamsByType(\'biologie\')">🧪 Biologie (' + counts.biologie + ')</button>';
+      h += '  <button class="filter-btn' + (currentExamFilter === 'imagerie' ? ' active' : '') + '" onclick="filterExamsByType(\'imagerie\')">☢️ Imagerie (' + counts.imagerie + ')</button>';
+      h += '  <button class="filter-btn' + (currentExamFilter === 'avis_specialise' ? ' active' : '') + '" onclick="filterExamsByType(\'avis_specialise\')">🩺 Avis spécialisé (' + counts.avis_specialise + ')</button>';
+      h += '  <button class="filter-btn' + (currentExamFilter === 'autre' ? ' active' : '') + '" onclick="filterExamsByType(\'autre\')">🅰️ Autre (' + counts.autre + ')</button>';
+      h += '</div>';
+
+      if (filtered.length === 0) {
+        h += '<div style="text-align:center;padding:40px 20px;color:var(--text-light);">';
+        h += '  <div style="font-size:2.5em;margin-bottom:12px;">📭</div>';
+        h += '  <p style="font-size:1.05em;">Aucun examen dans cette catégorie</p>';
+        h += '</div>';
+      } else {
+        h += '<p style="margin-bottom:14px;color:var(--text-light);font-size:0.88em;">' + filtered.length + ' examen(s) en cours — cliquez sur une ligne pour localiser l\'agent</p>';
+        h += '<div class="table-wrap">';
+        h += '<table>';
+        h += '<thead><tr>';
+        h += '  <th>#</th><th>Agent</th><th>Centre</th><th>Type</th><th>Détail</th><th>Demandé le</th><th>Résultat attendu</th><th>Commentaire</th>';
+        h += '</tr></thead>';
+        h += '<tbody>';
+
+        for (var i = 0; i < filtered.length; i++) {
+          var e = filtered[i];
+          var agent = agentsByMatricule[e.matricule] || {};
+          var isOverdue = e.dateResultatRaw && e.dateResultatRaw < now;
+
+          h += '<tr style="cursor:pointer' + (isOverdue ? ';background:#fff5f5' : '') + '" onclick="scrollToAgentFromModal(\'' + esc(e.matricule) + '\',\'allExamsModal\')">';
+          h += '  <td>' + (i + 1) + '</td>';
+          h += '  <td><strong>' + esc(agent.nomPrenom || e.matricule) + '</strong></td>';
+          h += '  <td>' + esc(agent.centrePrincipal || '') + '</td>';
+          h += '  <td>' + examTypeLabel(e.type) + '</td>';
+          h += '  <td>' + esc(e.detail || '') + '</td>';
+          h += '  <td>' + esc(e.dateDemande || '') + '</td>';
+          h += '  <td style="' + (isOverdue ? 'color:var(--primary);font-weight:600;' : '') + '">' + esc(e.dateResultat) + (isOverdue ? ' ⚠️' : '') + '</td>';
+          h += '  <td>' + esc(e.commentaire || '') + '</td>';
+          h += '</tr>';
+        }
+
+        h += '</tbody></table></div>';
+      }
+
+      document.getElementById('allExamsContent').innerHTML = h;
+    }
+
+    function closeAllExamsModal() {
+      document.getElementById('allExamsModal').style.display = 'none';
+    }
+
+    /* ═══════════════════════════════════════════════
+       ARCHIVAGE AGENT
+       ═══════════════════════════════════════════════ */
+    function archiveAgentAction(event, matricule, nomPrenom) {
+      var checkbox = event.target;
+      if (!confirm('Archiver l\'agent ' + nomPrenom + ' ?\n\nIl sera retiré de la liste principale.\nVous pourrez le restaurer via « Voir les inactifs ».')) {
+        checkbox.checked = false;
+        return;
+      }
+
+      checkbox.disabled = true;
+
+      google.script.run
+        .withSuccessHandler(function () {
+          // Déplacer agent de actif vers inactif côté client
+          var agentIdx = -1;
+          for (var i = 0; i < allAgents.length; i++) {
+            if (allAgents[i].matricule === matricule) { agentIdx = i; break; }
+          }
+          if (agentIdx >= 0) {
+            inactiveAgents.push(allAgents[agentIdx]);
+            allAgents.splice(agentIdx, 1);
+          }
+          buildIndexes();
+          renderMainPage();
+        })
+        .withFailureHandler(function (err) {
+          alert('Erreur : ' + (err.message || 'Erreur inconnue'));
+          checkbox.checked = false;
+          checkbox.disabled = false;
+        })
+        .archiveAgent(matricule, nomPrenom);
+    }
+
+    /* ═══════════════════════════════════════════════
+       MODAL AGENTS INACTIFS
+       ═══════════════════════════════════════════════ */
+    function showInactifs() {
+      var h = '';
+
+      if (inactiveAgents.length === 0) {
+        h += '<div style="text-align:center;padding:40px 20px;color:var(--text-light);">';
+        h += '  <div style="font-size:2.5em;margin-bottom:12px;">✅</div>';
+        h += '  <p style="font-size:1.05em;">Aucun agent inactif</p>';
+        h += '</div>';
+      } else {
+        h += '<p style="margin-bottom:14px;color:var(--text-light);font-size:0.88em;">' + inactiveAgents.length + ' agent(s) archivé(s) — cliquez sur « Restaurer » pour remettre un agent actif</p>';
+        h += '<div class="table-wrap">';
+        h += '<table>';
+        h += '<thead><tr>';
+        h += '  <th>#</th><th>NOM Prénom</th><th>Centre</th><th>Type de visite</th><th>Action</th>';
+        h += '</tr></thead>';
+        h += '<tbody>';
+
+        for (var i = 0; i < inactiveAgents.length; i++) {
+          var a = inactiveAgents[i];
+          h += '<tr>';
+          h += '  <td>' + (i + 1) + '</td>';
+          h += '  <td><strong>' + esc(a.nomPrenom) + '</strong></td>';
+          h += '  <td>' + esc(a.centrePrincipal || '') + '</td>';
+          h += '  <td>' + badgeHtml(a.typeVisite, a.typeVisiteRaison) + '</td>';
+          h += '  <td><button class="restore-btn" onclick="restoreAgentAction(\'' + esc(a.matricule) + '\')">↩️ Restaurer</button></td>';
+          h += '</tr>';
+        }
+
+        h += '</tbody></table></div>';
+      }
+
+      document.getElementById('inactifsContent').innerHTML = h;
+      document.getElementById('inactifsModal').style.display = 'flex';
+    }
+
+    function restoreAgentAction(matricule) {
+      if (!confirm('Restaurer cet agent dans la liste active ?')) return;
+
+      google.script.run
+        .withSuccessHandler(function () {
+          // Déplacer agent de inactif vers actif côté client
+          var agentIdx = -1;
+          for (var i = 0; i < inactiveAgents.length; i++) {
+            if (inactiveAgents[i].matricule === matricule) { agentIdx = i; break; }
+          }
+          if (agentIdx >= 0) {
+            allAgents.push(inactiveAgents[agentIdx]);
+            inactiveAgents.splice(agentIdx, 1);
+            // Re-trier les agents actifs
+            allAgents.sort(function (a, b) {
+              if (!a.datePerteCompetenceRaw && !b.datePerteCompetenceRaw) return 0;
+              if (!a.datePerteCompetenceRaw) return 1;
+              if (!b.datePerteCompetenceRaw) return -1;
+              return a.datePerteCompetenceRaw - b.datePerteCompetenceRaw;
+            });
+          }
+          buildIndexes();
+          showInactifs(); // Rafraîchir la modal
+          renderMainPage();
+        })
+        .withFailureHandler(function (err) {
+          alert('Erreur : ' + (err.message || 'Erreur inconnue'));
+        })
+        .restoreAgent(matricule);
+    }
+
+    function closeInactifsModal() {
+      document.getElementById('inactifsModal').style.display = 'none';
+    }
+
+    function scrollToAgentFromModal(matricule, modalId) {
+      document.getElementById(modalId).style.display = 'none';
+      var row = document.getElementById('row-' + matricule);
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.classList.add('row-highlight');
+        setTimeout(function () { row.classList.remove('row-highlight'); }, 2500);
+      }
     }
 
     /* ═══════════════════════════════════════════════
