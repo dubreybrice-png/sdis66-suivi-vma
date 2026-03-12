@@ -170,8 +170,16 @@ function getSeroData_() {
     var resultat = (row[CONFIG.COLS_SERO.RESULTAT] || '').toString().trim();
     if (!type) return;
 
+    var dateVal = row[CONFIG.COLS_SERO.DATE];
+    var dateRaw = (dateVal instanceof Date && !isNaN(dateVal.getTime())) ? dateVal.getTime() : null;
+
     if (!map[matricule]) map[matricule] = [];
-    map[matricule].push({ type: type, resultat: resultat });
+    map[matricule].push({ type: type, resultat: resultat, date: formatDate_(dateVal), dateRaw: dateRaw });
+  });
+
+  // Trier par date décroissante (plus récent en premier)
+  Object.keys(map).forEach(function (key) {
+    map[key].sort(function (a, b) { return (b.dateRaw || 0) - (a.dateRaw || 0); });
   });
 
   return map;

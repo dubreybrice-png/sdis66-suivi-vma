@@ -309,14 +309,6 @@
     </div>
   </div>
 
-  <!-- ═══ MODAL : NON RÉPONDEURS ═══ -->
-  <div class="modal-overlay" id="nonRepondeursModal" style="display:none" onclick="if(event.target===this)closeModal('nonRepondeursModal')">
-    <div class="modal modal-large">
-      <div class="modal-header"><h3>💉 Agents non répondeurs (Hépatite B)</h3><button class="modal-close" onclick="closeModal('nonRepondeursModal')">✕</button></div>
-      <div class="modal-body" id="nonRepondeursContent"></div>
-    </div>
-  </div>
-
   <!-- ═══ EXAM POPOVER ═══ -->
   <div class="exam-popover" id="examPopover"></div>
 
@@ -364,6 +356,14 @@
     var sportFilterMaxRules = [];
     var savedSportFilterRules = [];
 
+    /* ─── Vaccination full page state ─── */
+    var vaccinViewActive = false;
+    var vaccinSubView = 'hb'; // 'hb' or 'dtp'
+    var vaccinFilter = 'tous'; // 'tous', 'nonRepondeur', 'inconnu', 'enRetard', 'aFaire'
+    var dtpChecks = {};
+    var vaccinComments = {};
+    var sportRevisionFilterActive = false;
+
     var SPORT_TESTS_META = [
       { key: 'LUC LEGER', label: 'Luc Léger', short: 'Luc Léger' },
       { key: 'AVIRON - Chaine de commandement', label: 'Rameur Chaîne Cdt', short: 'Rameur CC' },
@@ -400,6 +400,7 @@
       serosByMatricule   = data.seros   || {};
       loadRowColors();
       loadSportMeta();
+      loadVaccinMeta();
       buildIndexes();
       renderMainPage();
     }
@@ -441,6 +442,8 @@
       else if (view === 'allExams') renderAllExamsModal();
       else if (view === 'overdue') renderOverdueContent();
       else if (view === 'sport') renderSportPage();
+      else if (view === 'vaccinHB') renderVaccinPage();
+      else if (view === 'vaccinDTP') renderVaccinPage();
     }
 
     function sortIcon(view, key) {
@@ -488,6 +491,7 @@
        ═══════════════════════════════════════════════ */
     function renderMainPage() {
       sportViewActive = false;
+      vaccinViewActive = false;
       hideExamPopover();
       var now = Date.now();
 
@@ -524,7 +528,7 @@
       h += '<div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">';
       h += '<button onclick="showAllExams()" class="btn btn-info-outline">📋 Examens en cours (' + allExamens.length + ')</button>';
       h += '<button onclick="showOverdueExams()" class="btn btn-danger-outline">⚠️ Examens en retard (' + overdueExamCount + ')</button>';
-      h += '<button onclick="showNonRepondeurs()" class="btn btn-danger-outline">💉 Non répondeurs</button>';
+      h += '<button onclick="showVaccinPage()" class="btn btn-info-outline">💉 Suivi vaccination</button>';
       h += '<button onclick="showSportPage()" class="btn btn-green-outline">🏃 Suivi Sport</button>';
       var ccCls = activePersonFilter === 'Cécile' ? ' person-active' : '';
       var clCls = activePersonFilter === 'Célia'  ? ' person-active' : '';
@@ -557,8 +561,8 @@
       h += thSort('main', 'centre', 'Centre');
       h += thSort('main', 'datePerte', 'Date perte compétence VMA');
       h += thSort('main', 'typeVisite', 'Type de visite');
-      h += '<th style="width:35px" title="Hépatite B">HB</th>';
-      h += '<th style="width:35px" title="DTP">DTP</th>';
+      h += '<th style="width:35px" title="Hépatite B"><div>HB</div><div style="font-size:0.6em;font-weight:400;line-height:1.3;text-transform:none;letter-spacing:0;white-space:nowrap;"><span style="color:#55efc4;">●</span> Immunisé<br><span style="color:#ff6b6b;">●</span> Non rép.<br><span style="color:#74b9ff;">●</span> Inconnu</div></th>';
+      h += '<th style="width:35px" title="DTP"><div>DTP</div><div style="font-size:0.6em;font-weight:400;line-height:1.3;text-transform:none;letter-spacing:0;white-space:nowrap;"><span style="color:#55efc4;">●</span> À jour<br><span style="color:#ff6b6b;">●</span> En retard<br><span style="color:#74b9ff;">●</span> Inconnu</div></th>';
       h += '<th style="width:40px" class="no-print" title="Archiver">🗃️</th>';
       h += '</tr></thead><tbody id="tableBody">';
 
@@ -849,7 +853,9 @@
       btn.disabled = true; btn.textContent = 'Enregistrement…';
       google.script.run.withSuccessHandler(function (saved) {
         allExamens.push(saved); buildIndexes(); closeExamModal();
-        if (sportViewActive) renderSportPage(); else renderMainPage();
+        if (vaccinViewActive) renderVaccinPage();
+        else if (sportViewActive) renderSportPage();
+        else renderMainPage();
         btn.disabled = false; btn.textContent = 'Enregistrer';
       }).withFailureHandler(function (err) {
         alert('Erreur : ' + (err.message || err)); btn.disabled = false; btn.textContent = 'Enregistrer';
@@ -1128,20 +1134,23 @@
 
     function showSportPage() {
       // Close any open modals
-      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal', 'nonRepondeursModal'].forEach(function (id) {
+      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal'].forEach(function (id) {
         document.getElementById(id).style.display = 'none';
       });
       sportViewActive = true;
+      vaccinViewActive = false;
       sportFilterICP = false;
       sportFilterPanelOpen = false;
       sportFilterMaxActive = false;
       sportFilterMaxRules = [];
+      sportRevisionFilterActive = false;
       loadSavedFilterRules();
       renderSportPage();
     }
 
     function backToMainPage() {
       sportViewActive = false;
+      vaccinViewActive = false;
       renderMainPage();
     }
 
@@ -1158,6 +1167,15 @@
       // ─── ICP > 1 an filter ───
       if (sportFilterICP) {
         list = list.filter(function (x) { return x.anyOld; });
+      }
+
+      // ─── Revision filter ───
+      if (sportRevisionFilterActive) {
+        var todayCheck = new Date().toISOString().split('T')[0];
+        list = list.filter(function (x) {
+          var rev = sportRevisions[x.agent.matricule];
+          return rev && rev <= todayCheck;
+        });
       }
 
       // ─── Max filter (OR logic) ───
@@ -1253,6 +1271,17 @@
 
       h += '<button onclick="showArchivedAgents()" class="btn btn-inactive">👁️ Archivés (' + inactiveAgents.length + ')</button>';
       h += '<button onclick="sortByRevisionDate()" class="btn btn-outline">📅 Trier par date révision</button>';
+
+      /* Agent à réviser button */
+      var nbReviser = 0;
+      var todayStr = new Date().toISOString().split('T')[0];
+      allAgents.forEach(function (a) {
+        var rev = sportRevisions[a.matricule];
+        if (rev && rev <= todayStr) nbReviser++;
+      });
+      var revCls = sportRevisionFilterActive ? ' person-active' : '';
+      h += '<button onclick="toggleRevisionFilter()" class="btn btn-danger-outline' + revCls + '">📋 Agent à réviser (' + nbReviser + ')</button>';
+
       h += '</div></div>';
 
       /* Active filter banners */
@@ -1267,6 +1296,10 @@
         }).join(' OU ');
         h += '<div class="filter-banner"><span>📊 Filtre max actif : <strong>' + esc(desc) + '</strong></span>';
         h += '<button onclick="clearMaxFilter()" class="btn btn-outline" style="padding:4px 12px;font-size:0.8em;">✕ Retirer</button></div>';
+      }
+      if (sportRevisionFilterActive) {
+        h += '<div class="filter-banner"><span>📋 Filtre actif : <strong>Agents à réviser</strong> — date de révision dépassée</span>';
+        h += '<button onclick="toggleRevisionFilter()" class="btn btn-outline" style="padding:4px 12px;font-size:0.8em;">✕ Retirer</button></div>';
       }
 
       /* Filter panel */
@@ -1544,8 +1577,8 @@
        ═══════════════════════════════════════════════ */
     function closeModal(id) {
       document.getElementById(id).style.display = 'none';
-      if (id === 'nonRepondeursModal') return; // no re-render needed
-      if (sportViewActive) renderSportPage();
+      if (vaccinViewActive) renderVaccinPage();
+      else if (sportViewActive) renderSportPage();
       else renderMainPage();
     }
 
@@ -1584,16 +1617,17 @@
        ═══════════════════════════════════════════════ */
     function renderVaccinBadge(matricule, type) {
       var vac = vaccinsByMatricule[matricule];
-      if (!vac) return '<span class="vaccin-badge vaccin-neutral" onmouseenter="showVaccinTip(event,\'' + esc(matricule) + '\',\'' + type + '\')" onmouseleave="hideTip()">' + (type === 'hb' ? 'HB' : 'DTP') + '</span>';
-
-      var entries = type === 'hb' ? vac.hb : vac.dtp;
       var cls = 'vaccin-neutral';
+
       if (type === 'hb') {
-        if (vac.immunise) cls = 'vaccin-ok';
-        else if (vac.nonRepondeur) cls = 'vaccin-warn';
-        else if (entries.length > 0) cls = 'vaccin-neutral';
+        if (vac) {
+          if (vac.immunise) cls = 'vaccin-ok';
+          else if (vac.nonRepondeur) cls = 'vaccin-warn';
+        }
       } else {
-        cls = entries.length > 0 ? 'vaccin-ok' : 'vaccin-neutral';
+        var dtpSt = computeDtpStatus(matricule);
+        if (dtpSt === 'ok') cls = 'vaccin-ok';
+        else if (dtpSt === 'warn') cls = 'vaccin-warn';
       }
 
       return '<span class="vaccin-badge ' + cls + '" onmouseenter="showVaccinTip(event,\'' + esc(matricule) + '\',\'' + type + '\')" onmouseleave="hideTip()">' + (type === 'hb' ? 'HB' : 'DTP') + '</span>';
@@ -1602,6 +1636,7 @@
     function showVaccinTip(event, matricule, type) {
       var vac = vaccinsByMatricule[matricule] || { hb: [], dtp: [], immunise: false, nonRepondeur: false };
       var agent = agentsByMatricule[matricule];
+      var seros = serosByMatricule[matricule] || [];
       var h = '<div style="font-weight:700;margin-bottom:8px;">';
 
       if (type === 'hb') {
@@ -1621,21 +1656,19 @@
           h += '<div style="color:var(--text-light);margin-bottom:6px;">Aucune vaccination Hépatite B</div>';
         }
 
-        /* Sérologies HB */
-        var seros = serosByMatricule[matricule] || [];
         var hbSeros = seros.filter(function (s) {
           var t = s.type.toLowerCase();
-          return t.indexOf('ac anti hb') !== -1 || t.indexOf('ag hbs') !== -1;
+          return t.indexOf('ac anti hb') !== -1 || t.indexOf('ag hbs') !== -1 || t.indexOf('hepat') !== -1 || t.indexOf('hb') !== -1;
         });
         if (hbSeros.length > 0) {
           h += '<div style="margin-top:8px;font-weight:600;font-size:0.9em;">Sérologies :</div>';
           for (var j = 0; j < hbSeros.length; j++) {
-            h += '<div class="sport-entry">🔬 <strong>' + esc(hbSeros[j].type) + '</strong> : ' + esc(hbSeros[j].resultat || '—') + '</div>';
+            h += '<div class="sport-entry">🔬 ' + esc(hbSeros[j].date || '') + ' <strong>' + esc(hbSeros[j].type) + '</strong> : ' + esc(hbSeros[j].resultat || '—') + '</div>';
           }
         }
       } else {
         h += '💉 DTP</div>';
-        if (agent) h += '<div style="margin-bottom:6px;font-weight:600;">' + esc(agent.nomPrenom) + '</div>';
+        if (agent) h += '<div style="margin-bottom:6px;font-weight:600;">' + esc(agent.nomPrenom) + (agent.age ? ' (' + agent.age + ' ans)' : '') + '</div>';
 
         if (vac.dtp.length > 0) {
           h += '<div style="margin-bottom:6px;font-weight:600;font-size:0.9em;">Vaccinations :</div>';
@@ -1643,7 +1676,18 @@
             h += '<div class="sport-entry">📅 <strong>' + esc(vac.dtp[k].date || '?') + '</strong> — ' + esc(vac.dtp[k].nom) + '</div>';
           }
         } else {
-          h += '<div style="color:var(--text-light);">Aucune vaccination DTP</div>';
+          h += '<div style="color:var(--text-light);margin-bottom:6px;">Aucune vaccination DTP</div>';
+        }
+
+        /* Milestone checkboxes */
+        var ms = getDtpMilestoneStatus(matricule);
+        h += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid #eee;font-weight:600;font-size:0.9em;margin-bottom:6px;">Jalons DTP :</div>';
+        var milestones = [25, 45, 65];
+        for (var mi = 0; mi < milestones.length; mi++) {
+          var m = milestones[mi];
+          var checked = ms['' + m] ? ' checked' : '';
+          var statusIcon = ms['' + m] ? '✅' : (agent && agent.age > m + 5 ? '❌' : '⬜');
+          h += '<div style="margin:3px 0;">' + statusIcon + ' DTP ' + m + ' ans <input type="checkbox"' + checked + ' onclick="event.stopPropagation();toggleDtpCheck(\'' + esc(matricule) + '\',' + m + ',this.checked)" style="vertical-align:middle;cursor:pointer;"></div>';
         }
       }
 
@@ -1651,59 +1695,503 @@
     }
 
     /* ═══════════════════════════════════════════════
-       NON RÉPONDEURS MODAL
+       DTP MILESTONE LOGIC
        ═══════════════════════════════════════════════ */
-    function showNonRepondeurs() {
-      var list = [];
-      Object.keys(vaccinsByMatricule).forEach(function (mat) {
-        var vac = vaccinsByMatricule[mat];
-        if (!vac.nonRepondeur) return;
-        var agent = agentsByMatricule[mat];
-        if (!agent) return;
+    function getDtpMilestoneStatus(matricule) {
+      var agent = agentsByMatricule[matricule];
+      if (!agent || !agent.birthYear) return { '25': false, '45': false, '65': false };
+      var vac = vaccinsByMatricule[matricule];
+      var dtpEntries = vac ? vac.dtp : [];
+      var manual = dtpChecks[matricule] || {};
+      var result = {};
+      var milestones = [25, 45, 65];
+      for (var i = 0; i < milestones.length; i++) {
+        var m = milestones[i];
+        var key = '' + m;
+        if (manual[key] !== undefined) {
+          result[key] = manual[key];
+        } else {
+          var auto = false;
+          for (var j = 0; j < dtpEntries.length; j++) {
+            var e = dtpEntries[j];
+            if (e.dateRaw && agent.birthYear) {
+              var vacYear = new Date(e.dateRaw).getFullYear();
+              var ageAtVac = vacYear - agent.birthYear;
+              if (ageAtVac >= m - 5 && ageAtVac <= m + 5) { auto = true; break; }
+            }
+          }
+          result[key] = auto;
+        }
+      }
+      return result;
+    }
 
-        /* Dernière date de vaccination HB pour tri */
-        var lastDate = 0;
+    function computeDtpStatus(matricule) {
+      var agent = agentsByMatricule[matricule];
+      if (!agent || !agent.age) return 'neutral';
+      var checks = getDtpMilestoneStatus(matricule);
+      var milestones = [25, 45, 65];
+      var anyOverdue = false;
+      var hasRelevant = false;
+      var allRelevantOk = true;
+      for (var i = 0; i < milestones.length; i++) {
+        var m = milestones[i];
+        if (agent.age >= m) {
+          hasRelevant = true;
+          if (!checks['' + m]) {
+            allRelevantOk = false;
+            if (agent.age > m + 5) anyOverdue = true;
+          }
+        }
+      }
+      if (anyOverdue) return 'warn';
+      if (hasRelevant && allRelevantOk) return 'ok';
+      return 'neutral';
+    }
+
+    function isDtpEnRetard(matricule) {
+      var agent = agentsByMatricule[matricule];
+      if (!agent || !agent.age) return false;
+      var checks = getDtpMilestoneStatus(matricule);
+      var milestones = [25, 45, 65];
+      for (var i = 0; i < milestones.length; i++) {
+        if (agent.age > milestones[i] + 5 && !checks['' + milestones[i]]) return true;
+      }
+      return false;
+    }
+
+    function isDtpAFaire(matricule) {
+      var agent = agentsByMatricule[matricule];
+      if (!agent || !agent.age) return false;
+      var checks = getDtpMilestoneStatus(matricule);
+      var milestones = [25, 45, 65];
+      for (var i = 0; i < milestones.length; i++) {
+        var m = milestones[i];
+        if (!checks['' + m] && agent.age >= m - 1 && agent.age <= m + 5) return true;
+      }
+      return false;
+    }
+
+    function toggleDtpCheck(matricule, milestone, checked) {
+      if (!dtpChecks[matricule]) dtpChecks[matricule] = {};
+      dtpChecks[matricule]['' + milestone] = checked;
+      saveDtpChecks();
+      /* Re-render badge on main page if visible */
+      if (!vaccinViewActive && !sportViewActive) renderMainPage();
+      else if (vaccinViewActive) renderVaccinPage();
+    }
+
+    /* ═══════════════════════════════════════════════
+       VACCINATION FULL PAGE
+       ═══════════════════════════════════════════════ */
+    function showVaccinPage() {
+      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal'].forEach(function (id) {
+        document.getElementById(id).style.display = 'none';
+      });
+      vaccinViewActive = true;
+      sportViewActive = false;
+      vaccinFilter = 'tous';
+      renderVaccinPage();
+    }
+
+    function setVaccinSubView(sub) {
+      vaccinSubView = sub;
+      vaccinFilter = 'tous';
+      sortStates.vaccinHB = {};
+      sortStates.vaccinDTP = {};
+      renderVaccinPage();
+    }
+
+    function setVaccinFilter(f) {
+      vaccinFilter = f;
+      renderVaccinPage();
+    }
+
+    function renderVaccinPage() {
+      hideExamPopover();
+      hideTip();
+      if (vaccinSubView === 'hb') renderVaccinHBPage();
+      else renderVaccinDTPPage();
+    }
+
+    /* ─── HB Page ─── */
+    function renderVaccinHBPage() {
+      var now = Date.now();
+      var oneYearAgo = now - 365.25 * 24 * 3600000;
+
+      /* Build list with sero/vaccin data */
+      var list = allAgents.map(function (a) {
+        var vac = vaccinsByMatricule[a.matricule] || { hb: [], dtp: [], immunise: false, nonRepondeur: false };
+        var seros = serosByMatricule[a.matricule] || [];
+        var hbSeros = seros.filter(function (s) {
+          var t = s.type.toLowerCase();
+          return t.indexOf('hb') !== -1 || t.indexOf('hepat') !== -1 || t.indexOf('ac anti') !== -1 || t.indexOf('ag hbs') !== -1;
+        });
+
+        var status = 'inconnu';
+        if (vac.immunise) status = 'immunise';
+        else if (vac.nonRepondeur) status = 'nonRepondeur';
+
+        /* Last vaccination HB date */
+        var lastVacDate = 0;
         for (var i = 0; i < vac.hb.length; i++) {
-          if (vac.hb[i].dateRaw && vac.hb[i].dateRaw > lastDate) lastDate = vac.hb[i].dateRaw;
+          if (vac.hb[i].dateRaw && vac.hb[i].dateRaw > lastVacDate) lastVacDate = vac.hb[i].dateRaw;
         }
 
-        list.push({ agent: agent, vaccin: vac, seros: serosByMatricule[mat] || [], lastDateRaw: lastDate });
+        /* Last sero date */
+        var lastSeroDate = 0;
+        for (var j = 0; j < hbSeros.length; j++) {
+          if (hbSeros[j].dateRaw && hbSeros[j].dateRaw > lastSeroDate) lastSeroDate = hbSeros[j].dateRaw;
+        }
+
+        var seroOld = lastSeroDate > 0 && lastSeroDate < oneYearAgo;
+
+        return { agent: a, vac: vac, hbSeros: hbSeros, status: status, lastVacDate: lastVacDate, lastSeroDate: lastSeroDate, seroOld: seroOld };
       });
 
-      list.sort(function (a, b) { return (b.lastDateRaw || 0) - (a.lastDateRaw || 0); });
+      /* Count */
+      var nbNR = list.filter(function (x) { return x.status === 'nonRepondeur'; }).length;
+      var nbInc = list.filter(function (x) { return x.status === 'inconnu'; }).length;
+
+      /* Filter */
+      if (vaccinFilter === 'nonRepondeur') list = list.filter(function (x) { return x.status === 'nonRepondeur'; });
+      else if (vaccinFilter === 'inconnu') list = list.filter(function (x) { return x.status === 'inconnu'; });
+
+      /* Sort: default by last sero date asc (oldest first) */
+      var ss = sortStates.vaccinHB;
+      if (ss && ss.key) {
+        var kf = {
+          nomPrenom: function (x) { return x.agent.nomPrenom || ''; },
+          centre: function (x) { return x.agent.centrePrincipal || ''; },
+          lastVac: function (x) { return x.lastVacDate || 0; },
+          lastSero: function (x) { return x.lastSeroDate || 0; },
+          status: function (x) { return x.status; }
+        };
+        if (kf[ss.key]) list = doSort(list, kf[ss.key], ss.dir);
+      } else {
+        list.sort(function (a, b) { return (a.lastSeroDate || 0) - (b.lastSeroDate || 0); });
+      }
 
       var h = '';
-      if (list.length === 0) {
-        h += '<div style="text-align:center;padding:40px;color:var(--text-light);"><div style="font-size:2.5em;margin-bottom:12px;">✅</div><p>Aucun agent non répondeur</p></div>';
-      } else {
-        h += '<p style="margin-bottom:14px;color:var(--text-light);font-size:0.88em;">' + list.length + ' agent(s) non répondeur(s) — triés par dernière vaccination HB</p>';
-        h += '<div class="table-wrap"><table><thead><tr><th>#</th><th>NOM Prénom</th><th>Centre</th><th>Dernière vaccination HB</th><th>Sérologies</th></tr></thead><tbody>';
-        for (var i = 0; i < list.length; i++) {
-          var item = list[i];
-          var a = item.agent;
-          var lastDateStr = '';
-          if (item.lastDateRaw) {
-            var d = new Date(item.lastDateRaw);
-            lastDateStr = ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear();
-          }
-          var hbSeros = item.seros.filter(function (s) {
-            var t = s.type.toLowerCase();
-            return t.indexOf('ac anti hb') !== -1 || t.indexOf('ag hbs') !== -1;
-          });
-          var seroStr = hbSeros.map(function (s) { return s.type + ' : ' + (s.resultat || '—'); }).join(' | ');
 
-          h += '<tr style="background:#fff5f5;">';
-          h += '<td>' + (i + 1) + '</td>';
-          h += '<td><strong>' + esc(a.nomPrenom) + '</strong></td>';
-          h += '<td>' + esc(a.centrePrincipal || '') + '</td>';
-          h += '<td>' + esc(lastDateStr || '—') + '</td>';
-          h += '<td style="font-size:0.85em;">' + esc(seroStr || '—') + '</td>';
-          h += '</tr>';
+      /* Header */
+      h += '<div class="page-header">';
+      h += '<div>';
+      h += '<div class="page-title">💉 Suivi vaccination — Hépatite B</div>';
+      h += '<div class="page-subtitle">' + list.length + ' agent(s) affiché(s)</div>';
+      h += '</div>';
+      h += '<div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">';
+      h += '<button onclick="backToMainFromVaccin()" class="btn btn-outline">← Retour</button>';
+      h += '<button class="btn btn-primary" style="opacity:1;cursor:default;">Hépatite B</button>';
+      h += '<button onclick="setVaccinSubView(\'dtp\')" class="btn btn-outline">DTP</button>';
+      h += '<button onclick="showArchivedAgents()" class="btn btn-inactive">👥 Archivés (' + inactiveAgents.length + ')</button>';
+      h += '</div></div>';
+
+      /* Filters */
+      h += '<div class="filter-bar">';
+      h += '<button class="filter-btn' + (vaccinFilter === 'tous' ? ' active' : '') + '" onclick="setVaccinFilter(\'tous\')">📋 Tous (' + allAgents.length + ')</button>';
+      h += '<button class="filter-btn' + (vaccinFilter === 'nonRepondeur' ? ' active' : '') + '" onclick="setVaccinFilter(\'nonRepondeur\')">❌ Non répondeurs (' + nbNR + ')</button>';
+      h += '<button class="filter-btn' + (vaccinFilter === 'inconnu' ? ' active' : '') + '" onclick="setVaccinFilter(\'inconnu\')">❓ Statut non connu (' + nbInc + ')</button>';
+      h += '</div>';
+
+      /* Search */
+      h += '<div class="no-print" style="margin-bottom:16px;"><input type="text" class="search-box" id="vaccinSearchInput" placeholder="Rechercher un agent…" oninput="filterVaccinTable()"></div>';
+
+      /* Stats */
+      h += '<div class="stats no-print">';
+      h += '<div class="stat-card"><div class="stat-value">' + allAgents.length + '</div><div class="stat-label">Total agents</div></div>';
+      h += '<div class="stat-card danger"><div class="stat-value">' + nbNR + '</div><div class="stat-label">Non répondeurs</div></div>';
+      h += '<div class="stat-card"><div class="stat-value">' + nbInc + '</div><div class="stat-label">Statut non connu</div></div>';
+      h += '</div>';
+
+      /* Table */
+      h += '<div class="table-wrap"><table id="vaccinTable"><thead><tr>';
+      h += '<th style="width:35px">#</th>';
+      h += '<th style="width:35px" class="no-print">🗃️</th>';
+      h += thSort('vaccinHB', 'nomPrenom', 'NOM Prénom');
+      h += thSort('vaccinHB', 'centre', 'Centre');
+      h += thSort('vaccinHB', 'status', 'Statut HB');
+      h += thSort('vaccinHB', 'lastVac', 'Dern. vaccination');
+      h += thSort('vaccinHB', 'lastSero', 'Dern. sérologie');
+      h += '<th style="min-width:120px;">Commentaire</th>';
+      h += '<th style="width:40px" class="no-print">🧪</th>';
+      h += '</tr></thead><tbody>';
+
+      for (var i = 0; i < list.length; i++) {
+        var x = list[i];
+        var a = x.agent;
+        var sm = esc(a.matricule);
+        var searchStr = (a.nomPrenom + ' ' + a.centrePrincipal).toLowerCase();
+
+        var rowBg = '';
+        if (x.status === 'nonRepondeur') rowBg = 'background:#fff5f5;';
+        else if (x.status === 'immunise') rowBg = 'background:#f0fff0;';
+
+        h += '<tr class="vaccin-row" data-search="' + esc(searchStr) + '" style="' + rowBg + '">';
+        h += '<td class="row-num">' + (i + 1) + '</td>';
+
+        /* Archive */
+        h += '<td class="no-print" style="text-align:center;"><input type="checkbox" class="archive-cb" onchange="archiveFromVaccin(event,\'' + sm + '\',\'' + esc(a.nomPrenom).replace(/'/g, '\\x27') + '\')" title="Archiver"></td>';
+
+        h += '<td><strong>' + esc(a.nomPrenom) + '</strong></td>';
+        h += '<td>' + esc(a.centrePrincipal || '') + '</td>';
+
+        /* Status */
+        var stLabel = x.status === 'immunise' ? '<span style="color:#00b894;font-weight:600;">✅ Immunisé</span>' :
+                      x.status === 'nonRepondeur' ? '<span style="color:#e74c3c;font-weight:600;">❌ Non répondeur</span>' :
+                      '<span style="color:var(--blue);font-weight:600;">❓ Inconnu</span>';
+        h += '<td>' + stLabel + '</td>';
+
+        /* Last vaccination HB (hover for all) */
+        var lastVacStr = '—';
+        if (x.lastVacDate) {
+          var dv = new Date(x.lastVacDate);
+          lastVacStr = ('0' + dv.getDate()).slice(-2) + '/' + ('0' + (dv.getMonth() + 1)).slice(-2) + '/' + dv.getFullYear();
         }
-        h += '</tbody></table></div>';
+        h += '<td style="cursor:help;" onmouseenter="showVaccinTip(event,\'' + sm + '\',\'hb\')" onmouseleave="hideTip()">' + lastVacStr + '</td>';
+
+        /* Last sero HB (hover for all, alarm if >1yr) */
+        var lastSeroStr = '—';
+        if (x.lastSeroDate) {
+          var ds = new Date(x.lastSeroDate);
+          lastSeroStr = ('0' + ds.getDate()).slice(-2) + '/' + ('0' + (ds.getMonth() + 1)).slice(-2) + '/' + ds.getFullYear();
+        }
+        var seroStyle = x.seroOld ? 'color:var(--primary);font-weight:600;' : '';
+        h += '<td style="cursor:help;' + seroStyle + '" onmouseenter="showSeroTip(event,\'' + sm + '\')" onmouseleave="hideTip()">';
+        h += lastSeroStr;
+        if (x.seroOld) h += ' ⚠️';
+        h += '</td>';
+
+        /* Comment */
+        var cVal = vaccinComments[a.matricule] || '';
+        h += '<td class="no-print"><input type="text" class="sport-input-sm" value="' + esc(cVal) + '" placeholder="Commentaire…" onchange="saveVaccinComment(\'' + sm + '\',this.value)"></td>';
+
+        /* Biologie shortcut */
+        h += '<td class="no-print" style="text-align:center;"><button class="add-exam-btn" onclick="openAddExam(\'' + sm + '\',\'biologie\')" title="Demande de biologie">🧪</button></td>';
+
+        h += '</tr>';
       }
-      document.getElementById('nonRepondeursContent').innerHTML = h;
-      document.getElementById('nonRepondeursModal').style.display = 'flex';
+
+      h += '</tbody></table></div>';
+      document.getElementById('app').innerHTML = h;
+    }
+
+    /* ─── DTP Page ─── */
+    function renderVaccinDTPPage() {
+      var now = Date.now();
+
+      var list = allAgents.map(function (a) {
+        var ms = getDtpMilestoneStatus(a.matricule);
+        var status = computeDtpStatus(a.matricule);
+        var enRetard = isDtpEnRetard(a.matricule);
+        var aFaire = isDtpAFaire(a.matricule);
+        var vac = vaccinsByMatricule[a.matricule] || { hb: [], dtp: [] };
+
+        var lastDtpDate = 0;
+        for (var i = 0; i < vac.dtp.length; i++) {
+          if (vac.dtp[i].dateRaw && vac.dtp[i].dateRaw > lastDtpDate) lastDtpDate = vac.dtp[i].dateRaw;
+        }
+
+        return { agent: a, ms: ms, status: status, enRetard: enRetard, aFaire: aFaire, vac: vac, lastDtpDate: lastDtpDate };
+      });
+
+      var nbRetard = list.filter(function (x) { return x.enRetard; }).length;
+      var nbAFaire = list.filter(function (x) { return x.aFaire; }).length;
+
+      /* Filter */
+      if (vaccinFilter === 'enRetard') list = list.filter(function (x) { return x.enRetard; });
+      else if (vaccinFilter === 'aFaire') list = list.filter(function (x) { return x.aFaire; });
+
+      /* Sort */
+      var ss = sortStates.vaccinDTP;
+      if (ss && ss.key) {
+        var kf = {
+          nomPrenom: function (x) { return x.agent.nomPrenom || ''; },
+          centre: function (x) { return x.agent.centrePrincipal || ''; },
+          age: function (x) { return x.agent.age || 0; },
+          lastDtp: function (x) { return x.lastDtpDate || 0; },
+          status: function (x) { return x.status; }
+        };
+        if (kf[ss.key]) list = doSort(list, kf[ss.key], ss.dir);
+      } else {
+        list.sort(function (a, b) { return (b.agent.age || 0) - (a.agent.age || 0); });
+      }
+
+      var h = '';
+
+      /* Header */
+      h += '<div class="page-header">';
+      h += '<div>';
+      h += '<div class="page-title">💉 Suivi vaccination — DTP</div>';
+      h += '<div class="page-subtitle">' + list.length + ' agent(s) affiché(s)</div>';
+      h += '</div>';
+      h += '<div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">';
+      h += '<button onclick="backToMainFromVaccin()" class="btn btn-outline">← Retour</button>';
+      h += '<button onclick="setVaccinSubView(\'hb\')" class="btn btn-outline">Hépatite B</button>';
+      h += '<button class="btn btn-primary" style="opacity:1;cursor:default;">DTP</button>';
+      h += '<button onclick="showArchivedAgents()" class="btn btn-inactive">👥 Archivés (' + inactiveAgents.length + ')</button>';
+      h += '</div></div>';
+
+      /* Filters */
+      h += '<div class="filter-bar">';
+      h += '<button class="filter-btn' + (vaccinFilter === 'tous' ? ' active' : '') + '" onclick="setVaccinFilter(\'tous\')">📋 Tous (' + allAgents.length + ')</button>';
+      h += '<button class="filter-btn' + (vaccinFilter === 'enRetard' ? ' active' : '') + '" onclick="setVaccinFilter(\'enRetard\')">🔴 Agents en retard (' + nbRetard + ')</button>';
+      h += '<button class="filter-btn' + (vaccinFilter === 'aFaire' ? ' active' : '') + '" onclick="setVaccinFilter(\'aFaire\')">🟡 Vaccination à faire (' + nbAFaire + ')</button>';
+      h += '</div>';
+
+      /* Legend */
+      h += '<div style="background:var(--card-bg);border-radius:var(--radius);padding:10px 16px;margin-bottom:12px;font-size:0.82em;box-shadow:var(--shadow);">';
+      h += '<strong>Légende :</strong> ';
+      h += '<span style="color:#00b894;">● À jour</span> — ';
+      h += '<span style="color:#e74c3c;">● En retard (&gt;5 ans sans vaccination)</span> — ';
+      h += '<span style="color:var(--blue);">● Statut inconnu</span> — ';
+      h += 'Jalons : vaccinations dues à 25, 45 et 65 ans (±5 ans)';
+      h += '</div>';
+
+      /* Search */
+      h += '<div class="no-print" style="margin-bottom:16px;"><input type="text" class="search-box" id="vaccinSearchInput" placeholder="Rechercher un agent…" oninput="filterVaccinTable()"></div>';
+
+      /* Stats */
+      h += '<div class="stats no-print">';
+      h += '<div class="stat-card"><div class="stat-value">' + allAgents.length + '</div><div class="stat-label">Total agents</div></div>';
+      h += '<div class="stat-card danger"><div class="stat-value">' + nbRetard + '</div><div class="stat-label">En retard</div></div>';
+      h += '<div class="stat-card"><div class="stat-value">' + nbAFaire + '</div><div class="stat-label">Vacc. à faire</div></div>';
+      h += '</div>';
+
+      /* Table */
+      h += '<div class="table-wrap"><table id="vaccinTable"><thead><tr>';
+      h += '<th style="width:35px">#</th>';
+      h += '<th style="width:35px" class="no-print">🗃️</th>';
+      h += thSort('vaccinDTP', 'nomPrenom', 'NOM Prénom');
+      h += thSort('vaccinDTP', 'centre', 'Centre');
+      h += thSort('vaccinDTP', 'age', 'Âge');
+      h += '<th title="DTP 25 ans" style="width:55px;text-align:center;">DTP 25</th>';
+      h += '<th title="DTP 45 ans" style="width:55px;text-align:center;">DTP 45</th>';
+      h += '<th title="DTP 65 ans" style="width:55px;text-align:center;">DTP 65</th>';
+      h += thSort('vaccinDTP', 'status', 'Statut');
+      h += thSort('vaccinDTP', 'lastDtp', 'Dern. DTP');
+      h += '<th style="min-width:120px;">Commentaire</th>';
+      h += '<th style="width:40px" class="no-print">🧪</th>';
+      h += '</tr></thead><tbody>';
+
+      for (var i = 0; i < list.length; i++) {
+        var x = list[i];
+        var a = x.agent;
+        var sm = esc(a.matricule);
+        var searchStr = (a.nomPrenom + ' ' + a.centrePrincipal).toLowerCase();
+
+        var rowBg = '';
+        if (x.enRetard) rowBg = 'background:#fff5f5;';
+        else if (x.status === 'ok') rowBg = 'background:#f0fff0;';
+
+        h += '<tr class="vaccin-row" data-search="' + esc(searchStr) + '" style="' + rowBg + '">';
+        h += '<td class="row-num">' + (i + 1) + '</td>';
+
+        /* Archive */
+        h += '<td class="no-print" style="text-align:center;"><input type="checkbox" class="archive-cb" onchange="archiveFromVaccin(event,\'' + sm + '\',\'' + esc(a.nomPrenom).replace(/'/g, '\\x27') + '\')" title="Archiver"></td>';
+
+        h += '<td><strong>' + esc(a.nomPrenom) + '</strong></td>';
+        h += '<td>' + esc(a.centrePrincipal || '') + '</td>';
+        h += '<td style="text-align:center;">' + (a.age || '—') + '</td>';
+
+        /* DTP 25/45/65 checkboxes */
+        var milestones = [25, 45, 65];
+        for (var mi = 0; mi < milestones.length; mi++) {
+          var m = milestones[mi];
+          var checked = x.ms['' + m];
+          var applicable = a.age >= m - 1;
+          var overdue = !checked && a.age > m + 5;
+          var cellStyle = overdue ? 'background:#ffe0e0;' : (checked ? 'background:#d4edda;' : '');
+          h += '<td style="text-align:center;' + cellStyle + '">';
+          if (applicable) {
+            h += '<input type="checkbox"' + (checked ? ' checked' : '') + ' onclick="toggleDtpCheck(\'' + sm + '\',' + m + ',this.checked)" style="cursor:pointer;width:16px;height:16px;">';
+          } else {
+            h += '<span style="color:var(--text-light);">—</span>';
+          }
+          h += '</td>';
+        }
+
+        /* Status */
+        var stLabel = x.status === 'ok' ? '<span style="color:#00b894;font-weight:600;">✅ À jour</span>' :
+                      x.status === 'warn' ? '<span style="color:#e74c3c;font-weight:600;">🔴 En retard</span>' :
+                      '<span style="color:var(--blue);">🔵 Inconnu</span>';
+        h += '<td>' + stLabel + '</td>';
+
+        /* Last DTP vaccination (hover for all) */
+        var lastDtpStr = '—';
+        if (x.lastDtpDate) {
+          var dd = new Date(x.lastDtpDate);
+          lastDtpStr = ('0' + dd.getDate()).slice(-2) + '/' + ('0' + (dd.getMonth() + 1)).slice(-2) + '/' + dd.getFullYear();
+        }
+        h += '<td style="cursor:help;" onmouseenter="showVaccinTip(event,\'' + sm + '\',\'dtp\')" onmouseleave="hideTip()">' + lastDtpStr + '</td>';
+
+        /* Comment */
+        var cVal = vaccinComments[a.matricule] || '';
+        h += '<td class="no-print"><input type="text" class="sport-input-sm" value="' + esc(cVal) + '" placeholder="Commentaire…" onchange="saveVaccinComment(\'' + sm + '\',this.value)"></td>';
+
+        /* Biologie shortcut */
+        h += '<td class="no-print" style="text-align:center;"><button class="add-exam-btn" onclick="openAddExam(\'' + sm + '\',\'biologie\')" title="Demande de biologie">🧪</button></td>';
+
+        h += '</tr>';
+      }
+
+      h += '</tbody></table></div>';
+      document.getElementById('app').innerHTML = h;
+    }
+
+    function backToMainFromVaccin() {
+      vaccinViewActive = false;
+      renderMainPage();
+    }
+
+    function filterVaccinTable() {
+      var q = document.getElementById('vaccinSearchInput').value.toLowerCase().trim();
+      var rows = document.querySelectorAll('.vaccin-row');
+      var n = 0;
+      for (var i = 0; i < rows.length; i++) {
+        var d = rows[i].getAttribute('data-search') || '';
+        if (d.indexOf(q) !== -1) { rows[i].style.display = ''; n++; rows[i].querySelector('.row-num').textContent = n; }
+        else rows[i].style.display = 'none';
+      }
+    }
+
+    function archiveFromVaccin(event, matricule, nomPrenom) {
+      var cb = event.target;
+      if (!confirm('Archiver l\x27agent ' + nomPrenom + ' ?')) { cb.checked = false; return; }
+      cb.disabled = true;
+      google.script.run.withSuccessHandler(function () {
+        for (var i = 0; i < allAgents.length; i++) {
+          if (allAgents[i].matricule === matricule) { inactiveAgents.push(allAgents.splice(i, 1)[0]); break; }
+        }
+        buildIndexes(); renderVaccinPage();
+      }).withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); cb.checked = false; cb.disabled = false; }).archiveAgent(matricule, nomPrenom);
+    }
+
+    function showSeroTip(event, matricule) {
+      var seros = serosByMatricule[matricule] || [];
+      var agent = agentsByMatricule[matricule];
+      if (seros.length === 0) return;
+      var now = Date.now();
+      var oneYearAgo = now - 365.25 * 24 * 3600000;
+
+      var h = '<div style="font-weight:700;margin-bottom:8px;">🔬 Sérologies</div>';
+      if (agent) h += '<div style="margin-bottom:6px;font-weight:600;">' + esc(agent.nomPrenom) + '</div>';
+
+      for (var i = 0; i < seros.length; i++) {
+        var s = seros[i];
+        var isOld = s.dateRaw && s.dateRaw < oneYearAgo;
+        h += '<div class="sport-entry">';
+        if (s.date) h += '📅 ' + esc(s.date) + ' — ';
+        h += '<strong>' + esc(s.type) + '</strong> : ' + esc(s.resultat || '—');
+        if (isOld) h += ' <span style="color:var(--primary);">⚠️</span>';
+        h += '</div>';
+      }
+
+      if (seros[0] && seros[0].dateRaw && seros[0].dateRaw < oneYearAgo) {
+        h += '<div style="color:var(--primary);font-weight:600;margin-top:8px;">⚠️ Dernière sérologie de plus d\x27un an</div>';
+      }
+
+      positionTooltip(event, h);
     }
 
     /* ═══════════════════════════════════════════════
@@ -1728,7 +2216,9 @@
       else delete rowColors[matricule];
       saveRowColors();
       document.querySelectorAll('.color-dropdown').forEach(function (m) { m.style.display = 'none'; });
-      if (sportViewActive) renderSportPage(); else renderMainPage();
+      if (vaccinViewActive) renderVaccinPage();
+      else if (sportViewActive) renderSportPage();
+      else renderMainPage();
     }
 
     function loadRowColors() {
@@ -1774,6 +2264,32 @@
     function sortByRevisionDate() {
       sortStates.sport = { key: '_revision', dir: 'asc' };
       renderSportPage();
+    }
+
+    function toggleRevisionFilter() {
+      sportRevisionFilterActive = !sportRevisionFilterActive;
+      renderSportPage();
+    }
+
+    /* ═══════════════════════════════════════════════
+       VACCINATION COMMENTS / DTP CHECKS (localStorage)
+       ═══════════════════════════════════════════════ */
+    function loadVaccinMeta() {
+      try {
+        var c = localStorage.getItem('sdis66_vaccin_comments');
+        if (c) vaccinComments = JSON.parse(c);
+        var d = localStorage.getItem('sdis66_dtp_checks');
+        if (d) dtpChecks = JSON.parse(d);
+      } catch (e) { vaccinComments = {}; dtpChecks = {}; }
+    }
+
+    function saveVaccinComment(matricule, value) {
+      vaccinComments[matricule] = value;
+      try { localStorage.setItem('sdis66_vaccin_comments', JSON.stringify(vaccinComments)); } catch (e) { /* ignore */ }
+    }
+
+    function saveDtpChecks() {
+      try { localStorage.setItem('sdis66_dtp_checks', JSON.stringify(dtpChecks)); } catch (e) { /* ignore */ }
     }
 
     /* ═══════════════════════════════════════════════

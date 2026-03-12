@@ -70,6 +70,7 @@ var CONFIG = {
 
   /* ── Colonnes onglet Sero (0-based) ── */
   COLS_SERO: {
+    DATE:       2,  // C — date de la sérologie
     MATRICULE:  3,  // D
     RESULTAT:   4,  // E
     TYPE:       5   // F — type de sérologie
