@@ -196,6 +196,9 @@
     .exam-pop-actions button { flex: 1; padding: 6px 8px; border-radius: 6px; border: 1.5px solid var(--border); background: white; cursor: pointer; font-size: 0.85em; font-weight: 600; transition: all .2s; }
     .exam-pop-actions .pop-close-btn:hover { background: var(--green); color: white; border-color: var(--green); }
     .exam-pop-actions .pop-delete-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+    .relance-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .relance-row label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.9em; }
+    .relance-date { color: var(--text-light); font-size: 0.86em; }
 
     /* ═══ SORTABLE COLUMNS ═══ */
     .sortable-th { cursor: pointer; user-select: none; }
@@ -248,6 +251,12 @@
     /* ═══ SPORT COMMENT/REVISION ═══ */
     .sport-input-sm { padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 5px; font-size: 0.82em; font-family: inherit; width: 100%; min-width: 90px; }
     .sport-input-sm:focus { outline: none; border-color: var(--primary); }
+    .doc-count-badge { display: inline-flex; align-items: center; gap: 3px; margin-left: 8px; padding: 2px 8px; border-radius: 12px; border: 1.5px solid var(--border); background: #fff; font-size: 0.78em; cursor: help; }
+    .sport-doc-link { display: block; margin: 4px 0; color: var(--blue); text-decoration: none; font-weight: 600; }
+    .sport-doc-link:hover { text-decoration: underline; }
+    .sport-doc-preview { width: 100%; height: 180px; border: 1px solid var(--border); border-radius: 6px; margin-top: 8px; }
+    .see-program-link { color: #6c5ce7; font-weight: 700; cursor: pointer; text-decoration: underline; font-size: 0.84em; }
+    .sport-session-icon { font-size: 1.1em; cursor: help; }
   </style>
 </head>
 
@@ -309,11 +318,22 @@
     </div>
   </div>
 
+  <!-- ═══ MODAL : PROGRAMME SPORT PDF ═══ -->
+  <div class="modal-overlay" id="programModal" style="display:none" onclick="if(event.target===this)closeModal('programModal')">
+    <div class="modal modal-large" style="max-width:1100px;">
+      <div class="modal-header"><h3 id="programModalTitle">📘 Programme</h3><button class="modal-close" onclick="closeModal('programModal')">✕</button></div>
+      <div class="modal-body" style="padding:10px 14px;">
+        <iframe id="programModalFrame" style="width:100%;height:72vh;border:1px solid var(--border);border-radius:8px;"></iframe>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ EXAM POPOVER ═══ -->
   <div class="exam-popover" id="examPopover"></div>
 
   <!-- ═══ GLOBAL TOOLTIP ═══ -->
   <div class="global-tooltip" id="globalTooltip"></div>
+  <input type="file" id="sportDocInput" accept=".pdf,.doc,.docx,.odt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.oasis.opendocument.text" style="display:none" onchange="handleSportDocFileSelected(event)">
 
   <!-- html2pdf.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -347,6 +367,9 @@
     /* ─── Sport comments/revision (localStorage) ─── */
     var sportComments = {};
     var sportRevisions = {};
+    var sportMetaByMatricule = {};
+    var sportProgramCatalog = {};
+    var pendingSportDocMatricule = '';
 
     /* ─── Sport full page state ─── */
     var sportViewActive = false;
@@ -398,6 +421,8 @@
       inactiveAgents = data.inactiveAgents || [];
       vaccinsByMatricule = data.vaccins || {};
       serosByMatricule   = data.seros   || {};
+      sportMetaByMatricule = data.sportMeta || {};
+      sportProgramCatalog = data.sportPrograms || {};
       loadRowColors();
       loadSportMeta();
       loadVaccinMeta();
@@ -686,6 +711,8 @@
       h += '<option value="Cécile"' + (exam.gerePar === 'Cécile' ? ' selected' : '') + '>Cécile</option>';
       h += '<option value="Célia"' + (exam.gerePar === 'Célia' ? ' selected' : '') + '>Célia</option>';
       h += '</select></div>';
+
+      h += renderRelanceSection(exam, null);
 
       h += '<div class="exam-pop-actions">';
       h += '<button class="pop-close-btn" onclick="closeExamFromPop(\'' + esc(exam.id) + '\')">✅ Clôturer</button>';
@@ -1013,6 +1040,44 @@
       return l[type] || type;
     }
 
+    function renderRelanceSection(exam, refreshFnName) {
+      var h = '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">';
+      h += '<strong>Relances :</strong>';
+      for (var i = 1; i <= 3; i++) {
+        var dateKey = 'relance' + i + 'Date';
+        var checked = !!exam[dateKey];
+        h += '<div class="relance-row">';
+        h += '<label><input type="checkbox" ' + (checked ? 'checked ' : '') + 'onchange="toggleExamRelance(\'' + esc(exam.id) + '\',' + i + ',this.checked,' + (refreshFnName ? '\'' + refreshFnName + '\'' : 'null') + ')">Relance ' + i + '</label>';
+        h += '<span class="relance-date">' + (checked ? esc(exam[dateKey]) : '\u2014') + '</span>';
+        h += '</div>';
+      }
+      h += '</div>';
+      return h;
+    }
+
+    function toggleExamRelance(examId, idx, checked, refreshFnName) {
+      for (var i = 0; i < allExamens.length; i++) {
+        if (allExamens[i].id === examId) {
+          var d = checked ? new Date() : null;
+          var dateStr = d ? d.toLocaleDateString('fr-FR') : '';
+          allExamens[i]['relance' + idx + 'Date'] = dateStr;
+          allExamens[i]['relance' + idx + 'Raw'] = d ? d.getTime() : null;
+          break;
+        }
+      }
+
+      google.script.run.withFailureHandler(function (err) {
+        alert('Erreur : ' + (err.message || err));
+      }).setExamRelance(examId, idx, checked);
+
+      buildIndexes();
+      if (refreshFnName && typeof window[refreshFnName] === 'function') {
+        window[refreshFnName]();
+      } else {
+        renderMainPage();
+      }
+    }
+
     function examSortKeyFns() {
       return {
         agent: function (e) { var a = agentsByMatricule[e.matricule]; return a ? a.nomPrenom : e.matricule; },
@@ -1098,6 +1163,7 @@
           h += '<option value="Cécile"' + (e.gerePar === 'Cécile' ? ' selected' : '') + '>Cécile</option>';
           h += '<option value="Célia"' + (e.gerePar === 'Célia' ? ' selected' : '') + '>Célia</option>';
           h += '</select></div>';
+          h += renderRelanceSection(e, refreshFn);
           h += '</div>';
         }
       }
@@ -1134,7 +1200,7 @@
 
     function showSportPage() {
       // Close any open modals
-      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal'].forEach(function (id) {
+      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal', 'programModal'].forEach(function (id) {
         document.getElementById(id).style.display = 'none';
       });
       sportViewActive = true;
@@ -1328,6 +1394,12 @@
       }
       h += '<th style="min-width:120px;">Commentaire</th>';
       h += '<th style="min-width:110px;">Date révision</th>';
+      h += '<th style="min-width:120px;">Suivi en place</th>';
+      h += '<th style="min-width:210px;">Nom de l\'EAP assurant le suivi</th>';
+      h += '<th style="min-width:190px;">Programme</th>';
+      h += '<th style="min-width:120px;">Voir programme</th>';
+      h += '<th style="min-width:90px;">Séances</th>';
+      h += '<th style="min-width:150px;">Documents</th>';
       h += '</tr></thead><tbody>';
 
       for (var i = 0; i < list.length; i++) {
@@ -1341,7 +1413,14 @@
         /* Archive checkbox */
         h += '<td class="no-print" style="text-align:center;"><input type="checkbox" class="archive-cb" onchange="archiveFromSport(event,\'' + esc(a.matricule) + '\',\'' + esc(a.nomPrenom).replace(/'/g, '\\x27') + '\')" title="Archiver"></td>';
 
-        h += '<td><strong>' + esc(a.nomPrenom) + '</strong></td>';
+        var meta = getSportFollowMeta(a.matricule);
+        var docs = meta.documents || [];
+
+        h += '<td><strong>' + esc(a.nomPrenom) + '</strong>';
+        if (docs.length > 0) {
+          h += '<span class="doc-count-badge" onmouseenter="showSportDocsTip(event,\'' + esc(a.matricule) + '\')" onmouseleave="hideTip()">📎 ' + docs.length + '</span>';
+        }
+        h += '</td>';
         h += '<td>' + esc(a.centrePrincipal || '') + '</td>';
 
         /* Test columns */
@@ -1364,12 +1443,201 @@
         var revisionVal = sportRevisions[a.matricule] || '';
         h += '<td class="no-print"><input type="text" class="sport-input-sm" value="' + esc(commentVal) + '" placeholder="Commentaire…" onchange="saveSportComment(\'' + esc(a.matricule) + '\',this.value)"></td>';
         h += '<td class="no-print"><input type="date" class="sport-input-sm" value="' + esc(revisionVal) + '" onchange="saveSportRevision(\'' + esc(a.matricule) + '\',this.value)"></td>';
+        h += '<td class="no-print" style="text-align:center;"><input type="checkbox" class="archive-cb" ' + (meta.suiviEnPlace ? 'checked' : '') + ' onchange="saveSportFollowUpAction(\'' + esc(a.matricule) + '\',this.checked,null,null)"></td>';
+        h += '<td class="no-print"><input type="text" class="sport-input-sm" value="' + esc(meta.nomEap || '') + '" placeholder="Nom EAP…" onchange="saveSportFollowUpAction(\'' + esc(a.matricule) + '\',null,this.value,null)"></td>';
+
+        if (meta.suiviEnPlace) {
+          h += '<td class="no-print"><select class="sport-input-sm" onchange="saveSportFollowUpAction(\'' + esc(a.matricule) + '\',null,null,this.value)">';
+          h += renderProgramOptions(meta.programmeKey || '');
+          h += '</select></td>';
+
+          var p = sportProgramCatalog[meta.programmeKey || ''];
+          if (p) {
+            h += '<td class="no-print" style="text-align:center;"><span class="see-program-link" onclick="openProgramPdf(\'' + esc(meta.programmeKey) + '\')">voir programme</span></td>';
+          } else {
+            h += '<td class="no-print" style="text-align:center;color:var(--text-light);">—</td>';
+          }
+
+          var hasSessions = meta.sessions && meta.sessions.length > 0;
+          h += '<td class="no-print" style="text-align:center;">';
+          if (hasSessions) h += '<span class="sport-session-icon" onmouseenter="showSportSessionsTip(event,\'' + esc(a.matricule) + '\')" onmouseleave="hideTip()">📅</span>';
+          else h += '<span style="color:var(--text-light);">—</span>';
+          h += '</td>';
+        } else {
+          h += '<td class="no-print" style="color:var(--text-light);">—</td>';
+          h += '<td class="no-print" style="color:var(--text-light);text-align:center;">—</td>';
+          h += '<td class="no-print" style="color:var(--text-light);text-align:center;">—</td>';
+        }
+
+        h += '<td class="no-print" style="text-align:center;"><button class="btn btn-outline" style="padding:4px 8px;font-size:0.78em;" onclick="triggerAddSportDocument(\'' + esc(a.matricule) + '\')">Ajouter document</button></td>';
 
         h += '</tr>';
       }
 
       h += '</tbody></table></div>';
       document.getElementById('app').innerHTML = h;
+    }
+
+    function getSportFollowMeta(matricule) {
+      var m = sportMetaByMatricule[matricule] || {};
+      return {
+        suiviEnPlace: !!m.suiviEnPlace,
+        nomEap: m.nomEap || '',
+        programmeKey: m.programmeKey || '',
+        sessions: Array.isArray(m.sessions) ? m.sessions : [],
+        documents: Array.isArray(m.documents) ? m.documents : []
+      };
+    }
+
+    function renderProgramOptions(selectedKey) {
+      var keys = Object.keys(sportProgramCatalog || {});
+      var h = '<option value="">— Choisir un programme —</option>';
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        var p = sportProgramCatalog[k];
+        h += '<option value="' + esc(k) + '"' + (selectedKey === k ? ' selected' : '') + '>' + esc(p.label) + '</option>';
+      }
+      return h;
+    }
+
+    function saveSportFollowUpAction(matricule, suiviVal, eapVal, programVal) {
+      var meta = getSportFollowMeta(matricule);
+      var suivi = (suiviVal === null || suiviVal === undefined) ? meta.suiviEnPlace : !!suiviVal;
+      var eap = (eapVal === null || eapVal === undefined) ? meta.nomEap : (eapVal || '');
+      var programKey = (programVal === null || programVal === undefined) ? meta.programmeKey : (programVal || '');
+
+      if (!suivi) programKey = '';
+
+      if (!sportMetaByMatricule[matricule]) sportMetaByMatricule[matricule] = { documents: [], sessions: [] };
+      sportMetaByMatricule[matricule].suiviEnPlace = suivi;
+      sportMetaByMatricule[matricule].nomEap = eap;
+      sportMetaByMatricule[matricule].programmeKey = programKey;
+      if (programKey && (!sportMetaByMatricule[matricule].sessions || sportMetaByMatricule[matricule].sessions.length === 0)) {
+        sportMetaByMatricule[matricule].sessions = buildDemoSessionsClient(programKey);
+      }
+
+      google.script.run.withFailureHandler(function (err) {
+        alert('Erreur : ' + (err.message || err));
+      }).saveSportFollowUp(matricule, suivi, eap, programKey);
+
+      renderSportPage();
+    }
+
+    function buildDemoSessionsClient(programKey) {
+      var now = new Date().getTime();
+      var d1 = new Date(now - 12 * 24 * 3600000).toLocaleDateString('fr-FR');
+      var d2 = new Date(now - 7 * 24 * 3600000).toLocaleDateString('fr-FR');
+      var d3 = new Date(now - 2 * 24 * 3600000).toLocaleDateString('fr-FR');
+      var byP = {
+        perte_poids: ['Cardio 40 min', 'Circuit renfo léger', 'Récup active + mobilité'],
+        reathletisation: ['Mobilité globale', 'Atelier unilatéral', 'Intervalle progressif'],
+        reprise_genou: ['Proprioception genou', 'Course progressive', 'Renfo quadriceps/ischios'],
+        reprise_accouchement: ['Marche active', 'Gainage doux', 'Renfo global léger'],
+        prevention_epaule: ['Élastiques coiffe', 'Stabilité scapulaire', 'Travail overhead progressif'],
+        prevention_cheville: ['Équilibre unipodal', 'Sauts latéraux', 'Course terrain plat']
+      };
+      var c = byP[programKey] || ['Séance 1', 'Séance 2', 'Séance 3'];
+      return [
+        { date: d1, commentaire: c[0] },
+        { date: d2, commentaire: c[1] },
+        { date: d3, commentaire: c[2] }
+      ];
+    }
+
+    function openProgramPdf(programKey) {
+      var p = sportProgramCatalog[programKey];
+      if (!p) {
+        alert('Programme introuvable.');
+        return;
+      }
+      document.getElementById('programModalTitle').textContent = '📘 ' + p.label;
+      document.getElementById('programModalFrame').src = p.previewUrl;
+      document.getElementById('programModal').style.display = 'flex';
+    }
+
+    function showSportSessionsTip(event, matricule) {
+      var meta = getSportFollowMeta(matricule);
+      var sessions = meta.sessions || [];
+      if (sessions.length === 0) return;
+      var agent = agentsByMatricule[matricule];
+      var h = '<div style="font-weight:700;margin-bottom:8px;">📅 Séances réalisées</div>';
+      if (agent) h += '<div style="margin-bottom:6px;font-weight:600;">' + esc(agent.nomPrenom) + '</div>';
+      for (var i = 0; i < sessions.length; i++) {
+        h += '<div class="sport-entry"><strong>' + esc(sessions[i].date || '') + '</strong> — ' + esc(sessions[i].commentaire || '') + '</div>';
+      }
+      positionTooltip(event, h);
+    }
+
+    function triggerAddSportDocument(matricule) {
+      pendingSportDocMatricule = matricule;
+      var input = document.getElementById('sportDocInput');
+      if (!input) return;
+      input.value = '';
+      input.click();
+    }
+
+    function handleSportDocFileSelected(event) {
+      var file = event.target.files && event.target.files[0];
+      if (!file || !pendingSportDocMatricule) return;
+
+      var validTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.oasis.opendocument.text'
+      ];
+      var nameLower = (file.name || '').toLowerCase();
+      var extOk = /\.(pdf|doc|docx|odt)$/.test(nameLower);
+      if (validTypes.indexOf(file.type) === -1 && !extOk) {
+        alert('Seuls les fichiers PDF/Word sont autorisés.');
+        return;
+      }
+
+      var reader = new FileReader();
+      var matricule = pendingSportDocMatricule;
+      pendingSportDocMatricule = '';
+
+      reader.onload = function (e) {
+        var result = e.target.result || '';
+        var base64 = result.split(',')[1] || '';
+        if (!base64) {
+          alert('Impossible de lire le fichier sélectionné.');
+          return;
+        }
+
+        google.script.run.withSuccessHandler(function (res) {
+          if (!sportMetaByMatricule[matricule]) sportMetaByMatricule[matricule] = { suiviEnPlace: false, nomEap: '', documents: [] };
+          if (!Array.isArray(sportMetaByMatricule[matricule].documents)) sportMetaByMatricule[matricule].documents = [];
+          sportMetaByMatricule[matricule].documents.push(res.document);
+          renderSportPage();
+        }).withFailureHandler(function (err) {
+          alert('Erreur upload : ' + (err.message || err));
+        }).uploadSportDocument(matricule, file.name, file.type, base64);
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    function showSportDocsTip(event, matricule) {
+      var meta = getSportFollowMeta(matricule);
+      var docs = meta.documents || [];
+      if (docs.length === 0) return;
+
+      var agent = agentsByMatricule[matricule];
+      var h = '<div style="font-weight:700;margin-bottom:8px;">📎 Documents de suivi sport (' + docs.length + ')</div>';
+      if (agent) h += '<div style="margin-bottom:6px;font-weight:600;">' + esc(agent.nomPrenom) + '</div>';
+
+      for (var i = 0; i < docs.length; i++) {
+        var d = docs[i];
+        h += '<a class="sport-doc-link" href="' + esc(d.url || '#') + '" target="_blank" rel="noopener">📄 ' + esc(d.name || ('Document ' + (i + 1))) + '</a>';
+      }
+
+      var first = docs[0];
+      if (first && first.previewUrl) {
+        h += '<iframe class="sport-doc-preview" src="' + esc(first.previewUrl) + '"></iframe>';
+      }
+
+      positionTooltip(event, h);
     }
 
     /* ═══════════════════════════════════════════════
@@ -1577,6 +1845,10 @@
        ═══════════════════════════════════════════════ */
     function closeModal(id) {
       document.getElementById(id).style.display = 'none';
+      if (id === 'programModal') {
+        var fr = document.getElementById('programModalFrame');
+        if (fr) fr.src = 'about:blank';
+      }
       if (vaccinViewActive) renderVaccinPage();
       else if (sportViewActive) renderSportPage();
       else renderMainPage();
@@ -1785,7 +2057,7 @@
        VACCINATION FULL PAGE
        ═══════════════════════════════════════════════ */
     function showVaccinPage() {
-      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal'].forEach(function (id) {
+      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal', 'programModal'].forEach(function (id) {
         document.getElementById(id).style.display = 'none';
       });
       vaccinViewActive = true;

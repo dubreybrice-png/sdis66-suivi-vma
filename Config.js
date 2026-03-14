@@ -13,6 +13,7 @@ var CONFIG = {
     CIS_MAILING:  'cis / mailing',
     SPECIALITE:   'données spécialité',
     SPORT:        'Sport',
+    SPORT_META:   'Suivi sport meta',
     EXAMENS:      'Examens',
     INACTIFS:     'Inactifs',
     VACCINS:      'Vaccins',
@@ -56,7 +57,10 @@ var CONFIG = {
     DATE_RESULTAT:  5,  // F
     COMMENTAIRE:    6,  // G
     STATUT:         7,  // H
-    GERE_PAR:       8   // I — Géré par (Cécile/Célia)
+    GERE_PAR:       8,  // I — Géré par (Cécile/Célia)
+    RELANCE_1:      9,  // J — Date relance 1
+    RELANCE_2:      10, // K — Date relance 2
+    RELANCE_3:      11  // L — Date relance 3
   },
 
   /* ── Colonnes onglet Vaccins (0-based) ── */

@@ -36,6 +36,25 @@ function formatDate_(date) {
   return dd + '/' + mm + '/' + date.getFullYear();
 }
 
+/** Retourne/crée le dossier Drive des documents de suivi sport */
+function getSportDocsFolder_() {
+  var props = PropertiesService.getScriptProperties();
+  var folderId = props.getProperty('SPORT_DOCS_FOLDER_ID');
+  if (folderId) {
+    try {
+      return DriveApp.getFolderById(folderId);
+    } catch (e) {
+      // dossier supprimé/inaccessible: on recrée plus bas
+    }
+  }
+
+  var name = 'SDIS66 - Suivi VMA - Documents Sport';
+  var it = DriveApp.getFoldersByName(name);
+  var folder = it.hasNext() ? it.next() : DriveApp.createFolder(name);
+  props.setProperty('SPORT_DOCS_FOLDER_ID', folder.getId());
+  return folder;
+}
+
 /* ═══════════════════════════════════════════════════════
    SPÉCIALITÉS
    ═══════════════════════════════════════════════════════ */
@@ -96,6 +115,468 @@ function getSportData_() {
   });
 
   return map;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SPORT META (SUIVI + EAP + DOCUMENTS)
+   ═══════════════════════════════════════════════════════ */
+
+function getProgramDefinitions_() {
+  return {
+    perte_poids: {
+      label: 'Perte de poids',
+      content:
+        'Programme de perte de poids (progressif, sécurisé)\n\n' +
+        'Objectif général\n' +
+        '- Réduction progressive de la masse grasse\n' +
+        '- Préservation de la masse musculaire\n' +
+        '- Amélioration du souffle et de la tolérance à l\'effort\n\n' +
+        'Semaine type (4 séances)\n' +
+        '1) Cardio zone modérée (45 min)\n' +
+        '2) Renforcement global (45 min)\n' +
+        '3) Cardio fractionné doux (30 min)\n' +
+        '4) Mobilité + gainage (30 min)\n\n' +
+        'Repères nutrition\n' +
+        '- Assiette équilibrée 80% du temps\n' +
+        '- Hydratation 2L/jour\n' +
+        '- Protéines à chaque repas\n\n' +
+        'Précautions\n' +
+        '- Progressivité des charges\n' +
+        '- Arrêt si douleur articulaire anormale\n' +
+        '- Point mensuel EAP'
+    },
+    reathletisation: {
+      label: 'Réathlétisation',
+      content:
+        'Programme de réathlétisation\n\n' +
+        'Phase 1 (2 semaines)\n' +
+        '- Mobilité active et contrôle moteur\n' +
+        '- Endurance fondamentale 20-30 min\n\n' +
+        'Phase 2 (3 semaines)\n' +
+        '- Renforcement fonctionnel\n' +
+        '- Travail unilatéral et gainage\n\n' +
+        'Phase 3 (3 semaines)\n' +
+        '- Reprise d\'intensité\n' +
+        '- Intervalles courts\n' +
+        '- Ateliers opérationnels\n\n' +
+        'Critères de passage\n' +
+        '- Douleur < 2/10\n' +
+        '- Symétrie motrice satisfaisante\n' +
+        '- Validation EAP'
+    },
+    reprise_genou: {
+      label: 'Reprise post blessure genou',
+      content:
+        'Programme de reprise post blessure genou\n\n' +
+        '1) Mobilité\n' +
+        '- Flexion/extension contrôlée\n' +
+        '- Mobilité hanche-cheville\n\n' +
+        '2) Renforcement\n' +
+        '- Chaîne antérieure/postérieure\n' +
+        '- Squat partiel, fente statique\n' +
+        '- Ischio-jambiers et fessiers\n\n' +
+        '3) Proprioception\n' +
+        '- Appuis unipodaux\n' +
+        '- Variations visuelles et surfaces\n\n' +
+        '4) Retour terrain\n' +
+        '- Course progressive\n' +
+        '- Changements de direction\n' +
+        '- Port de charge progressif'
+    },
+    reprise_accouchement: {
+      label: 'Reprise post accouchement',
+      content:
+        'Programme de reprise post accouchement\n\n' +
+        'Pré-requis\n' +
+        '- Feu vert médical\n' +
+        '- Travail respiratoire et périnéal intégré\n\n' +
+        'Étape 1 (2-4 semaines)\n' +
+        '- Marche active\n' +
+        '- Renforcement doux du tronc\n\n' +
+        'Étape 2 (4-6 semaines)\n' +
+        '- Renforcement global progressif\n' +
+        '- Endurance modérée\n\n' +
+        'Étape 3\n' +
+        '- Reprise des impacts progressifs\n' +
+        '- Ateliers métiers adaptés\n\n' +
+        'Surveillance\n' +
+        '- Fatigue\n' +
+        '- Douleurs pelviennes/lombaires\n' +
+        '- Qualité de récupération'
+    },
+    prevention_epaule: {
+      label: 'Prévention blessure épaule',
+      content:
+        'Programme de prévention des blessures de l\'épaule\n\n' +
+        'Échauffement\n' +
+        '- Mobilité scapulo-thoracique\n' +
+        '- Rotations contrôlées\n\n' +
+        'Renforcement\n' +
+        '- Coiffe des rotateurs avec élastique\n' +
+        '- Stabilisateurs omoplates\n' +
+        '- Gainage anti-rotation\n\n' +
+        'Fonctionnel pompier\n' +
+        '- Tirage/port de charge progressif\n' +
+        '- Travail au-dessus de la tête\n\n' +
+        'Fréquence\n' +
+        '- 2 à 3 séances / semaine\n' +
+        '- 20 à 30 minutes'
+    },
+    prevention_cheville: {
+      label: 'Prévention blessure cheville',
+      content:
+        'Programme de prévention des blessures de cheville\n' +
+        '(suite à entorse – reprise progressive)\n\n' +
+        '1. Mobilité de la cheville (échauffement)\n' +
+        'Objectif : récupérer l\'amplitude articulaire et lubrifier l\'articulation.\n\n' +
+        '- Cercles de cheville : 10 cercles dans chaque sens, 2 séries\n' +
+        '- Alphabet avec le pied : 1 alphabet complet, 1 à 2 séries\n' +
+        '- Étirement mollet / tendon d\'Achille au mur : 20 secondes, 3 répétitions\n\n' +
+        '2. Renforcement musculaire\n' +
+        'Objectif : renforcer les muscles stabilisateurs de la cheville.\n\n' +
+        '- Éversion / inversion avec élastique : 12 répétitions, 3 séries\n' +
+        '- Flexion plantaire (montées sur pointe) : 15 répétitions, 3 séries\n' +
+        '- Progression : sur un seul pied\n\n' +
+        '3. Proprioception (clé pour les pompiers)\n' +
+        'Objectif : éviter les récidives sur terrains instables.\n\n' +
+        '- Équilibre sur un pied : 30 secondes, 3 répétitions\n' +
+        '- Progression : yeux fermés puis surface instable\n' +
+        '- Variante pompier : rotation du tronc / lancer de balle\n\n' +
+        '4. Reprise fonctionnelle\n' +
+        '- Petits sauts : 10 sauts, 3 séries\n' +
+        '- Sauts latéraux : 10 répétitions, 3 séries\n' +
+        '- Course légère : 10 à 15 minutes\n\n' +
+        'Conseils spécifiques SP\n' +
+        '- Échauffement systématique\n' +
+        '- Proprioception au moins 2 mois\n' +
+        '- Reprise progressive terrains instables\n' +
+        '- Chevillière si instabilité ressentie\n\n' +
+        'Risque de récidive majoré lors de la course en terrain irrégulier, du port de charge et de la fatigue en intervention.'
+    }
+  };
+}
+
+function buildDemoSessionsForProgram_(programKey) {
+  var now = new Date();
+  var base = now.getTime();
+  var comments = {
+    perte_poids: ['Cardio modéré 40 min', 'Renforcement complet OK', 'Bonne récupération et hydratation'],
+    reathletisation: ['Travail mobilité + gainage', 'Atelier unilatéral validé', 'Progression sans douleur'],
+    reprise_genou: ['Proprioception unipodale', 'Course légère 12 min', 'Aucun gonflement post séance'],
+    reprise_accouchement: ['Marche active + respiration', 'Renforcement tronc doux', 'Fatigue correcte, RAS'],
+    prevention_epaule: ['Coiffe des rotateurs élastique', 'Stabilité scapulaire', 'Mobilité overhead améliorée'],
+    prevention_cheville: ['Équilibre sur coussin', 'Sauts latéraux contrôlés', 'Cheville stable en fin de séance']
+  };
+  var c = comments[programKey] || ['Séance réalisée'];
+  return [
+    { date: formatDate_(new Date(base - 12 * 24 * 3600000)), commentaire: c[0] || 'Séance 1' },
+    { date: formatDate_(new Date(base - 7 * 24 * 3600000)), commentaire: c[1] || 'Séance 2' },
+    { date: formatDate_(new Date(base - 2 * 24 * 3600000)), commentaire: c[2] || 'Séance 3' }
+  ];
+}
+
+function getProgramFolder_() {
+  var root = getSportDocsFolder_();
+  var it = root.getFoldersByName('Programmes Démo');
+  return it.hasNext() ? it.next() : root.createFolder('Programmes Démo');
+}
+
+function ensureProgramCatalog_() {
+  var defs = getProgramDefinitions_();
+  var folder = getProgramFolder_();
+  var props = PropertiesService.getScriptProperties();
+  var map;
+
+  try {
+    map = JSON.parse(props.getProperty('SPORT_PROGRAM_PDF_MAP') || '{}');
+  } catch (e) {
+    map = {};
+  }
+
+  Object.keys(defs).forEach(function (key) {
+    var existingId = map[key];
+    if (existingId) {
+      try {
+        DriveApp.getFileById(existingId);
+        return;
+      } catch (e) {
+        // recréation
+      }
+    }
+
+    var def = defs[key];
+    var doc = DocumentApp.create('Programme - ' + def.label);
+    doc.getBody().setText(def.content);
+    doc.saveAndClose();
+
+    var docFile = DriveApp.getFileById(doc.getId());
+    var pdfBlob = docFile.getAs(MimeType.PDF).setName('Programme - ' + def.label + '.pdf');
+    var pdfFile = folder.createFile(pdfBlob);
+    map[key] = pdfFile.getId();
+
+    // On nettoie le Google Doc temporaire
+    docFile.setTrashed(true);
+  });
+
+  props.setProperty('SPORT_PROGRAM_PDF_MAP', JSON.stringify(map));
+
+  var out = {};
+  Object.keys(defs).forEach(function (key) {
+    var f = DriveApp.getFileById(map[key]);
+    out[key] = {
+      key: key,
+      label: defs[key].label,
+      fileId: f.getId(),
+      url: f.getUrl(),
+      previewUrl: 'https://drive.google.com/file/d/' + f.getId() + '/preview'
+    };
+  });
+  return out;
+}
+
+/** Retourne (et crée si besoin) l'onglet de métadonnées sport */
+function getSportMetaSheet_() {
+  var ss = getSpreadsheet_();
+  var sheet = ss.getSheetByName(CONFIG.SHEETS.SPORT_META);
+  if (!sheet) {
+    sheet = ss.insertSheet(CONFIG.SHEETS.SPORT_META);
+    sheet.getRange(1, 1, 1, 7).setValues([[
+      'Matricule',
+      'Suivi en place',
+      'Nom EAP',
+      'Programme',
+      'Séances JSON',
+      'Documents JSON',
+      'Dernière mise à jour'
+    ]]);
+    sheet.setFrozenRows(1);
+  } else if (sheet.getLastColumn() < 7) {
+    sheet.getRange(1, 1, 1, 7).setValues([[
+      'Matricule',
+      'Suivi en place',
+      'Nom EAP',
+      'Programme',
+      'Séances JSON',
+      'Documents JSON',
+      'Dernière mise à jour'
+    ]]);
+  }
+  return sheet;
+}
+
+/** Retourne { matricule: { suiviEnPlace, nomEap, programmeKey, sessions[], documents[] } } */
+function getSportMetaMap_() {
+  var sheet = getSportMetaSheet_();
+  if (sheet.getLastRow() < 2) return {};
+
+  var data = sheet.getDataRange().getValues().slice(1);
+  var map = {};
+
+  data.forEach(function (row) {
+    var matricule = (row[0] || '').toString().trim();
+    if (!matricule) return;
+
+    var suiviRaw = (row[1] || '').toString().trim().toLowerCase();
+    var suiviEnPlace = (suiviRaw === 'oui' || suiviRaw === 'true' || suiviRaw === '1');
+    var nomEap = (row[2] || '').toString().trim();
+    var programmeKey = (row[3] || '').toString().trim();
+    var sessions = [];
+    var documents = [];
+
+    // Compatibilité ancienne structure (5 colonnes): row[3] = docs
+    var looksLikeOldDocs = false;
+    if (row[3] && !row[4] && !row[5]) {
+      var s = (row[3] || '').toString().trim();
+      looksLikeOldDocs = s.indexOf('[') === 0;
+    }
+
+    if (!looksLikeOldDocs && row[4]) {
+      try {
+        sessions = JSON.parse(row[4]);
+        if (!Array.isArray(sessions)) sessions = [];
+      } catch (e) {
+        sessions = [];
+      }
+    }
+
+    var docsRaw = looksLikeOldDocs ? row[3] : row[5];
+    if (docsRaw) {
+      try {
+        documents = JSON.parse(docsRaw);
+        if (!Array.isArray(documents)) documents = [];
+      } catch (e) {
+        documents = [];
+      }
+    }
+
+    if (programmeKey && sessions.length === 0) {
+      sessions = buildDemoSessionsForProgram_(programmeKey);
+    }
+
+    map[matricule] = {
+      suiviEnPlace: suiviEnPlace,
+      nomEap: nomEap,
+      programmeKey: programmeKey,
+      sessions: sessions,
+      documents: documents
+    };
+  });
+
+  return map;
+}
+
+/** Enregistre le suivi sport (checkbox + nom EAP + programme) */
+function saveSportFollowUp(matricule, suiviEnPlace, nomEap, programmeKey) {
+  matricule = (matricule || '').toString().trim();
+  if (!matricule) throw new Error('Matricule manquant');
+
+  var defs = getProgramDefinitions_();
+  if (programmeKey && !defs[programmeKey]) {
+    throw new Error('Programme inconnu');
+  }
+
+  var sheet = getSportMetaSheet_();
+  var data = sheet.getDataRange().getValues();
+  var rowIndex = -1;
+  var existingSessions = '[]';
+  var existingDocs = '[]';
+  var existingProgram = '';
+
+  for (var i = 1; i < data.length; i++) {
+    if ((data[i][0] || '').toString().trim() === matricule) {
+      rowIndex = i + 1;
+      existingProgram = (data[i][3] || '').toString().trim();
+      existingSessions = data[i][4] || '[]';
+      existingDocs = data[i][5] || '[]';
+      // Compat old 5 cols
+      if (!data[i][5] && data[i][3] && (data[i][3] || '').toString().trim().indexOf('[') === 0) {
+        existingProgram = '';
+        existingSessions = '[]';
+        existingDocs = data[i][3] || '[]';
+      }
+      break;
+    }
+  }
+
+  var finalProgram = (programmeKey !== undefined && programmeKey !== null)
+    ? (programmeKey || '')
+    : existingProgram;
+
+  if (finalProgram && (!existingSessions || existingSessions === '[]')) {
+    existingSessions = JSON.stringify(buildDemoSessionsForProgram_(finalProgram));
+  }
+
+  var values = [
+    matricule,
+    suiviEnPlace ? 'oui' : 'non',
+    (nomEap || '').toString().trim(),
+    finalProgram,
+    existingSessions,
+    existingDocs,
+    new Date()
+  ];
+
+  if (rowIndex > -1) {
+    sheet.getRange(rowIndex, 1, 1, 7).setValues([values]);
+  } else {
+    sheet.appendRow(values);
+  }
+
+  return true;
+}
+
+/** Upload un document sport (PDF/Word) sur Drive et rattache à l'agent */
+function uploadSportDocument(matricule, fileName, mimeType, base64Data) {
+  matricule = (matricule || '').toString().trim();
+  fileName = (fileName || '').toString().trim();
+  mimeType = (mimeType || '').toString().trim();
+  base64Data = (base64Data || '').toString().trim();
+
+  if (!matricule) throw new Error('Matricule manquant');
+  if (!fileName || !base64Data) throw new Error('Fichier invalide');
+
+  var allowed = {
+    'application/pdf': true,
+    'application/msword': true,
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': true,
+    'application/vnd.oasis.opendocument.text': true
+  };
+  var extOk = /\.(pdf|doc|docx|odt)$/i.test(fileName);
+  if (!allowed[mimeType] && !extOk) {
+    throw new Error('Seuls les fichiers PDF/Word sont autorisés');
+  }
+
+  var bytes = Utilities.base64Decode(base64Data);
+  var blob = Utilities.newBlob(bytes, mimeType, fileName);
+  var folder = getSportDocsFolder_();
+  var file = folder.createFile(blob);
+
+  var doc = {
+    id: file.getId(),
+    name: file.getName(),
+    mimeType: file.getMimeType(),
+    url: file.getUrl(),
+    previewUrl: 'https://drive.google.com/file/d/' + file.getId() + '/preview',
+    createdAt: new Date().toISOString()
+  };
+
+  var sheet = getSportMetaSheet_();
+  var data = sheet.getDataRange().getValues();
+  var rowIndex = -1;
+  var suivi = 'non';
+  var nomEap = '';
+  var programmeKey = '';
+  var sessionsJson = '[]';
+  var docs = [];
+
+  for (var i = 1; i < data.length; i++) {
+    if ((data[i][0] || '').toString().trim() === matricule) {
+      rowIndex = i + 1;
+      suivi = (data[i][1] || '').toString().trim().toLowerCase() === 'oui' ? 'oui' : 'non';
+      nomEap = (data[i][2] || '').toString().trim();
+      programmeKey = (data[i][3] || '').toString().trim();
+      sessionsJson = data[i][4] || '[]';
+      var docsRaw = data[i][5];
+      if (!docsRaw && data[i][3] && (data[i][3] || '').toString().trim().indexOf('[') === 0) {
+        // compat ancienne structure
+        docsRaw = data[i][3];
+        programmeKey = '';
+        sessionsJson = '[]';
+      }
+      if (docsRaw) {
+        try {
+          docs = JSON.parse(docsRaw);
+          if (!Array.isArray(docs)) docs = [];
+        } catch (e) {
+          docs = [];
+        }
+      }
+      break;
+    }
+  }
+
+  docs.push(doc);
+
+  if (programmeKey && (!sessionsJson || sessionsJson === '[]')) {
+    sessionsJson = JSON.stringify(buildDemoSessionsForProgram_(programmeKey));
+  }
+
+  var values = [matricule, suivi, nomEap, programmeKey, sessionsJson, JSON.stringify(docs), new Date()];
+  if (rowIndex > -1) {
+    sheet.getRange(rowIndex, 1, 1, 7).setValues([values]);
+  } else {
+    sheet.appendRow(values);
+  }
+
+  return {
+    document: doc,
+    count: docs.length
+  };
+}
+
+/** Retourne le catalogue des programmes avec liens Drive/preview */
+function getSportProgramCatalog() {
+  return ensureProgramCatalog_();
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -195,11 +676,21 @@ function getExamensSheet_() {
   var sheet = ss.getSheetByName(CONFIG.SHEETS.EXAMENS);
   if (!sheet) {
     sheet = ss.insertSheet(CONFIG.SHEETS.EXAMENS);
-    sheet.getRange(1, 1, 1, 9).setValues([[
+    sheet.getRange(1, 1, 1, 12).setValues([[
       'ID', 'Matricule', 'Type', 'Détail examen',
-      'Date demande', 'Date résultat attendu', 'Commentaire', 'Statut', 'Géré par'
+      'Date demande', 'Date résultat attendu', 'Commentaire', 'Statut', 'Géré par',
+      'Relance 1', 'Relance 2', 'Relance 3'
     ]]);
     sheet.setFrozenRows(1);
+  } else {
+    // Garantir la présence des colonnes Relance 1/2/3
+    if (sheet.getLastColumn() < 12) {
+      sheet.getRange(1, 1, 1, 12).setValues([[
+        'ID', 'Matricule', 'Type', 'Détail examen',
+        'Date demande', 'Date résultat attendu', 'Commentaire', 'Statut', 'Géré par',
+        'Relance 1', 'Relance 2', 'Relance 3'
+      ]]);
+    }
   }
   return sheet;
 }
@@ -274,6 +765,9 @@ function getAllExamens() {
 
     var dateDem = row[CONFIG.COLS_EXAMENS.DATE_DEMANDE];
     var dateRes = row[CONFIG.COLS_EXAMENS.DATE_RESULTAT];
+    var rel1 = row[CONFIG.COLS_EXAMENS.RELANCE_1];
+    var rel2 = row[CONFIG.COLS_EXAMENS.RELANCE_2];
+    var rel3 = row[CONFIG.COLS_EXAMENS.RELANCE_3];
     examens.push({
       id:              (row[CONFIG.COLS_EXAMENS.ID] || '').toString(),
       matricule:       (row[CONFIG.COLS_EXAMENS.MATRICULE] || '').toString().trim(),
@@ -285,7 +779,13 @@ function getAllExamens() {
       dateResultatRaw: (dateRes instanceof Date && !isNaN(dateRes.getTime())) ? dateRes.getTime() : null,
       commentaire:     (row[CONFIG.COLS_EXAMENS.COMMENTAIRE] || '').toString().trim(),
       statut:          statut || 'ouvert',
-      gerePar:         (row[CONFIG.COLS_EXAMENS.GERE_PAR] || '').toString().trim()
+      gerePar:         (row[CONFIG.COLS_EXAMENS.GERE_PAR] || '').toString().trim(),
+      relance1Date:    formatDate_(rel1),
+      relance1Raw:     (rel1 instanceof Date && !isNaN(rel1.getTime())) ? rel1.getTime() : null,
+      relance2Date:    formatDate_(rel2),
+      relance2Raw:     (rel2 instanceof Date && !isNaN(rel2.getTime())) ? rel2.getTime() : null,
+      relance3Date:    formatDate_(rel3),
+      relance3Raw:     (rel3 instanceof Date && !isNaN(rel3.getTime())) ? rel3.getTime() : null
     });
   });
 
@@ -312,7 +812,10 @@ function saveExamen(examenData) {
     dateResultat,
     commentaire,
     'ouvert',
-    examenData.gerePar || ''
+    examenData.gerePar || '',
+    '',
+    '',
+    ''
   ]);
 
   return {
@@ -326,7 +829,13 @@ function saveExamen(examenData) {
     dateResultatRaw: dateResultat ? dateResultat.getTime() : null,
     commentaire:     commentaire,
     statut:          'ouvert',
-    gerePar:         (examenData.gerePar || '').toString().trim()
+    gerePar:         (examenData.gerePar || '').toString().trim(),
+    relance1Date:    '',
+    relance1Raw:     null,
+    relance2Date:    '',
+    relance2Raw:     null,
+    relance3Date:    '',
+    relance3Raw:     null
   };
 }
 
@@ -354,6 +863,31 @@ function updateExamGerePar(examId, gerePar) {
     }
   }
   return false;
+}
+
+/** Coche/décoche une relance (1/2/3) pour un examen */
+function setExamRelance(examId, relanceIndex, checked) {
+  var idxMap = {
+    1: CONFIG.COLS_EXAMENS.RELANCE_1,
+    2: CONFIG.COLS_EXAMENS.RELANCE_2,
+    3: CONFIG.COLS_EXAMENS.RELANCE_3
+  };
+  var colIdx = idxMap[relanceIndex];
+  if (colIdx === undefined) throw new Error('Relance invalide');
+
+  var sheet = getExamensSheet_();
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0].toString() === examId) {
+      var value = checked ? new Date() : '';
+      sheet.getRange(i + 1, colIdx + 1).setValue(value);
+      return {
+        ok: true,
+        date: checked ? formatDate_(value) : ''
+      };
+    }
+  }
+  throw new Error('Examen introuvable');
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -528,6 +1062,8 @@ function getPageData() {
   var inactifs  = getInactiveMatricules_();
   var vaccinData = getVaccinData_();
   var seroData   = getSeroData_();
+  var sportMeta  = getSportMetaMap_();
+  var programCatalog = ensureProgramCatalog_();
 
   // Séparer actifs / inactifs et rattacher sport
   var activeAgents   = [];
@@ -548,7 +1084,9 @@ function getPageData() {
     examens:        examens,
     totalAgents:    activeAgents.length,
     vaccins:        vaccinData,
-    seros:          seroData
+    seros:          seroData,
+    sportMeta:      sportMeta,
+    sportPrograms:  programCatalog
   };
 }
 
