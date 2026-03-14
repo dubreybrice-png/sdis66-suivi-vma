@@ -91,10 +91,13 @@
 
     /* ═══ TABLE ═══ */
     .table-wrap { position: relative; background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); overflow-x: auto; }
-    table { width: 100%; border-collapse: separate; border-spacing: 0; }
-    thead { background: var(--secondary); color: #fff; position: sticky; top: var(--header-offset); z-index: 70; }
-    th { padding: 12px 16px; text-align: left; font-weight: 600; font-size: 0.82em; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
-    .table-wrap table thead th { position: static; background: var(--secondary); }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--secondary); color: #fff; }
+    th { padding: 12px 16px; text-align: left; font-weight: 600; font-size: 0.82em; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; background: var(--secondary); }
+    /* Fixed header clone (JS-driven) */
+    .fixed-thead-clone { display:none; position:fixed; z-index:80; overflow:hidden; pointer-events:none; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+    .fixed-thead-clone table { border-collapse:collapse; table-layout:fixed; }
+    .fixed-thead-clone th { padding:12px 16px; text-align:left; font-weight:600; font-size:0.82em; text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; background:var(--secondary); color:#fff; }
     td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.88em; vertical-align: middle; }
     tbody tr:last-child td { border-bottom: none; }
     tbody tr:hover { background: #f8f9fa; }
@@ -662,6 +665,8 @@
       h += '</tbody></table></div>';
 
       document.getElementById('app').innerHTML = h;
+      cleanupFixedHeaders();
+      setupFixedHeader('agentTable');
     }
 
     /* ═══════════════════════════════════════════════
@@ -1505,7 +1510,7 @@
       h += '</div>';
 
       /* Table */
-      h += '<div class="table-wrap sport-table-wrap"><table id="sportTable"><thead><tr>';
+      h += '<div class="table-wrap"><table id="sportTable"><thead><tr>';
       h += '<th style="width:35px">#</th>';
       h += '<th style="width:35px" class="no-print" title="Archiver">🗃️</th>';
       h += thSort('sport', 'nomPrenom', 'NOM Prénom');
@@ -1592,6 +1597,8 @@
 
       h += '</tbody></table></div>';
       document.getElementById('app').innerHTML = h;
+      cleanupFixedHeaders();
+      setupFixedHeader('sportTable');
     }
 
     function getSportFollowMeta(matricule) {
@@ -2449,6 +2456,8 @@
 
       h += '</tbody></table></div>';
       document.getElementById('app').innerHTML = h;
+      cleanupFixedHeaders();
+      setupFixedHeader('vaccinTable');
     }
 
     /* ─── DTP Page ─── */
@@ -2614,6 +2623,8 @@
 
       h += '</tbody></table></div>';
       document.getElementById('app').innerHTML = h;
+      cleanupFixedHeaders();
+      setupFixedHeader('vaccinTable');
     }
 
     function backToMainFromVaccin() {
@@ -2800,6 +2811,71 @@
     function showError(err) {
       var msg = (err && err.message) ? err.message : 'Erreur inconnue';
       document.getElementById('app').innerHTML = '<div class="error-box"><h2>❌ Erreur</h2><p>' + esc(msg) + '</p></div>';
+    }
+
+    /* ═══════════════════════════════════════════════
+       FIXED TABLE HEADERS (JS clone – works with overflow-x)
+       ═══════════════════════════════════════════════ */
+    var _fhItems = [];
+
+    function cleanupFixedHeaders() {
+      for (var i = 0; i < _fhItems.length; i++) {
+        var fh = _fhItems[i];
+        window.removeEventListener('scroll', fh.fn, true);
+        window.removeEventListener('resize', fh.fn);
+        if (fh.wrap) fh.wrap.removeEventListener('scroll', fh.fn);
+        if (fh.el && fh.el.parentNode) fh.el.parentNode.removeChild(fh.el);
+      }
+      _fhItems = [];
+    }
+
+    function setupFixedHeader(tableId) {
+      var table = document.getElementById(tableId);
+      if (!table) return;
+      var thead = table.querySelector('thead');
+      if (!thead) return;
+      var wrap = table.closest('.table-wrap');
+      if (!wrap) return;
+      var hdr = document.querySelector('.header');
+      var topPx = hdr ? hdr.offsetHeight : 58;
+
+      var box = document.createElement('div');
+      box.className = 'fixed-thead-clone';
+      var ct = document.createElement('table');
+      var cth = thead.cloneNode(true);
+      ct.appendChild(cth);
+      box.appendChild(ct);
+      document.body.appendChild(box);
+
+      function update() {
+        if (!table.offsetParent) { box.style.display = 'none'; return; }
+        var thR = thead.getBoundingClientRect();
+        var wR = wrap.getBoundingClientRect();
+        var tblBot = table.getBoundingClientRect().bottom;
+        var show = thR.bottom <= topPx && tblBot > topPx + thR.height;
+        if (!show) { box.style.display = 'none'; return; }
+        var origThs = thead.querySelectorAll('th');
+        var clonThs = cth.querySelectorAll('th');
+        var tw = 0;
+        for (var i = 0; i < origThs.length && i < clonThs.length; i++) {
+          var w = origThs[i].getBoundingClientRect().width;
+          clonThs[i].style.width = w + 'px';
+          clonThs[i].style.minWidth = w + 'px';
+          tw += w;
+        }
+        ct.style.width = tw + 'px';
+        ct.style.marginLeft = (-wrap.scrollLeft) + 'px';
+        box.style.top = topPx + 'px';
+        box.style.left = wR.left + 'px';
+        box.style.width = wR.width + 'px';
+        box.style.display = 'block';
+      }
+
+      window.addEventListener('scroll', update, true);
+      window.addEventListener('resize', update);
+      wrap.addEventListener('scroll', update);
+      _fhItems.push({ el: box, wrap: wrap, fn: update });
+      setTimeout(update, 60);
     }
   </script>
 </body>
