@@ -46,19 +46,13 @@
     .page-title { font-size: 1.5em; font-weight: 700; color: var(--secondary); }
     .page-subtitle { font-size: 0.88em; color: var(--text-light); margin-top: 2px; }
     .sticky-subheader {
-      position: sticky;
-      top: var(--header-offset);
-      z-index: 45;
-      background: linear-gradient(to bottom, rgba(240,242,245,0.98), rgba(240,242,245,0.96));
-      backdrop-filter: blur(6px);
-      margin: 0 -8px 14px;
-      padding: 8px 8px 12px;
-    }
-    .sport-subheader {
       position: static;
       top: auto;
       z-index: auto;
+      background: transparent;
       backdrop-filter: none;
+      margin: 0 -8px 14px;
+      padding: 8px 8px 12px;
     }
     .sticky-subheader .page-header { margin-bottom: 10px; }
     .sticky-subheader .filter-bar { margin-bottom: 10px; }
@@ -103,7 +97,7 @@
     .table-wrap table thead th {
       position: sticky;
       top: var(--header-offset);
-      z-index: 25;
+      z-index: 70;
       background: var(--secondary);
     }
     td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.88em; vertical-align: middle; }
@@ -617,7 +611,7 @@
 
       var h = '';
 
-      h += '<div class="sticky-subheader sport-subheader no-print">';
+      h += '<div class="sticky-subheader no-print">';
       h += '<div class="page-header">';
       h += '<div>';
       h += '<div class="page-title">📋 Suivi VMA — Vue complète</div>';
