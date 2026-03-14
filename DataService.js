@@ -883,6 +883,45 @@ function updateExamGerePar(examId, gerePar) {
   return false;
 }
 
+function updateExamDateResultat(examId, dateResultat) {
+  var sheet = getExamensSheet_();
+  var data = sheet.getDataRange().getValues();
+  var parsedDate = dateResultat ? new Date(dateResultat) : null;
+
+  if (dateResultat && (!(parsedDate instanceof Date) || isNaN(parsedDate.getTime()))) {
+    throw new Error('Date de résultat invalide');
+  }
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0].toString() === examId) {
+      sheet.getRange(i + 1, CONFIG.COLS_EXAMENS.DATE_RESULTAT + 1).setValue(parsedDate || '');
+      return {
+        ok: true,
+        dateResultat: formatDate_(parsedDate),
+        dateResultatRaw: parsedDate ? parsedDate.getTime() : null
+      };
+    }
+  }
+  throw new Error('Examen introuvable');
+}
+
+function updateExamCommentaire(examId, commentaire) {
+  var sheet = getExamensSheet_();
+  var data = sheet.getDataRange().getValues();
+  var value = (commentaire || '').toString().trim();
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0].toString() === examId) {
+      sheet.getRange(i + 1, CONFIG.COLS_EXAMENS.COMMENTAIRE + 1).setValue(value);
+      return {
+        ok: true,
+        commentaire: value
+      };
+    }
+  }
+  throw new Error('Examen introuvable');
+}
+
 /** Coche/décoche une relance (1/2/3) pour un examen */
 function setExamRelance(examId, relanceIndex, checked) {
   var idxMap = {

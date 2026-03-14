@@ -257,6 +257,15 @@
     .sport-doc-preview { width: 100%; height: 180px; border: 1px solid var(--border); border-radius: 6px; margin-top: 8px; }
     .see-program-link { color: #6c5ce7; font-weight: 700; cursor: pointer; text-decoration: underline; font-size: 0.84em; }
     .sport-session-icon { font-size: 1.1em; cursor: help; }
+    .sport-meta-cell { min-width: 360px; }
+    .sport-meta-grid { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+    .sport-meta-inline { display: inline-flex; align-items: center; gap: 6px; }
+    .sport-meta-label { font-size: 0.76em; color: var(--text-light); font-weight: 700; text-transform: uppercase; }
+    .sport-meta-grid .sport-input-sm { min-width: 120px; max-width: 180px; }
+    .sport-meta-grid .btn { padding: 4px 8px; font-size: 0.78em; }
+    .icon-edit-btn { background: none; border: none; cursor: pointer; font-size: 0.95em; margin-left: 6px; color: var(--blue); }
+    .icon-edit-btn:hover { color: var(--primary); }
+    .exam-edit-line { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; flex-wrap: wrap; }
   </style>
 </head>
 
@@ -695,6 +704,23 @@
 
       activePopoverExamId = examId;
       var el = document.getElementById('examPopover');
+      el.setAttribute('data-exam-id', examId);
+      el.setAttribute('data-anchor-left', event.currentTarget.getBoundingClientRect().left);
+      el.setAttribute('data-anchor-bottom', event.currentTarget.getBoundingClientRect().bottom);
+      el.setAttribute('data-anchor-top', event.currentTarget.getBoundingClientRect().top);
+      el.innerHTML = renderExamPopoverContent(exam);
+      el.style.display = 'block';
+      var rect = event.currentTarget.getBoundingClientRect();
+      el.style.top = (rect.bottom + 8) + 'px';
+      el.style.left = Math.max(10, rect.left + rect.width / 2 - 155) + 'px';
+      setTimeout(function () {
+        var r = el.getBoundingClientRect();
+        if (r.bottom > window.innerHeight) el.style.top = Math.max(10, rect.top - r.height - 8) + 'px';
+        if (r.right > window.innerWidth - 10) el.style.left = (window.innerWidth - r.width - 10) + 'px';
+      }, 0);
+    }
+
+    function renderExamPopoverContent(exam) {
       var now = Date.now();
       var isOv = exam.dateResultatRaw && exam.dateResultatRaw < now;
       var icons = { biologie: '🧪', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
@@ -703,8 +729,8 @@
       var h = '<div style="font-weight:700;font-size:1.05em;margin-bottom:8px;">' + (icons[exam.type] || '📋') + ' ' + esc(labels[exam.type] || exam.type) + '</div>';
       if (exam.detail) h += '<div style="margin-bottom:4px;"><strong>Examen :</strong> ' + esc(exam.detail) + '</div>';
       h += '<div style="margin-bottom:4px;"><strong>Demandé le :</strong> ' + esc(exam.dateDemande) + '</div>';
-      h += '<div style="margin-bottom:4px;"><strong>Résultat attendu :</strong> <span style="' + (isOv ? 'color:var(--primary);font-weight:600' : '') + '">' + esc(exam.dateResultat) + (isOv ? ' ⚠️' : '') + '</span></div>';
-      if (exam.commentaire) h += '<div style="margin-bottom:4px;"><strong>Commentaire :</strong> ' + esc(exam.commentaire) + '</div>';
+      h += '<div class="exam-edit-line"><strong>Résultat attendu :</strong> <span style="' + (isOv ? 'color:var(--primary);font-weight:600' : '') + '">' + esc(exam.dateResultat || '—') + (isOv ? ' ⚠️' : '') + '</span><button class="icon-edit-btn" onclick="editExamDateResultat(\'' + esc(exam.id) + '\')" title="Modifier la date">✏️</button></div>';
+      h += '<div class="exam-edit-line"><strong>Commentaire :</strong> <span>' + esc(exam.commentaire || '—') + '</span><button class="icon-edit-btn" onclick="editExamCommentaire(\'' + esc(exam.id) + '\')" title="Modifier le commentaire">✏️</button></div>';
       if (isOv) h += '<div style="color:var(--primary);font-weight:600;margin:6px 0;">⚠️ Résultat en retard</div>';
 
       h += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);"><strong>Géré par :</strong> ';
@@ -721,16 +747,16 @@
       h += '<button class="pop-delete-btn" onclick="deleteExamFromPop(\'' + esc(exam.id) + '\')">🗑️ Supprimer</button>';
       h += '</div>';
 
-      el.innerHTML = h;
-      el.style.display = 'block';
-      var rect = event.currentTarget.getBoundingClientRect();
-      el.style.top = (rect.bottom + 8) + 'px';
-      el.style.left = Math.max(10, rect.left + rect.width / 2 - 155) + 'px';
-      setTimeout(function () {
-        var r = el.getBoundingClientRect();
-        if (r.bottom > window.innerHeight) el.style.top = Math.max(10, rect.top - r.height - 8) + 'px';
-        if (r.right > window.innerWidth - 10) el.style.left = (window.innerWidth - r.width - 10) + 'px';
-      }, 0);
+      return h;
+    }
+
+    function refreshExamPopover(examId) {
+      var el = document.getElementById('examPopover');
+      if (!el || el.style.display !== 'block') return;
+      var exam = null;
+      for (var i = 0; i < allExamens.length; i++) { if (allExamens[i].id === examId) { exam = allExamens[i]; break; } }
+      if (!exam) return;
+      el.innerHTML = renderExamPopoverContent(exam);
     }
 
     function hideExamPopover() {
@@ -761,7 +787,39 @@
         if (allExamens[i].id === examId) { allExamens[i].gerePar = val; break; }
       }
       google.script.run.withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); }).updateExamGerePar(examId, val);
-      hideExamPopover(); buildIndexes(); renderMainPage();
+      buildIndexes(); refreshExamPopover(examId); renderMainPage();
+    }
+
+    function editExamDateResultat(examId) {
+      var exam = null;
+      for (var i = 0; i < allExamens.length; i++) { if (allExamens[i].id === examId) { exam = allExamens[i]; break; } }
+      if (!exam) return;
+      var current = exam.dateResultatRaw ? new Date(exam.dateResultatRaw).toISOString().split('T')[0] : '';
+      var next = prompt('Nouvelle date de résultat attendu (AAAA-MM-JJ) :', current);
+      if (next === null) return;
+      next = next.trim();
+      if (!next) { alert('La date ne peut pas être vide.'); return; }
+      google.script.run.withSuccessHandler(function (res) {
+        exam.dateResultat = res.dateResultat;
+        exam.dateResultatRaw = res.dateResultatRaw;
+        buildIndexes(); refreshExamPopover(examId); renderMainPage();
+      }).withFailureHandler(function (err) {
+        alert('Erreur : ' + (err.message || err));
+      }).updateExamDateResultat(examId, next);
+    }
+
+    function editExamCommentaire(examId) {
+      var exam = null;
+      for (var i = 0; i < allExamens.length; i++) { if (allExamens[i].id === examId) { exam = allExamens[i]; break; } }
+      if (!exam) return;
+      var next = prompt('Nouveau commentaire :', exam.commentaire || '');
+      if (next === null) return;
+      google.script.run.withSuccessHandler(function (res) {
+        exam.commentaire = res.commentaire;
+        buildIndexes(); refreshExamPopover(examId); renderMainPage();
+      }).withFailureHandler(function (err) {
+        alert('Erreur : ' + (err.message || err));
+      }).updateExamCommentaire(examId, next);
     }
 
     document.addEventListener('click', function (e) {
@@ -1400,12 +1458,7 @@
       }
       h += '<th style="min-width:120px;">Commentaire</th>';
       h += '<th style="min-width:110px;">Date révision</th>';
-      h += '<th style="min-width:120px;">Suivi en place</th>';
-      h += '<th style="min-width:210px;">Nom de l\'EAP assurant le suivi</th>';
-      h += '<th style="min-width:190px;">Programme</th>';
-      h += '<th style="min-width:120px;">Voir programme</th>';
-      h += '<th style="min-width:90px;">Séances</th>';
-      h += '<th style="min-width:150px;">Documents</th>';
+      h += '<th style="min-width:360px;">Suivi sport</th>';
       h += '</tr></thead><tbody>';
 
       for (var i = 0; i < list.length; i++) {
@@ -1449,33 +1502,28 @@
         var revisionVal = sportRevisions[a.matricule] || '';
         h += '<td class="no-print"><input type="text" class="sport-input-sm" value="' + esc(commentVal) + '" placeholder="Commentaire…" onchange="saveSportComment(\'' + esc(a.matricule) + '\',this.value)"></td>';
         h += '<td class="no-print"><input type="date" class="sport-input-sm" value="' + esc(revisionVal) + '" onchange="saveSportRevision(\'' + esc(a.matricule) + '\',this.value)"></td>';
-        h += '<td class="no-print" style="text-align:center;"><input type="checkbox" class="archive-cb" ' + (meta.suiviEnPlace ? 'checked' : '') + ' onchange="saveSportFollowUpAction(\'' + esc(a.matricule) + '\',this.checked,null,null)"></td>';
-        h += '<td class="no-print"><input type="text" class="sport-input-sm" value="' + esc(meta.nomEap || '') + '" placeholder="Nom EAP…" onchange="saveSportFollowUpAction(\'' + esc(a.matricule) + '\',null,this.value,null)"></td>';
+        h += '<td class="no-print sport-meta-cell">';
+        h += '<div class="sport-meta-grid">';
+        h += '<span class="sport-meta-inline"><span class="sport-meta-label">Suivi</span><input type="checkbox" class="archive-cb" ' + (meta.suiviEnPlace ? 'checked' : '') + ' onchange="saveSportFollowUpAction(\'' + esc(a.matricule) + '\',this.checked,null,null)"></span>';
+        h += '<input type="text" class="sport-input-sm" value="' + esc(meta.nomEap || '') + '" placeholder="Nom EAP…" onchange="saveSportFollowUpAction(\'' + esc(a.matricule) + '\',null,this.value,null)">';
 
         if (meta.suiviEnPlace) {
-          h += '<td class="no-print"><select class="sport-input-sm" onchange="saveSportFollowUpAction(\'' + esc(a.matricule) + '\',null,null,this.value)">';
+          h += '<select class="sport-input-sm" onchange="saveSportFollowUpAction(\'' + esc(a.matricule) + '\',null,null,this.value)">';
           h += renderProgramOptions(meta.programmeKey || '');
-          h += '</select></td>';
+          h += '</select>';
 
           var p = sportProgramCatalog[meta.programmeKey || ''];
           if (p) {
-            h += '<td class="no-print" style="text-align:center;"><span class="see-program-link" onclick="openProgramPdf(\'' + esc(meta.programmeKey) + '\')">voir programme</span></td>';
-          } else {
-            h += '<td class="no-print" style="text-align:center;color:var(--text-light);">—</td>';
+            h += '<span class="see-program-link" onclick="openProgramPdf(\'' + esc(meta.programmeKey) + '\')">voir programme</span>';
           }
 
           var hasSessions = meta.sessions && meta.sessions.length > 0;
-          h += '<td class="no-print" style="text-align:center;">';
           if (hasSessions) h += '<span class="sport-session-icon" onmouseenter="showSportSessionsTip(event,\'' + esc(a.matricule) + '\')" onmouseleave="hideTip()">📅</span>';
-          else h += '<span style="color:var(--text-light);">—</span>';
-          h += '</td>';
-        } else {
-          h += '<td class="no-print" style="color:var(--text-light);">—</td>';
-          h += '<td class="no-print" style="color:var(--text-light);text-align:center;">—</td>';
-          h += '<td class="no-print" style="color:var(--text-light);text-align:center;">—</td>';
         }
 
-        h += '<td class="no-print" style="text-align:center;"><button class="btn btn-outline" style="padding:4px 8px;font-size:0.78em;" onclick="triggerAddSportDocument(\'' + esc(a.matricule) + '\')">Ajouter document</button></td>';
+        h += '<button class="btn btn-outline" onclick="triggerAddSportDocument(\'' + esc(a.matricule) + '\')">Ajouter document</button>';
+        h += '</div>';
+        h += '</td>';
 
         h += '</tr>';
       }
