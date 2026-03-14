@@ -12,7 +12,6 @@
       --secondary: #1D2951;
       --secondary-light: #2a3a6a;
       --header-offset: 58px;
-      --table-sticky-top: 152px;
       --bg: #f0f2f5;
       --card-bg: #ffffff;
       --text: #2d3436;
@@ -103,53 +102,9 @@
     th:first-child { border-top-left-radius: var(--radius); }
     th:last-child { border-top-right-radius: var(--radius); }
 
-    #agentTable thead th,
-    #sportTable thead th,
-    #vaccinTable thead th {
-      position: sticky;
-      top: var(--table-sticky-top);
-      z-index: 25;
-      background: var(--secondary);
-    }
-
     #agentTable { min-width: 1180px; }
     #sportTable { min-width: 1480px; }
     #vaccinTable { min-width: 1320px; }
-
-    #sportTable th:nth-child(1), #sportTable td:nth-child(1),
-    #sportTable th:nth-child(3), #sportTable td:nth-child(3),
-    #vaccinTable th:nth-child(1), #vaccinTable td:nth-child(1),
-    #vaccinTable th:nth-child(3), #vaccinTable td:nth-child(3) {
-      position: sticky;
-      z-index: 18;
-      background: var(--card-bg);
-    }
-    #sportTable th:nth-child(1), #vaccinTable th:nth-child(1) {
-      left: 0;
-      z-index: 32;
-      background: var(--secondary);
-      box-shadow: 1px 0 0 var(--border);
-    }
-    #sportTable td:nth-child(1), #vaccinTable td:nth-child(1) {
-      left: 0;
-      box-shadow: 1px 0 0 var(--border);
-    }
-    #sportTable th:nth-child(3), #vaccinTable th:nth-child(3) {
-      left: 52px;
-      z-index: 31;
-      background: var(--secondary);
-      box-shadow: 1px 0 0 var(--border), 2px 0 8px rgba(0,0,0,0.04);
-    }
-    #sportTable td:nth-child(3), #vaccinTable td:nth-child(3) {
-      left: 52px;
-      box-shadow: 1px 0 0 var(--border), 2px 0 8px rgba(0,0,0,0.04);
-    }
-    #sportTable tbody tr:hover td:nth-child(1),
-    #sportTable tbody tr:hover td:nth-child(3),
-    #vaccinTable tbody tr:hover td:nth-child(1),
-    #vaccinTable tbody tr:hover td:nth-child(3) {
-      background: #f8f9fa;
-    }
 
     /* ═══ BADGES ═══ */
     .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75em; font-weight: 600; white-space: nowrap; }
@@ -217,9 +172,7 @@
       th, td { padding: 8px 10px; font-size: 0.8em; }
       .stats { gap: 8px; }
       .stat-card { min-width: 110px; padding: 10px 14px; }
-      :root { --header-offset: 78px; --table-sticky-top: 210px; }
-      #sportTable th:nth-child(3), #sportTable td:nth-child(3),
-      #vaccinTable th:nth-child(3), #vaccinTable td:nth-child(3) { left: 42px; }
+      :root { --header-offset: 78px; }
       .sticky-subheader { margin: 0 0 14px; padding: 8px 0 12px; }
     }
 
@@ -635,6 +588,7 @@
       h += '<button onclick="showOverdueExams()" class="btn btn-danger-outline">⚠️ Examens en retard (' + overdueExamCount + ')</button>';
       h += '<button onclick="showVaccinPage()" class="btn btn-info-outline">💉 Suivi vaccination</button>';
       h += '<button onclick="showSportPage()" class="btn btn-green-outline">🏃 Suivi Sport</button>';
+      h += '<button onclick="resetMainFilters()" class="btn btn-outline">🧹 Réinitialiser filtres</button>';
       var ccCls = activePersonFilter === 'Cécile' ? ' person-active' : '';
       var clCls = activePersonFilter === 'Célia'  ? ' person-active' : '';
       h += '<button onclick="togglePersonFilter(\'Cécile\')" class="btn btn-outline' + ccCls + '">👤 Dossier Cécile</button>';
@@ -1465,6 +1419,7 @@
 
       var maxCls = sportFilterPanelOpen ? ' person-active' : '';
       h += '<button onclick="toggleMaxFilterPanel()" class="btn btn-info-outline' + maxCls + '">📊 Filtre max</button>';
+      h += '<button onclick="resetSportFilters()" class="btn btn-outline">🧹 Réinitialiser filtres</button>';
 
       h += '<button onclick="showArchivedAgents()" class="btn btn-inactive">👁️ Archivés (' + inactiveAgents.length + ')</button>';
       h += '<button onclick="sortByRevisionDate()" class="btn btn-outline">📅 Trier par date révision</button>';
@@ -2283,6 +2238,7 @@
       h += '<button onclick="backToMainFromVaccin()" class="btn btn-outline">← Retour</button>';
       h += '<button class="btn btn-primary" style="opacity:1;cursor:default;">Hépatite B</button>';
       h += '<button onclick="setVaccinSubView(\'dtp\')" class="btn btn-outline">DTP</button>';
+      h += '<button onclick="resetVaccinFilters()" class="btn btn-outline">🧹 Réinitialiser filtres</button>';
       h += '<button onclick="showArchivedAgents()" class="btn btn-inactive">👥 Archivés (' + inactiveAgents.length + ')</button>';
       h += '</div></div>';
 
@@ -2430,6 +2386,7 @@
       h += '<button onclick="backToMainFromVaccin()" class="btn btn-outline">← Retour</button>';
       h += '<button onclick="setVaccinSubView(\'hb\')" class="btn btn-outline">Hépatite B</button>';
       h += '<button class="btn btn-primary" style="opacity:1;cursor:default;">DTP</button>';
+      h += '<button onclick="resetVaccinFilters()" class="btn btn-outline">🧹 Réinitialiser filtres</button>';
       h += '<button onclick="showArchivedAgents()" class="btn btn-inactive">👥 Archivés (' + inactiveAgents.length + ')</button>';
       h += '</div></div>';
 
@@ -2670,6 +2627,29 @@
     function toggleRevisionFilter() {
       sportRevisionFilterActive = !sportRevisionFilterActive;
       renderSportPage();
+    }
+
+    function resetMainFilters() {
+      activePersonFilter = null;
+      sortStates.main = {};
+      renderMainPage();
+    }
+
+    function resetSportFilters() {
+      sportFilterICP = false;
+      sportFilterPanelOpen = false;
+      sportFilterMaxActive = false;
+      sportFilterMaxRules = [];
+      sportRevisionFilterActive = false;
+      sortStates.sport = {};
+      renderSportPage();
+    }
+
+    function resetVaccinFilters() {
+      vaccinFilter = 'tous';
+      if (vaccinSubView === 'hb') sortStates.vaccinHB = {};
+      else sortStates.vaccinDTP = {};
+      renderVaccinPage();
     }
 
     /* ═══════════════════════════════════════════════
