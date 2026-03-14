@@ -1397,7 +1397,15 @@
       if (ss && ss.key) {
         var kf = {
           nomPrenom: function (x) { return x.agent.nomPrenom || ''; },
-          centre: function (x) { return x.agent.centrePrincipal || ''; }
+          centre: function (x) { return x.agent.centrePrincipal || ''; },
+          lastIcp: function (x) {
+            var latest = null;
+            for (var j = 0; j < SPORT_TESTS_META.length; j++) {
+              var e = x.byTest[SPORT_TESTS_META[j].key];
+              if (e && e.dateRaw && (!latest || e.dateRaw > latest)) latest = e.dateRaw;
+            }
+            return latest || 0;
+          }
         };
         for (var ti = 0; ti < SPORT_TESTS_META.length; ti++) {
           (function (t) {
@@ -1515,6 +1523,7 @@
       h += '<th style="width:35px" class="no-print" title="Archiver">🗃️</th>';
       h += thSort('sport', 'nomPrenom', 'NOM Prénom');
       h += thSort('sport', 'centre', 'Centre');
+      h += thSort('sport', 'lastIcp', 'Date dernier ICP');
       for (var ci = 0; ci < SPORT_TESTS_META.length; ci++) {
         h += thSort('sport', SPORT_TESTS_META[ci].key, SPORT_TESTS_META[ci].short);
       }
@@ -1543,6 +1552,21 @@
         }
         h += '</td>';
         h += '<td>' + esc(a.centrePrincipal || '') + '</td>';
+
+        /* Date dernier ICP */
+        var latestIcp = null;
+        for (var li = 0; li < SPORT_TESTS_META.length; li++) {
+          var le = x.byTest[SPORT_TESTS_META[li].key];
+          if (le && le.dateRaw && (!latestIcp || le.dateRaw > latestIcp)) latestIcp = le.dateRaw;
+        }
+        if (latestIcp) {
+          var icpOld = latestIcp < oneYearAgo;
+          var dIcp = new Date(latestIcp);
+          var icpStr = ('0' + dIcp.getDate()).slice(-2) + '/' + ('0' + (dIcp.getMonth() + 1)).slice(-2) + '/' + dIcp.getFullYear();
+          h += '<td class="sport-cell' + (icpOld ? ' sport-cell-old' : '') + '" style="white-space:nowrap;">' + icpStr + '</td>';
+        } else {
+          h += '<td class="sport-cell sport-cell-old">—</td>';
+        }
 
         /* Test columns */
         for (var ti2 = 0; ti2 < SPORT_TESTS_META.length; ti2++) {
