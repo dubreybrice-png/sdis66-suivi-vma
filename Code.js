@@ -8,8 +8,10 @@
    ═══════════════════════════════════════════════════════ */
 
 function doGet(e) {
-  var template = HtmlService.createTemplateFromFile('Index');
+  var token = (e && e.parameter && e.parameter.followToken) ? e.parameter.followToken : '';
+  var template = HtmlService.createTemplateFromFile(token ? 'Followup' : 'Index');
   template.baseUrl = ScriptApp.getService().getUrl();
+  template.followToken = token;
 
   return template.evaluate()
     .setTitle('SDIS 66 — Suivi VMA')

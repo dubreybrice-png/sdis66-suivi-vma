@@ -36,6 +36,43 @@ function formatDate_(date) {
   return dd + '/' + mm + '/' + date.getFullYear();
 }
 
+function formatIsoDate_(date) {
+  if (!(date instanceof Date) || isNaN(date.getTime())) return '';
+  var dd = ('0' + date.getDate()).slice(-2);
+  var mm = ('0' + (date.getMonth() + 1)).slice(-2);
+  return date.getFullYear() + '-' + mm + '-' + dd;
+}
+
+function parseAnyDateToIso_(value) {
+  if (!value) return '';
+  if (value instanceof Date && !isNaN(value.getTime())) return formatIsoDate_(value);
+  var s = value.toString().trim();
+  if (!s) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  var m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m) return m[3] + '-' + m[2] + '-' + m[1];
+  var d = new Date(s);
+  if (!isNaN(d.getTime())) return formatIsoDate_(d);
+  return '';
+}
+
+function normalizeSessions_(sessions) {
+  if (!Array.isArray(sessions)) return [];
+  var out = [];
+  for (var i = 0; i < sessions.length; i++) {
+    var iso = parseAnyDateToIso_(sessions[i].dateIso || sessions[i].date);
+    if (!iso) continue;
+    out.push({
+      dateIso: iso,
+      date: formatDate_(new Date(iso + 'T12:00:00')),
+      commentaire: (sessions[i].commentaire || '').toString().trim(),
+      createdAt: sessions[i].createdAt || new Date().toISOString()
+    });
+  }
+  out.sort(function (a, b) { return a.dateIso.localeCompare(b.dateIso); });
+  return out;
+}
+
 /** Retourne/crée le dossier Drive des documents de suivi sport */
 function getSportDocsFolder_() {
   var props = PropertiesService.getScriptProperties();
@@ -268,11 +305,20 @@ function buildDemoSessionsForProgram_(programKey) {
     prevention_cheville: ['Équilibre sur coussin', 'Sauts latéraux contrôlés', 'Cheville stable en fin de séance']
   };
   var c = comments[programKey] || ['Séance réalisée'];
-  return [
-    { date: formatDate_(new Date(base - 12 * 24 * 3600000)), commentaire: c[0] || 'Séance 1' },
-    { date: formatDate_(new Date(base - 7 * 24 * 3600000)), commentaire: c[1] || 'Séance 2' },
-    { date: formatDate_(new Date(base - 2 * 24 * 3600000)), commentaire: c[2] || 'Séance 3' }
-  ];
+  return normalizeSessions_([
+    { dateIso: formatIsoDate_(new Date(base - 28 * 24 * 3600000)), commentaire: c[0] || 'Séance 1' },
+    { dateIso: formatIsoDate_(new Date(base - 11 * 24 * 3600000)), commentaire: c[1] || 'Séance 2' },
+    { dateIso: formatIsoDate_(new Date(base - 3 * 24 * 3600000)), commentaire: c[2] || 'Séance 3' }
+  ]);
+}
+
+function generateFollowToken_() {
+  return Utilities.getUuid().replace(/-/g, '').slice(0, 20);
+}
+
+function makeFollowLink_(token) {
+  var base = ScriptApp.getService().getUrl();
+  return base + '?followToken=' + encodeURIComponent(token);
 }
 
 function getProgramFolder_() {
@@ -340,25 +386,27 @@ function getSportMetaSheet_() {
   var sheet = ss.getSheetByName(CONFIG.SHEETS.SPORT_META);
   if (!sheet) {
     sheet = ss.insertSheet(CONFIG.SHEETS.SPORT_META);
-    sheet.getRange(1, 1, 1, 7).setValues([[
+    sheet.getRange(1, 1, 1, 8).setValues([[
       'Matricule',
       'Suivi en place',
       'Nom EAP',
       'Programme',
       'Séances JSON',
       'Documents JSON',
-      'Dernière mise à jour'
+      'Dernière mise à jour',
+      'Token suivi'
     ]]);
     sheet.setFrozenRows(1);
-  } else if (sheet.getLastColumn() < 7) {
-    sheet.getRange(1, 1, 1, 7).setValues([[
+  } else if (sheet.getLastColumn() < 8) {
+    sheet.getRange(1, 1, 1, 8).setValues([[
       'Matricule',
       'Suivi en place',
       'Nom EAP',
       'Programme',
       'Séances JSON',
       'Documents JSON',
-      'Dernière mise à jour'
+      'Dernière mise à jour',
+      'Token suivi'
     ]]);
   }
   return sheet;
@@ -380,6 +428,7 @@ function getSportMetaMap_() {
     var suiviEnPlace = (suiviRaw === 'oui' || suiviRaw === 'true' || suiviRaw === '1');
     var nomEap = (row[2] || '').toString().trim();
     var programmeKey = (row[3] || '').toString().trim();
+    var followToken = (row[7] || '').toString().trim();
     var sessions = [];
     var documents = [];
 
@@ -393,7 +442,7 @@ function getSportMetaMap_() {
     if (!looksLikeOldDocs && row[4]) {
       try {
         sessions = JSON.parse(row[4]);
-        if (!Array.isArray(sessions)) sessions = [];
+        sessions = normalizeSessions_(sessions);
       } catch (e) {
         sessions = [];
       }
@@ -413,12 +462,18 @@ function getSportMetaMap_() {
       sessions = buildDemoSessionsForProgram_(programmeKey);
     }
 
+    if (!followToken && suiviEnPlace && programmeKey) {
+      followToken = generateFollowToken_();
+    }
+
     map[matricule] = {
       suiviEnPlace: suiviEnPlace,
       nomEap: nomEap,
       programmeKey: programmeKey,
       sessions: sessions,
-      documents: documents
+      documents: documents,
+      followToken: followToken,
+      followLink: followToken ? makeFollowLink_(followToken) : ''
     };
   });
 
@@ -441,6 +496,7 @@ function saveSportFollowUp(matricule, suiviEnPlace, nomEap, programmeKey) {
   var existingSessions = '[]';
   var existingDocs = '[]';
   var existingProgram = '';
+  var existingToken = '';
 
   for (var i = 1; i < data.length; i++) {
     if ((data[i][0] || '').toString().trim() === matricule) {
@@ -448,6 +504,7 @@ function saveSportFollowUp(matricule, suiviEnPlace, nomEap, programmeKey) {
       existingProgram = (data[i][3] || '').toString().trim();
       existingSessions = data[i][4] || '[]';
       existingDocs = data[i][5] || '[]';
+      existingToken = (data[i][7] || '').toString().trim();
       // Compat old 5 cols
       if (!data[i][5] && data[i][3] && (data[i][3] || '').toString().trim().indexOf('[') === 0) {
         existingProgram = '';
@@ -466,6 +523,10 @@ function saveSportFollowUp(matricule, suiviEnPlace, nomEap, programmeKey) {
     existingSessions = JSON.stringify(buildDemoSessionsForProgram_(finalProgram));
   }
 
+  var finalToken = existingToken;
+  if (suiviEnPlace && finalProgram && !finalToken) finalToken = generateFollowToken_();
+  if (!suiviEnPlace) finalToken = '';
+
   var values = [
     matricule,
     suiviEnPlace ? 'oui' : 'non',
@@ -473,11 +534,12 @@ function saveSportFollowUp(matricule, suiviEnPlace, nomEap, programmeKey) {
     finalProgram,
     existingSessions,
     existingDocs,
-    new Date()
+    new Date(),
+    finalToken
   ];
 
   if (rowIndex > -1) {
-    sheet.getRange(rowIndex, 1, 1, 7).setValues([values]);
+    sheet.getRange(rowIndex, 1, 1, 8).setValues([values]);
   } else {
     sheet.appendRow(values);
   }
@@ -528,6 +590,7 @@ function uploadSportDocument(matricule, fileName, mimeType, base64Data) {
   var programmeKey = '';
   var sessionsJson = '[]';
   var docs = [];
+  var followToken = '';
 
   for (var i = 1; i < data.length; i++) {
     if ((data[i][0] || '').toString().trim() === matricule) {
@@ -536,6 +599,7 @@ function uploadSportDocument(matricule, fileName, mimeType, base64Data) {
       nomEap = (data[i][2] || '').toString().trim();
       programmeKey = (data[i][3] || '').toString().trim();
       sessionsJson = data[i][4] || '[]';
+      followToken = (data[i][7] || '').toString().trim();
       var docsRaw = data[i][5];
       if (!docsRaw && data[i][3] && (data[i][3] || '').toString().trim().indexOf('[') === 0) {
         // compat ancienne structure
@@ -561,9 +625,11 @@ function uploadSportDocument(matricule, fileName, mimeType, base64Data) {
     sessionsJson = JSON.stringify(buildDemoSessionsForProgram_(programmeKey));
   }
 
-  var values = [matricule, suivi, nomEap, programmeKey, sessionsJson, JSON.stringify(docs), new Date()];
+  if (suivi === 'oui' && programmeKey && !followToken) followToken = generateFollowToken_();
+
+  var values = [matricule, suivi, nomEap, programmeKey, sessionsJson, JSON.stringify(docs), new Date(), followToken];
   if (rowIndex > -1) {
-    sheet.getRange(rowIndex, 1, 1, 7).setValues([values]);
+    sheet.getRange(rowIndex, 1, 1, 8).setValues([values]);
   } else {
     sheet.appendRow(values);
   }
@@ -595,6 +661,121 @@ function getSportProgramCatalogSafe_() {
     }
     throw e;
   }
+}
+
+function getOrCreateSportFollowLink(matricule) {
+  matricule = (matricule || '').toString().trim();
+  if (!matricule) throw new Error('Matricule manquant');
+
+  var sheet = getSportMetaSheet_();
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if ((data[i][0] || '').toString().trim() === matricule) {
+      var suivi = (data[i][1] || '').toString().trim().toLowerCase() === 'oui';
+      var programKey = (data[i][3] || '').toString().trim();
+      if (!suivi || !programKey) throw new Error('Le suivi et le programme doivent être renseignés');
+      var token = (data[i][7] || '').toString().trim();
+      if (!token) {
+        token = generateFollowToken_();
+        sheet.getRange(i + 1, 8).setValue(token);
+      }
+      return {
+        token: token,
+        url: makeFollowLink_(token)
+      };
+    }
+  }
+  throw new Error('Agent introuvable dans Suivi sport meta');
+}
+
+function getFollowupAgentPageData(followToken) {
+  followToken = (followToken || '').toString().trim();
+  if (!followToken) throw new Error('Lien de suivi invalide');
+
+  var sheet = getSportMetaSheet_();
+  var data = sheet.getDataRange().getValues();
+  var found = null;
+  for (var i = 1; i < data.length; i++) {
+    if ((data[i][7] || '').toString().trim() === followToken) {
+      found = {
+        row: i + 1,
+        matricule: (data[i][0] || '').toString().trim(),
+        suivi: (data[i][1] || '').toString().trim().toLowerCase() === 'oui',
+        nomEap: (data[i][2] || '').toString().trim(),
+        programKey: (data[i][3] || '').toString().trim(),
+        sessionsJson: data[i][4] || '[]'
+      };
+      break;
+    }
+  }
+  if (!found || !found.suivi || !found.programKey) throw new Error('Suivi non disponible pour ce lien');
+
+  var sessions;
+  try {
+    sessions = normalizeSessions_(JSON.parse(found.sessionsJson || '[]'));
+  } catch (e) {
+    sessions = [];
+  }
+
+  var agents = getAllAgents();
+  var agent = null;
+  for (var j = 0; j < agents.length; j++) {
+    if (agents[j].matricule === found.matricule) { agent = agents[j]; break; }
+  }
+
+  var catalog = ensureProgramCatalog_();
+  var prog = catalog[found.programKey];
+  if (!prog) throw new Error('Programme introuvable');
+
+  return {
+    token: followToken,
+    matricule: found.matricule,
+    agentName: agent ? agent.nomPrenom : found.matricule,
+    centre: agent ? (agent.centrePrincipal || '') : '',
+    nomEap: found.nomEap,
+    programKey: found.programKey,
+    programLabel: prog.label,
+    programUrl: prog.url,
+    programPreviewUrl: prog.previewUrl,
+    sessions: sessions
+  };
+}
+
+function logFollowupSession(followToken, dateIso, commentaire) {
+  followToken = (followToken || '').toString().trim();
+  dateIso = (dateIso || '').toString().trim();
+  commentaire = (commentaire || '').toString().trim();
+  if (!followToken) throw new Error('Lien invalide');
+  if (!dateIso || !/^\d{4}-\d{2}-\d{2}$/.test(dateIso)) throw new Error('Date invalide');
+
+  var sheet = getSportMetaSheet_();
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if ((data[i][7] || '').toString().trim() === followToken) {
+      var sessions = [];
+      try {
+        sessions = normalizeSessions_(JSON.parse(data[i][4] || '[]'));
+      } catch (e) {
+        sessions = [];
+      }
+      sessions.push({
+        dateIso: dateIso,
+        date: formatDate_(new Date(dateIso + 'T12:00:00')),
+        commentaire: commentaire,
+        createdAt: new Date().toISOString()
+      });
+      sessions = normalizeSessions_(sessions);
+
+      sheet.getRange(i + 1, 5).setValue(JSON.stringify(sessions));
+      sheet.getRange(i + 1, 7).setValue(new Date());
+
+      return {
+        ok: true,
+        sessions: sessions
+      };
+    }
+  }
+  throw new Error('Lien de suivi introuvable');
 }
 
 /* ═══════════════════════════════════════════════════════
