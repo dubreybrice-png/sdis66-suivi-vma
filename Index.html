@@ -100,6 +100,16 @@
       z-index: 70;
       background: var(--secondary);
     }
+    .table-wrap.sport-table-wrap table { border-collapse: separate; border-spacing: 0; }
+    .table-wrap.sport-table-wrap thead {
+      position: sticky;
+      top: var(--header-offset);
+      z-index: 70;
+    }
+    .table-wrap.sport-table-wrap table thead th {
+      position: static;
+      background: var(--secondary);
+    }
     td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.88em; vertical-align: middle; }
     tbody tr:last-child td { border-bottom: none; }
     tbody tr:hover { background: #f8f9fa; }
@@ -1510,7 +1520,7 @@
       h += '</div>';
 
       /* Table */
-      h += '<div class="table-wrap"><table id="sportTable"><thead><tr>';
+      h += '<div class="table-wrap sport-table-wrap"><table id="sportTable"><thead><tr>';
       h += '<th style="width:35px">#</th>';
       h += '<th style="width:35px" class="no-print" title="Archiver">🗃️</th>';
       h += thSort('sport', 'nomPrenom', 'NOM Prénom');
