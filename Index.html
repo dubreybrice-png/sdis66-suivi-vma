@@ -39,7 +39,7 @@
     .header h1 { font-size: 1.2em; font-weight: 700; letter-spacing: .3px; }
 
     /* ═══ CONTAINER ═══ */
-    .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+    .container { max-width: 100%; margin: 0 auto; padding: 16px 18px; }
 
     /* ═══ PAGE HEADER ═══ */
     .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
@@ -91,25 +91,10 @@
 
     /* ═══ TABLE ═══ */
     .table-wrap { position: relative; background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; }
-    thead { background: var(--secondary); color: #fff; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    thead { background: var(--secondary); color: #fff; position: sticky; top: var(--header-offset); z-index: 70; }
     th { padding: 12px 16px; text-align: left; font-weight: 600; font-size: 0.82em; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
-    .table-wrap table thead th {
-      position: sticky;
-      top: var(--header-offset);
-      z-index: 70;
-      background: var(--secondary);
-    }
-    .table-wrap.sport-table-wrap table { border-collapse: separate; border-spacing: 0; }
-    .table-wrap.sport-table-wrap thead {
-      position: sticky;
-      top: var(--header-offset);
-      z-index: 70;
-    }
-    .table-wrap.sport-table-wrap table thead th {
-      position: static;
-      background: var(--secondary);
-    }
+    .table-wrap table thead th { position: static; background: var(--secondary); }
     td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.88em; vertical-align: middle; }
     tbody tr:last-child td { border-bottom: none; }
     tbody tr:hover { background: #f8f9fa; }
@@ -119,7 +104,7 @@
     th:last-child { border-top-right-radius: var(--radius); }
 
     #agentTable { min-width: 1180px; }
-    #sportTable { min-width: 1480px; }
+    #sportTable { min-width: 1820px; }
     #vaccinTable { min-width: 1320px; }
 
     /* ═══ BADGES ═══ */
@@ -294,7 +279,7 @@
     .sport-doc-preview { width: 100%; height: 180px; border: 1px solid var(--border); border-radius: 6px; margin-top: 8px; }
     .see-program-link { color: #6c5ce7; font-weight: 700; cursor: pointer; text-decoration: underline; font-size: 0.84em; display: inline-block; }
     .sport-session-icon { font-size: 1.1em; cursor: help; }
-    .sport-meta-cell { min-width: 360px; }
+    .sport-meta-cell { min-width: 430px; }
     .sport-meta-grid { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
     .sport-meta-inline { display: inline-flex; align-items: center; gap: 6px; }
     .sport-meta-label { font-size: 0.76em; color: var(--text-light); font-weight: 700; text-transform: uppercase; }

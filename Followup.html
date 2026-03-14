@@ -78,13 +78,15 @@
   </style>
 </head>
 <body>
+  <input id="followTokenServer" type="hidden" value="<?= followToken ?>">
   <div class="header">🏃 SDIS 66 — Suivi individuel sport</div>
   <div class="container" id="app">
     <div class="card">Chargement…</div>
   </div>
 
   <script>
-    var FOLLOW_TOKEN = (new URLSearchParams(window.location.search)).get('followToken') || '';
+    var FOLLOW_TOKEN = (document.getElementById('followTokenServer') && document.getElementById('followTokenServer').value) || '';
+    if (!FOLLOW_TOKEN) FOLLOW_TOKEN = (new URLSearchParams(window.location.search)).get('followToken') || '';
     var pageData = null;
 
     document.addEventListener('DOMContentLoaded', function () {
