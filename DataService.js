@@ -640,6 +640,38 @@ function uploadSportDocument(matricule, fileName, mimeType, base64Data) {
   };
 }
 
+/** Supprime un document sport de Drive et de la feuille méta */
+function deleteSportDocument(matricule, fileId) {
+  matricule = (matricule || '').toString().trim();
+  fileId = (fileId || '').toString().trim();
+  if (!matricule) throw new Error('Matricule manquant');
+  if (!fileId) throw new Error('ID fichier manquant');
+
+  // Supprimer de Drive
+  try {
+    var file = DriveApp.getFileById(fileId);
+    file.setTrashed(true);
+  } catch (e) {
+    // fichier déjà supprimé ou inaccessible – on continue pour nettoyer la méta
+  }
+
+  // Retirer de la feuille méta
+  var sheet = getSportMetaSheet_();
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if ((data[i][0] || '').toString().trim() === matricule) {
+      var docsRaw = data[i][5] || '[]';
+      var docs = [];
+      try { docs = JSON.parse(docsRaw); if (!Array.isArray(docs)) docs = []; } catch (e) { docs = []; }
+      docs = docs.filter(function (d) { return d.id !== fileId; });
+      sheet.getRange(i + 1, 6).setValue(JSON.stringify(docs));
+      break;
+    }
+  }
+
+  return true;
+}
+
 /** Retourne le catalogue des programmes avec liens Drive/preview */
 function getSportProgramCatalog() {
   return ensureProgramCatalog_();
