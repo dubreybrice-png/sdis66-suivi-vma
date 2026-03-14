@@ -29,6 +29,8 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('🏥 Suivi VMA')
     .addItem('📋 Mettre à jour la liste des CIS', 'populateCisMailingSheet')
+    .addSeparator()
+    .addItem('🧰 Initialiser Drive + programmes sport', 'initializeSportProgramResources')
     .addItem('🌐 Ouvrir l\'application web', 'openWebApp')
     .addToUi();
 }
@@ -39,4 +41,14 @@ function openWebApp() {
     '<script>window.open("' + url + '");google.script.host.close();</script>'
   );
   SpreadsheetApp.getUi().showModalDialog(html, 'Ouverture de l\'application…');
+}
+
+function initializeSportProgramResources() {
+  var result = getSportProgramCatalog();
+  var count = Object.keys(result || {}).length;
+  SpreadsheetApp.getUi().alert(
+    'Initialisation terminée',
+    count + ' programme(s) PDF disponible(s) dans Drive.\n\nLa webapp peut maintenant afficher les aperçus PDF.',
+    SpreadsheetApp.getUi().ButtonSet.OK
+  );
 }

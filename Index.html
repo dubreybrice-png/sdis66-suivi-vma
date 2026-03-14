@@ -369,6 +369,7 @@
     var sportRevisions = {};
     var sportMetaByMatricule = {};
     var sportProgramCatalog = {};
+    var sportProgramAuthRequired = false;
     var pendingSportDocMatricule = '';
 
     /* ─── Sport full page state ─── */
@@ -423,6 +424,7 @@
       serosByMatricule   = data.seros   || {};
       sportMetaByMatricule = data.sportMeta || {};
       sportProgramCatalog = data.sportPrograms || {};
+      sportProgramAuthRequired = !!data.sportProgramAuthRequired;
       loadRowColors();
       loadSportMeta();
       loadVaccinMeta();
@@ -1374,6 +1376,10 @@
       }
 
       /* Search */
+      if (sportProgramAuthRequired) {
+        h += '<div class="filter-banner"><span>⚠️ Les aperçus PDF Drive ne sont pas encore initialisés. Depuis le tableur, utilisez le menu <strong>🏥 Suivi VMA → 🧰 Initialiser Drive + programmes sport</strong>, puis réouvrez la webapp.</span></div>';
+      }
+
       h += '<div class="no-print" style="margin-bottom:16px;"><input type="text" class="search-box" id="sportSearchInput" placeholder="Rechercher un agent…" oninput="filterSportTable()"></div>';
 
       /* Stats */

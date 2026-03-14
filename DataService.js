@@ -579,6 +579,24 @@ function getSportProgramCatalog() {
   return ensureProgramCatalog_();
 }
 
+function getSportProgramCatalogSafe_() {
+  try {
+    return {
+      catalog: ensureProgramCatalog_(),
+      authRequired: false
+    };
+  } catch (e) {
+    var msg = (e && e.message) ? e.message : e;
+    if (msg && msg.toString().indexOf('DriveApp') !== -1) {
+      return {
+        catalog: {},
+        authRequired: true
+      };
+    }
+    throw e;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════
    VACCINS
    ═══════════════════════════════════════════════════════ */
@@ -1063,7 +1081,7 @@ function getPageData() {
   var vaccinData = getVaccinData_();
   var seroData   = getSeroData_();
   var sportMeta  = getSportMetaMap_();
-  var programCatalog = ensureProgramCatalog_();
+  var programInfo = getSportProgramCatalogSafe_();
 
   // Séparer actifs / inactifs et rattacher sport
   var activeAgents   = [];
@@ -1086,7 +1104,8 @@ function getPageData() {
     vaccins:        vaccinData,
     seros:          seroData,
     sportMeta:      sportMeta,
-    sportPrograms:  programCatalog
+    sportPrograms:  programInfo.catalog,
+    sportProgramAuthRequired: programInfo.authRequired
   };
 }
 
