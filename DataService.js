@@ -1183,19 +1183,20 @@ function setExamRelance(examId, relanceIndex, checked) {
  */
 function determineVisitType_(agent, specialties) {
   var agentSpe = specialties[agent.nomPrenom];
+  var vp = agent.visitYear ? 'Dernière VMA en ' + agent.visitYear + '. ' : '';
 
   /* ── Règles spécialité ── */
   if (agentSpe && agentSpe.length > 0) {
     for (var i = 0; i < agentSpe.length; i++) {
       var spe = agentSpe[i];
       if (CONFIG.VMA_SPECIALTIES.indexOf(spe) !== -1) {
-        return { type: 'VMA tous les ans', raison: 'Spécialité : ' + spe };
+        return { type: 'VMA tous les ans', raison: vp + 'Spécialité : ' + spe };
       }
       if (spe === 'Grimp' && agent.age >= CONFIG.VMA_GRIMP_AGE) {
-        return { type: 'VMA tous les ans', raison: 'Spécialité : Grimp (≥ ' + CONFIG.VMA_GRIMP_AGE + ' ans)' };
+        return { type: 'VMA tous les ans', raison: vp + 'Spécialité : Grimp (≥ ' + CONFIG.VMA_GRIMP_AGE + ' ans)' };
       }
       if (spe.toLowerCase() === 'diabétique') {
-        return { type: 'VMA tous les ans', raison: 'Spécialité : Diabétique' };
+        return { type: 'VMA tous les ans', raison: vp + 'Spécialité : Diabétique' };
       }
     }
     // Dans données spécialité mais aucune règle VMA matchée
@@ -1213,27 +1214,27 @@ function determineVisitType_(agent, specialties) {
   if (agent.age >= CONFIG.AGE_THRESHOLD) {
     /* ≥ 39 ans : parité année de naissance */
     if (isBirthEven) {
-      return { type: 'Visite médicale biennale', raison: 'Maintien activité ≥ ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
+      return { type: 'Visite médicale biennale', raison: vp + 'Maintien activité ≥ ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
     } else {
-      return { type: 'Visite prévention', raison: 'Maintien activité ≥ ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
+      return { type: 'Visite prévention', raison: vp + 'Maintien activité ≥ ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
     }
   } else if (isSPP) {
     /* SPP < 39 ans : même logique parité que ≥ 39 ans */
     if (isBirthEven) {
-      return { type: 'Visite médicale biennale', raison: 'Maintien activité SPP < ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
+      return { type: 'Visite médicale biennale', raison: vp + 'Maintien activité SPP < ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
     } else {
-      return { type: 'Visite prévention', raison: 'Maintien activité SPP < ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
+      return { type: 'Visite prévention', raison: vp + 'Maintien activité SPP < ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
     }
   } else {
     /* Volontaires < 39 ans */
     if (isBirthEven) {
-      return { type: 'Visite médicale biennale', raison: 'Volontaire de -' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
+      return { type: 'Visite médicale biennale', raison: vp + 'Volontaire de -' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
     } else {
       /* Année impaire : vérifier la règle des 2 ans (doit voir le médecin au moins tous les 2 ans) */
       if (agent.visitYear && agent.visitYear <= CONFIG.REFERENCE_YEAR - 2) {
-        return { type: 'Visite médicale ' + CONFIG.REFERENCE_YEAR, raison: 'Volontaire de -' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + '), dernière visite ' + agent.visitYear + ' (> 2 ans → ' + CONFIG.REFERENCE_YEAR + ')' };
+        return { type: 'Visite médicale ' + CONFIG.REFERENCE_YEAR, raison: vp + 'Volontaire de -' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + '), dernière visite ' + agent.visitYear + ' (> 2 ans → ' + CONFIG.REFERENCE_YEAR + ')' };
       }
-      return { type: 'Visite médicale 2027', raison: 'Volontaire de -' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
+      return { type: 'Visite médicale 2027', raison: vp + 'Volontaire de -' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
     }
   }
 }
