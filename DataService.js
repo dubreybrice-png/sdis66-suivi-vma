@@ -1173,8 +1173,13 @@ function setExamRelance(examId, relanceIndex, checked) {
  * ─── Hors spécialité (ou spécialité sans match VMA) ───
  * 4. ≥ 39 ans, né en année paire                       → Visite médicale biennale
  * 5. ≥ 39 ans, né en année impaire                     → Visite prévention
- * 6. < 39 ans, né en année paire                       → Visite médicale biennale
- * 7. < 39 ans, né en année impaire                     → Visite médicale 2027
+ * ─── SPP < 39 ans (même logique parité que ≥ 39) ─────
+ * 6. SPP < 39 ans, né en année paire                   → Visite médicale biennale
+ * 7. SPP < 39 ans, né en année impaire                 → Visite prévention
+ * ─── Volontaires < 39 ans ─────────────────────────────
+ * 8. < 39 ans, né en année paire                       → Visite médicale biennale
+ * 9. < 39 ans, né en année impaire, visite ≤ 2024      → Visite médicale 2026 (règle 2 ans)
+ * 10.< 39 ans, né en année impaire, visite ≥ 2025      → Visite médicale 2027
  */
 function determineVisitType_(agent, specialties) {
   var agentSpe = specialties[agent.nomPrenom];
@@ -1203,17 +1208,31 @@ function determineVisitType_(agent, specialties) {
 
   var isBirthEven = birthYear % 2 === 0;
   var pariteLabel = isBirthEven ? 'paire' : 'impaire';
+  var isSPP = agent.objetVisite && agent.objetVisite.indexOf('SPP') !== -1;
 
   if (agent.age >= CONFIG.AGE_THRESHOLD) {
+    /* ≥ 39 ans : parité année de naissance */
     if (isBirthEven) {
       return { type: 'Visite médicale biennale', raison: 'Maintien activité ≥ ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
     } else {
       return { type: 'Visite prévention', raison: 'Maintien activité ≥ ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
     }
+  } else if (isSPP) {
+    /* SPP < 39 ans : même logique parité que ≥ 39 ans */
+    if (isBirthEven) {
+      return { type: 'Visite médicale biennale', raison: 'Maintien activité SPP < ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
+    } else {
+      return { type: 'Visite prévention', raison: 'Maintien activité SPP < ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
+    }
   } else {
+    /* Volontaires < 39 ans */
     if (isBirthEven) {
       return { type: 'Visite médicale biennale', raison: 'Volontaire de -' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
     } else {
+      /* Année impaire : vérifier la règle des 2 ans (doit voir le médecin au moins tous les 2 ans) */
+      if (agent.visitYear && agent.visitYear <= CONFIG.REFERENCE_YEAR - 2) {
+        return { type: 'Visite médicale ' + CONFIG.REFERENCE_YEAR, raison: 'Volontaire de -' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + '), dernière visite ' + agent.visitYear + ' (> 2 ans → ' + CONFIG.REFERENCE_YEAR + ')' };
+      }
       return { type: 'Visite médicale 2027', raison: 'Volontaire de -' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
     }
   }

@@ -649,6 +649,29 @@
       if (overdueExamCount > 0) h += '<div class="stat-card danger"><div class="stat-value">' + overdueExamCount + '</div><div class="stat-label">Examens en retard</div></div>';
       h += '</div>';
 
+      /* Legend */
+      h += '<div style="background:var(--card-bg);border-radius:var(--radius);padding:14px 20px;margin-bottom:14px;box-shadow:var(--shadow);font-size:1em;line-height:1.8;">';
+      h += '<div style="font-weight:700;font-size:1.05em;margin-bottom:6px;">📖 Légende</div>';
+      h += '<div><strong>Examens :</strong> ';
+      h += '🧪 Biologie &nbsp; ☢️ Imagerie &nbsp; 🩺 Avis spécialisé &nbsp; 🅰️ Autre &nbsp;|&nbsp; ';
+      h += '<span style="display:inline-flex;align-items:center;gap:3px;"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#d4edda;border:2px solid #00b894;"></span> À jour</span> &nbsp; ';
+      h += '<span style="display:inline-flex;align-items:center;gap:3px;"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#ffe0e0;border:2px solid #e74c3c;"></span> Date de rendu dépassée</span>';
+      h += '</div>';
+      h += '<div><strong>Hépatite B :</strong> ';
+      h += '<span style="color:#00b894;font-weight:600;">● Immunisé</span> &nbsp; ';
+      h += '<span style="color:#e74c3c;font-weight:600;">● Non répondeur</span> &nbsp; ';
+      h += '<span style="color:var(--blue);font-weight:600;">● Statut inconnu</span>';
+      h += '</div>';
+      h += '<div><strong>DTP :</strong> ';
+      h += '<span style="color:#00b894;font-weight:600;">● À jour</span> &nbsp; ';
+      h += '<span style="color:#e74c3c;font-weight:600;">● En retard</span> &nbsp; ';
+      h += '<span style="color:var(--blue);font-weight:600;">● Statut inconnu</span>';
+      h += '</div>';
+      h += '<div><strong>Sport :</strong> 🏃 Épreuve sportive &nbsp;|&nbsp; ';
+      h += '<span style="display:inline-flex;align-items:center;gap:3px;"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;border:3px solid #e74c3c;"></span> ICP &gt; 1 an</span>';
+      h += '</div>';
+      h += '</div>';
+
       h += '<div class="table-wrap" id="tableContainer"><table id="agentTable"><thead><tr>';
       h += '<th style="width:40px">#</th>';
       h += '<th style="width:30px" class="no-print" title="Couleur">🎨</th>';
@@ -657,8 +680,8 @@
       h += thSort('main', 'centre', 'Centre');
       h += thSort('main', 'datePerte', 'Date perte compétence VMA');
       h += thSort('main', 'typeVisite', 'Type de visite');
-      h += '<th style="width:35px" title="Hépatite B"><div>HB</div><div style="font-size:0.6em;font-weight:400;line-height:1.3;text-transform:none;letter-spacing:0;white-space:nowrap;"><span style="color:#55efc4;">●</span> Immunisé<br><span style="color:#ff6b6b;">●</span> Non rép.<br><span style="color:#74b9ff;">●</span> Inconnu</div></th>';
-      h += '<th style="width:35px" title="DTP"><div>DTP</div><div style="font-size:0.6em;font-weight:400;line-height:1.3;text-transform:none;letter-spacing:0;white-space:nowrap;"><span style="color:#55efc4;">●</span> À jour<br><span style="color:#ff6b6b;">●</span> En retard<br><span style="color:#74b9ff;">●</span> Inconnu</div></th>';
+      h += '<th style="width:35px" title="Hépatite B">HB</th>';
+      h += '<th style="width:35px" title="DTP">DTP</th>';
       h += '<th style="width:40px" class="no-print" title="Archiver">🗃️</th>';
       h += '</tr></thead><tbody id="tableBody">';
 
@@ -732,19 +755,19 @@
         var latest = a.sport[0];
         var oneYearAgo = now - (365.25 * 24 * 60 * 60 * 1000);
         var isOld = !latest.dateRaw || latest.dateRaw < oneYearAgo;
-        h += '<span class="sport-icon-ring ' + (isOld ? 'sport-overdue' : 'sport-ok') + '" onmouseenter="showSportTip(event,\'' + sm + '\')" onmouseleave="hideTip()">🏃</span>';
+        h += '<span class="sport-icon-ring ' + (isOld ? 'sport-overdue' : 'sport-ok') + '" onclick="showSportPage()" onmouseenter="showSportTip(event,\'' + sm + '\')" onmouseleave="hideTip()" style="cursor:pointer;">🏃</span>';
       }
       h += (a.datePerteCompetence || '\u2014') + '</td>';
 
       h += '<td>' + badgeHtml(a.typeVisite, a.typeVisiteRaison) + '</td>';
 
-      /* HB icon */
-      h += '<td style="text-align:center;">';
+      /* HB icon — click to go to vaccination HB page */
+      h += '<td style="text-align:center;cursor:pointer;" onclick="goToVaccinView(\'hb\')">';
       h += renderVaccinBadge(a.matricule, 'hb');
       h += '</td>';
 
-      /* DTP icon */
-      h += '<td style="text-align:center;">';
+      /* DTP icon — click to go to vaccination DTP page */
+      h += '<td style="text-align:center;cursor:pointer;" onclick="goToVaccinView(\'dtp\')">';
       h += renderVaccinBadge(a.matricule, 'dtp');
       h += '</td>';
 
@@ -1530,6 +1553,18 @@
         h += renderFilterPanel();
       }
 
+      /* Legend */
+      h += '<div style="background:var(--card-bg);border-radius:var(--radius);padding:14px 20px;margin-bottom:14px;box-shadow:var(--shadow);font-size:1em;line-height:1.8;">';
+      h += '<div style="font-weight:700;font-size:1.05em;margin-bottom:4px;">📖 Légende Sport</div>';
+      h += '<div><strong>Cellules :</strong> ';
+      h += '<span style="display:inline-flex;align-items:center;gap:3px;"><span style="display:inline-block;width:14px;height:14px;background:#fff5f5;border:1px solid #eee;"></span> Épreuve &gt; 1 an (fond rose)</span> &nbsp; ';
+      h += '<span style="display:inline-flex;align-items:center;gap:3px;">— Pas de résultat</span>';
+      h += '</div>';
+      h += '<div><strong>Filtres :</strong> ';
+      h += '⏰ ICP &gt; 1 an = au moins une épreuve de plus d\x27un an &nbsp;|&nbsp; ';
+      h += '📋 Agent à réviser = date de révision dépassée';
+      h += '</div></div>';
+
       /* Search */
       if (sportProgramAuthRequired) {
         h += '<div class="filter-banner"><span>⚠️ Les aperçus PDF Drive ne sont pas encore initialisés. Depuis le tableur, utilisez le menu <strong>🏥 Suivi VMA → 🧰 Initialiser Drive + programmes sport</strong>, puis réouvrez la webapp.</span></div>';
@@ -2250,6 +2285,8 @@
       var manual = dtpChecks[matricule] || {};
       var result = {};
       var milestones = [25, 45, 65];
+
+      /* 1ère passe : vérifier chaque jalon individuellement */
       for (var i = 0; i < milestones.length; i++) {
         var m = milestones[i];
         var key = '' + m;
@@ -2268,6 +2305,20 @@
           result[key] = auto;
         }
       }
+
+      /* 2ème passe : la dernière dose couvre tous les jalons précédents.
+         Ex: dose à 45 ans → jalons 25 ET 45 sont OK, seul 65 reste à faire */
+      for (var i = milestones.length - 1; i >= 0; i--) {
+        if (result['' + milestones[i]]) {
+          for (var k = 0; k < i; k++) {
+            if (manual['' + milestones[k]] === undefined) {
+              result['' + milestones[k]] = true;
+            }
+          }
+          break;
+        }
+      }
+
       return result;
     }
 
@@ -2337,6 +2388,14 @@
       sportViewActive = false;
       vaccinFilter = 'tous';
       renderVaccinPage();
+    }
+
+    function goToVaccinView(sub) {
+      vaccinSubView = sub;
+      vaccinFilter = 'tous';
+      sortStates.vaccinHB = {};
+      sortStates.vaccinDTP = {};
+      showVaccinPage();
     }
 
     function setVaccinSubView(sub) {
@@ -2432,6 +2491,15 @@
       h += '<button onclick="setVaccinSubView(\'dtp\')" class="btn btn-outline">DTP</button>';
       h += '<button onclick="resetVaccinFilters()" class="btn btn-outline">🧹 Réinitialiser filtres</button>';
       h += '<button onclick="showArchivedAgents()" class="btn btn-inactive">👥 Archivés (' + inactiveAgents.length + ')</button>';
+      h += '</div></div>';
+
+      /* Legend */
+      h += '<div style="background:var(--card-bg);border-radius:var(--radius);padding:14px 20px;margin-bottom:14px;box-shadow:var(--shadow);font-size:1em;line-height:1.8;">';
+      h += '<div style="font-weight:700;font-size:1.05em;margin-bottom:4px;">📖 Légende Hépatite B</div>';
+      h += '<div><span style="color:#00b894;font-weight:600;">● Immunisé</span> &nbsp; ';
+      h += '<span style="color:#e74c3c;font-weight:600;">● Non répondeur</span> &nbsp; ';
+      h += '<span style="color:var(--blue);font-weight:600;">● Statut non connu</span> &nbsp;|&nbsp; ';
+      h += '⚠️ Sérologie &gt; 1 an';
       h += '</div></div>';
 
       /* Filters */
@@ -2595,13 +2663,15 @@
       h += '</div>';
 
       /* Legend */
-      h += '<div style="background:var(--card-bg);border-radius:var(--radius);padding:10px 16px;margin-bottom:12px;font-size:0.82em;box-shadow:var(--shadow);">';
-      h += '<strong>Légende :</strong> ';
-      h += '<span style="color:#00b894;">● À jour</span> — ';
-      h += '<span style="color:#e74c3c;">● En retard (&gt;5 ans sans vaccination)</span> — ';
-      h += '<span style="color:var(--blue);">● Statut inconnu</span> — ';
-      h += 'Jalons : vaccinations dues à 25, 45 et 65 ans (±5 ans)';
-      h += '</div>';
+      h += '<div style="background:var(--card-bg);border-radius:var(--radius);padding:14px 20px;margin-bottom:14px;box-shadow:var(--shadow);font-size:1em;line-height:1.8;">';
+      h += '<div style="font-weight:700;font-size:1.05em;margin-bottom:4px;">📖 Légende DTP</div>';
+      h += '<div><span style="color:#00b894;font-weight:600;">● À jour</span> &nbsp; ';
+      h += '<span style="color:#e74c3c;font-weight:600;">● En retard (&gt;5 ans sans vaccination)</span> &nbsp; ';
+      h += '<span style="color:var(--blue);font-weight:600;">● Statut inconnu</span></div>';
+      h += '<div>Jalons : vaccinations dues à <strong>25, 45 et 65 ans</strong> (±5 ans) &nbsp;|&nbsp; ';
+      h += '<span style="display:inline-flex;align-items:center;gap:3px;"><span style="display:inline-block;width:14px;height:14px;background:#d4edda;"></span> Jalon validé</span> &nbsp; ';
+      h += '<span style="display:inline-flex;align-items:center;gap:3px;"><span style="display:inline-block;width:14px;height:14px;background:#ffe0e0;"></span> Jalon manquant</span>';
+      h += '</div></div>';
 
       /* Stats */
       h += '<div class="stats no-print">';
