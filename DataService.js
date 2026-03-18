@@ -1217,6 +1217,21 @@ function determineVisitType_(agent, specialties) {
     return { type: 'Visite médicale renforcée', raison: vp + '45 ans en ' + CONFIG.REFERENCE_YEAR + ' (né en ' + birthYear + ') → visite médicale renforcée' };
   }
 
+  /* ── Agents en retard (Copie retard) : pas de date de dernière visite connue ── */
+  if (agent.isRetard) {
+    if (agent.age < CONFIG.AGE_THRESHOLD) {
+      /* < 39 ans en retard → visite forcément ≤ 2024 → VMA 2026 */
+      return { type: 'Visite médicale ' + CONFIG.REFERENCE_YEAR, raison: 'En retard, < ' + CONFIG.AGE_THRESHOLD + ' ans → visite médicale obligatoire en ' + CONFIG.REFERENCE_YEAR };
+    } else {
+      /* ≥ 39 ans en retard → parité année de naissance */
+      if (isBirthEven) {
+        return { type: 'Visite médicale biennale', raison: 'En retard, ≥ ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
+      } else {
+        return { type: 'Visite prévention', raison: 'En retard, ≥ ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
+      }
+    }
+  }
+
   /* ── Règle universelle : dernière visite ≤ 2024 → visite médicale 2026 ── */
   if (agent.visitYear && agent.visitYear <= CONFIG.REFERENCE_YEAR - 2) {
     return { type: 'Visite médicale ' + CONFIG.REFERENCE_YEAR, raison: vp + 'Dernière visite en ' + agent.visitYear + ' (≥ 2 ans) → visite médicale obligatoire en ' + CONFIG.REFERENCE_YEAR };
@@ -1260,12 +1275,17 @@ function determineVisitType_(agent, specialties) {
 function getAllAgents() {
   var retardData  = getSheetData_(CONFIG.SHEETS.RETARD);
   var aVenirData  = getSheetData_(CONFIG.SHEETS.A_VENIR);
-  var allData     = retardData.concat(aVenirData);
   var specialties = getSpecialties_();
+
+  /* Marquer chaque ligne avec sa source */
+  var allData = [];
+  retardData.forEach(function (row) { allData.push({ row: row, source: 'retard' }); });
+  aVenirData.forEach(function (row) { allData.push({ row: row, source: 'a_venir' }); });
 
   var agentsMap = {};
 
-  allData.forEach(function (row) {
+  allData.forEach(function (item) {
+    var row = item.row;
     var matricule = row[CONFIG.COLS.MATRICULE];
     if (!matricule || matricule.toString().trim() === '') return;
 
@@ -1288,8 +1308,13 @@ function getAllAgents() {
     var birthYear = (dateNaissance instanceof Date && !isNaN(dateNaissance.getTime()))
       ? dateNaissance.getFullYear() : null;
     var perteYear = datePerteCompetence ? datePerteCompetence.getFullYear() : null;
-    var visitYear = (dateVisite instanceof Date && !isNaN(dateVisite.getTime()))
-      ? dateVisite.getFullYear() : null;
+
+    /* Pour "Copie retard", la date est la date de perte de compétence,
+       PAS la dernière visite passée → visitYear = null */
+    var visitYear = null;
+    if (item.source === 'a_venir' && dateVisite instanceof Date && !isNaN(dateVisite.getTime())) {
+      visitYear = dateVisite.getFullYear();
+    }
 
     var agent = {
       age:                    age,
@@ -1304,6 +1329,7 @@ function getAllAgents() {
       birthYear:              birthYear,
       perteYear:              perteYear,
       visitYear:              visitYear,
+      isRetard:               item.source === 'retard',
       typeVisite:             '',
       typeVisiteRaison:       '',
       sport:                  []
