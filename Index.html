@@ -117,6 +117,7 @@
     .badge-prevention { background: #0984e3; color: #fff; }
     .badge-2027       { background: #a29bfe; color: #fff; }
     .badge-renforcee  { background: #e17055; color: #fff; }
+    .badge-2026       { background: #d63031; color: #fff; }
     .badge-default    { background: #dfe6e9; color: #636e72; }
 
     /* ═══ ADD EXAM DROPDOWN ═══ */
@@ -1003,6 +1004,7 @@
       else if (type === 'Visite médicale biennale') cls = 'badge-biennale';
       else if (type === 'Visite prévention') cls = 'badge-prevention';
       else if (type === 'Visite médicale renforcée') cls = 'badge-renforcee';
+      else if (type === 'Visite médicale ' + new Date().getFullYear()) cls = 'badge-2026';
       else if (type === 'Visite médicale 2027') cls = 'badge-2027';
       var h = '<span class="visit-badge-wrap"><span class="badge ' + cls + '">' + esc(type) + '</span>';
       if (raison) h += '<span class="visit-tooltip">' + esc(raison) + '</span>';

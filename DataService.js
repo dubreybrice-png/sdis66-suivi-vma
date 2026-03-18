@@ -1217,6 +1217,11 @@ function determineVisitType_(agent, specialties) {
     return { type: 'Visite médicale renforcée', raison: vp + '45 ans en ' + CONFIG.REFERENCE_YEAR + ' (né en ' + birthYear + ') → visite médicale renforcée' };
   }
 
+  /* ── Règle universelle : dernière visite ≤ 2024 → visite médicale 2026 ── */
+  if (agent.visitYear && agent.visitYear <= CONFIG.REFERENCE_YEAR - 2) {
+    return { type: 'Visite médicale ' + CONFIG.REFERENCE_YEAR, raison: vp + 'Dernière visite en ' + agent.visitYear + ' (≥ 2 ans) → visite médicale obligatoire en ' + CONFIG.REFERENCE_YEAR };
+  }
+
   if (agent.age >= CONFIG.AGE_THRESHOLD) {
     /* ≥ 39 ans : parité année de naissance */
     if (isBirthEven) {
