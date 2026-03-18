@@ -1211,6 +1211,12 @@ function determineVisitType_(agent, specialties) {
   var pariteLabel = isBirthEven ? 'paire' : 'impaire';
   var isSPP = agent.objetVisite && agent.objetVisite.indexOf('SPP') !== -1;
 
+  /* ── 45 ans en année de référence → visite médicale renforcée ── */
+  var ageInRefYear = CONFIG.REFERENCE_YEAR - birthYear;
+  if (ageInRefYear === 45) {
+    return { type: 'Visite médicale renforcée', raison: vp + '45 ans en ' + CONFIG.REFERENCE_YEAR + ' (né en ' + birthYear + ') → visite médicale renforcée' };
+  }
+
   if (agent.age >= CONFIG.AGE_THRESHOLD) {
     /* ≥ 39 ans : parité année de naissance */
     if (isBirthEven) {
