@@ -3143,6 +3143,9 @@
       h += '<span class="bc-icon bc-prescrit" style="width:20px;height:20px;font-size:11px;cursor:default;">🩻</span> Prescrit &nbsp; ';
       h += '<span class="bc-icon bc-recu" style="width:20px;height:20px;font-size:11px;cursor:default;">🩻</span> Reçu &nbsp; ';
       h += '<span class="bc-icon bc-vu" style="width:20px;height:20px;font-size:11px;cursor:default;">🩻</span> Vu par le médecin</div>';
+      h += '<div><strong>Consentement :</strong> ✍️ — ';
+      h += '<span class="bc-icon bc-prescrit" style="width:20px;height:20px;font-size:11px;cursor:default;">✍️</span> Envoyé &nbsp; ';
+      h += '<span class="bc-icon bc-vu" style="width:20px;height:20px;font-size:11px;cursor:default;">✍️</span> Reçu</div>';
       h += '<div><strong>ECBU :</strong> 🧪 — mêmes statuts. <span style="color:#e74c3c;font-weight:600;">● Rouge clignotant</span> = en retard (&gt; 6 mois depuis dernier vu)</div>';
       h += '</div>';
 
@@ -3151,12 +3154,15 @@
 
       h += '<div class="table-wrap" id="bruleurTableContainer"><table id="bruleurTable"><thead><tr>';
       h += '<th style="width:40px">#</th>';
+      h += '<th style="width:40px" class="no-print"></th>';
       h += thSort('bruleur', 'nomPrenom', 'NOM Prénom');
       h += thSort('bruleur', 'centre', 'Centre');
       h += thSort('bruleur', 'specialite', 'Spécialité');
       h += '<th style="width:120px;text-align:center;">Expo &gt; 20 ans</th>';
+      h += '<th style="width:100px;text-align:center;">Consentement</th>';
       h += '<th style="width:90px;text-align:center;">Scanner</th>';
       h += '<th style="min-width:250px;">ECBU (tous les 6 mois)</th>';
+      h += '<th style="min-width:140px;" class="no-print">Commentaire</th>';
       h += '</tr></thead><tbody>';
 
       for (var i = 0; i < agents.length; i++) {
@@ -3171,7 +3177,7 @@
 
     function renderBruleurRow(a, idx) {
       var sm = esc(a.matricule);
-      var bd = bruleurDataByMatricule[a.matricule] || { exposition: false, scanner: { statut: '', date: '' }, ecbus: [] };
+      var bd = bruleurDataByMatricule[a.matricule] || { exposition: false, scanner: { statut: '', date: '' }, consentement: '', ecbus: [] };
       var now = Date.now();
       var speList = (a.specialites || []).filter(function (s) { return s === 'Bruleur' || s === 'caisson'; });
       var searchStr = (a.nomPrenom + ' ' + a.centrePrincipal).toLowerCase();
@@ -3209,6 +3215,15 @@
 
       /* Checkbox exposition > 20 ans */
       h += '<td style="text-align:center;"><input type="checkbox"' + (bd.exposition ? ' checked' : '') + ' onchange="toggleBruleurExpo(\'' + sm + '\',this.checked)" style="width:18px;height:18px;cursor:pointer;accent-color:var(--primary);"></td>';
+
+      /* Consentement — only show if exposition is active */
+      h += '<td style="text-align:center;">';
+      if (bd.exposition) {
+        h += renderConsentementIcon(sm, bd.consentement || '');
+      } else {
+        h += '<span style="color:var(--text-light);">\u2014</span>';
+      }
+      h += '</td>';
 
       /* Scanner — only show if exposition is active */
       h += '<td style="text-align:center;">';
@@ -3252,6 +3267,25 @@
       h += '<button onclick="event.stopPropagation();setScannerStatus(\'' + esc(matricule) + '\',\'recu\')">📩 Reçu</button>';
       h += '<button onclick="event.stopPropagation();setScannerStatus(\'' + esc(matricule) + '\',\'vu\')">✅ Vu par le médecin</button>';
       if (statut) h += '<button onclick="event.stopPropagation();setScannerStatus(\'' + esc(matricule) + '\',\'\')" style="color:var(--primary);">✕ Retirer</button>';
+      h += '</div>';
+      if (statut) h += '<div style="font-size:0.72em;color:var(--text-light);margin-top:2px;">' + label + '</div>';
+      h += '</span>';
+      return h;
+    }
+
+    /* ─── Consentement icon with dropdown ─── */
+    function renderConsentementIcon(matricule, statut) {
+      var cls = 'bc-icon';
+      if (statut === 'envoye') cls += ' bc-prescrit';
+      else if (statut === 'recu') cls += ' bc-vu';
+
+      var label = statut === 'envoye' ? 'Envoy\u00e9' : (statut === 'recu' ? 'Re\u00e7u' : '\u2014');
+      var h = '<span class="bc-status-wrap">';
+      h += '<span class="' + cls + '" onclick="toggleBcDropdown(event,\'cons-' + esc(matricule) + '\')" title="Consentement: ' + label + '">\u270D\uFE0F</span>';
+      h += '<div class="bc-dropdown" id="cons-' + esc(matricule) + '">';
+      h += '<button onclick="event.stopPropagation();setConsentementStatus(\'' + esc(matricule) + '\',\'envoye\')">📨 Envoy\u00e9</button>';
+      h += '<button onclick="event.stopPropagation();setConsentementStatus(\'' + esc(matricule) + '\',\'recu\')">✅ Re\u00e7u</button>';
+      if (statut) h += '<button onclick="event.stopPropagation();setConsentementStatus(\'' + esc(matricule) + '\',\'\')" style="color:var(--primary);">✕ Retirer</button>';
       h += '</div>';
       if (statut) h += '<div style="font-size:0.72em;color:var(--text-light);margin-top:2px;">' + label + '</div>';
       h += '</span>';
@@ -3331,23 +3365,30 @@
 
     /* ─── Actions ─── */
     function toggleBruleurExpo(matricule, checked) {
-      bruleurDataByMatricule[matricule] = bruleurDataByMatricule[matricule] || { exposition: false, scanner: { statut: '', date: '' }, ecbus: [] };
+      bruleurDataByMatricule[matricule] = bruleurDataByMatricule[matricule] || { exposition: false, scanner: { statut: '', date: '' }, consentement: '', ecbus: [] };
       bruleurDataByMatricule[matricule].exposition = checked;
       google.script.run.withFailureHandler(function (e) { alert('Erreur: ' + e.message); }).saveBruleurExposition(matricule, checked);
       renderBruleurPage();
     }
 
     function setScannerStatus(matricule, statut) {
-      bruleurDataByMatricule[matricule] = bruleurDataByMatricule[matricule] || { exposition: false, scanner: { statut: '', date: '' }, ecbus: [] };
+      bruleurDataByMatricule[matricule] = bruleurDataByMatricule[matricule] || { exposition: false, scanner: { statut: '', date: '' }, consentement: '', ecbus: [] };
       bruleurDataByMatricule[matricule].scanner.statut = statut;
       google.script.run.withFailureHandler(function (e) { alert('Erreur: ' + e.message); }).saveScannerStatus(matricule, statut);
+      renderBruleurPage();
+    }
+
+    function setConsentementStatus(matricule, statut) {
+      bruleurDataByMatricule[matricule] = bruleurDataByMatricule[matricule] || { exposition: false, scanner: { statut: '', date: '' }, consentement: '', ecbus: [] };
+      bruleurDataByMatricule[matricule].consentement = statut;
+      google.script.run.withFailureHandler(function (e) { alert('Erreur: ' + e.message); }).saveConsentementStatus(matricule, statut);
       renderBruleurPage();
     }
 
     function addNewEcbu(matricule) {
       var dateStr = prompt('Date de l\'ECBU (JJ/MM/AAAA) :', formatDateFrFromObj(new Date()));
       if (!dateStr) return;
-      bruleurDataByMatricule[matricule] = bruleurDataByMatricule[matricule] || { exposition: false, scanner: { statut: '', date: '' }, ecbus: [] };
+      bruleurDataByMatricule[matricule] = bruleurDataByMatricule[matricule] || { exposition: false, scanner: { statut: '', date: '' }, consentement: '', ecbus: [] };
       google.script.run
         .withSuccessHandler(function (ecbus) {
           bruleurDataByMatricule[matricule].ecbus = ecbus;
@@ -3360,7 +3401,7 @@
     function updateEcbuStatus(matricule, ecbuId, statut) {
       google.script.run
         .withSuccessHandler(function (ecbus) {
-          bruleurDataByMatricule[matricule] = bruleurDataByMatricule[matricule] || { exposition: false, scanner: { statut: '', date: '' }, ecbus: [] };
+          bruleurDataByMatricule[matricule] = bruleurDataByMatricule[matricule] || { exposition: false, scanner: { statut: '', date: '' }, consentement: '', ecbus: [] };
           bruleurDataByMatricule[matricule].ecbus = ecbus;
           renderBruleurPage();
         })
@@ -3372,7 +3413,7 @@
       if (!confirm('Supprimer cet ECBU ?')) return;
       google.script.run
         .withSuccessHandler(function (ecbus) {
-          bruleurDataByMatricule[matricule] = bruleurDataByMatricule[matricule] || { exposition: false, scanner: { statut: '', date: '' }, ecbus: [] };
+          bruleurDataByMatricule[matricule] = bruleurDataByMatricule[matricule] || { exposition: false, scanner: { statut: '', date: '' }, consentement: '', ecbus: [] };
           bruleurDataByMatricule[matricule].ecbus = ecbus;
           renderBruleurPage();
         })
@@ -3385,7 +3426,7 @@
       if (!newDate || newDate === currentDate) return;
       google.script.run
         .withSuccessHandler(function (ecbus) {
-          bruleurDataByMatricule[matricule] = bruleurDataByMatricule[matricule] || { exposition: false, scanner: { statut: '', date: '' }, ecbus: [] };
+          bruleurDataByMatricule[matricule] = bruleurDataByMatricule[matricule] || { exposition: false, scanner: { statut: '', date: '' }, consentement: '', ecbus: [] };
           bruleurDataByMatricule[matricule].ecbus = ecbus;
           renderBruleurPage();
         })

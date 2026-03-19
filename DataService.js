@@ -1460,8 +1460,8 @@ function getBruleurSheet_() {
   var sheet = ss.getSheetByName(CONFIG.SHEETS.BRULEUR);
   if (!sheet) {
     sheet = ss.insertSheet(CONFIG.SHEETS.BRULEUR);
-    sheet.getRange(1, 1, 1, 5).setValues([[
-      'Matricule', 'Exposition>20ans', 'Scanner Statut', 'Scanner Date', 'ECBU JSON'
+    sheet.getRange(1, 1, 1, 6).setValues([[
+      'Matricule', 'Exposition>20ans', 'Scanner Statut', 'Scanner Date', 'ECBU JSON', 'Consentement'
     ]]);
     sheet.setFrozenRows(1);
   }
@@ -1486,6 +1486,7 @@ function getBruleurCaissonData_() {
     var scannerStatut = (row[2] || '').toString().trim();
     var scannerDate = row[3];
     var ecbuJson = (row[4] || '').toString().trim();
+    var consentement = (row[5] || '').toString().trim();
 
     var ecbus = [];
     if (ecbuJson) {
@@ -1498,6 +1499,7 @@ function getBruleurCaissonData_() {
         statut: scannerStatut || '',
         date: (scannerDate instanceof Date && !isNaN(scannerDate.getTime())) ? formatDate_(scannerDate) : (scannerDate || '').toString().trim()
       },
+      consentement: consentement || '',
       ecbus: ecbus
     };
   });
@@ -1519,7 +1521,7 @@ function saveBruleurExposition(matricule, exposition) {
   }
 
   if (rowIndex === -1) {
-    sheet.appendRow([matricule, exposition ? 'oui' : '', '', '', '[]']);
+    sheet.appendRow([matricule, exposition ? 'oui' : '', '', '', '[]', '']);
   } else {
     sheet.getRange(rowIndex, 2).setValue(exposition ? 'oui' : '');
     // Si on décoche, on ne supprime pas les données existantes
@@ -1544,7 +1546,7 @@ function saveScannerStatus(matricule, statut) {
 
   var now = statut ? formatDate_(new Date()) : '';
   if (rowIndex === -1) {
-    sheet.appendRow([matricule, '', statut, now, '[]']);
+    sheet.appendRow([matricule, '', statut, now, '[]', '']);
   } else {
     sheet.getRange(rowIndex, 3).setValue(statut);
     if (statut) sheet.getRange(rowIndex, 4).setValue(now);
@@ -1596,7 +1598,7 @@ function saveEcbuEntry(matricule, ecbuData) {
 
   var jsonStr = JSON.stringify(existingEcbus);
   if (rowIndex === -1) {
-    sheet.appendRow([matricule, '', '', '', jsonStr]);
+    sheet.appendRow([matricule, '', '', '', jsonStr, '']);
   } else {
     sheet.getRange(rowIndex, 5).setValue(jsonStr);
   }
@@ -1621,4 +1623,32 @@ function deleteEcbuEntry(matricule, ecbuId) {
     }
   }
   return [];
+}
+
+/** Sauvegarde le statut consentement (envoye / recu / '') */
+function saveConsentementStatus(matricule, statut) {
+  matricule = (matricule || '').toString().trim();
+  if (!matricule) throw new Error('Matricule manquant');
+  var validStatuts = ['', 'envoye', 'recu'];
+  if (validStatuts.indexOf(statut) === -1) throw new Error('Statut invalide');
+
+  var sheet = getBruleurSheet_();
+  var data = sheet.getDataRange().getValues();
+  var rowIndex = -1;
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0].toString().trim() === matricule) { rowIndex = i + 1; break; }
+  }
+
+  // Ensure column 6 exists
+  if (sheet.getLastColumn() < 6) {
+    sheet.getRange(1, 6).setValue('Consentement');
+  }
+
+  if (rowIndex === -1) {
+    sheet.appendRow([matricule, '', '', '', '[]', statut]);
+  } else {
+    sheet.getRange(rowIndex, 6).setValue(statut);
+  }
+  return true;
 }
