@@ -774,6 +774,7 @@
       h += '<button class="add-exam-btn" onclick="toggleAddMenu(event,\'' + sm + '\')" title="Ajouter un examen">📄<sup style="font-size:9px;color:var(--green)">+</sup></button>';
       h += '<div class="add-exam-dropdown" id="addmenu-' + sm + '">';
       h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'biologie\')">🧪</button>';
+      h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'automesure\')">🩻</button>';
       h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'imagerie\')">☢️</button>';
       h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'avis_specialise\')">🩺</button>';
       h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'autre\')">🅰️</button>';
@@ -786,7 +787,7 @@
           var ex = agentExams[j];
           var isExOverdue = ex.dateResultatRaw && ex.dateResultatRaw < now;
           var cc = isExOverdue ? 'red' : 'green';
-          var icons = { biologie: '🧪', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+          var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
           h += '<span class="exam-icon-wrap"><span class="exam-badge ' + cc + '" onclick="toggleExamPopover(event,\'' + esc(ex.id) + '\')">' + (icons[ex.type] || '📋') + '</span></span>';
         }
         h += '</span>';
@@ -860,8 +861,8 @@
     function renderExamPopoverContent(exam) {
       var now = Date.now();
       var isOv = exam.dateResultatRaw && exam.dateResultatRaw < now;
-      var icons = { biologie: '🧪', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
-      var labels = { biologie: 'Biologie', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre examen' };
+      var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+      var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre examen' };
 
       var h = '<div style="font-weight:700;font-size:1.05em;margin-bottom:8px;">' + (icons[exam.type] || '📋') + ' ' + esc(labels[exam.type] || exam.type) + '</div>';
       if (exam.detail) h += '<div style="margin-bottom:4px;"><strong>Examen :</strong> ' + esc(exam.detail) + '</div>';
@@ -989,8 +990,8 @@
         modal.style.display = 'flex';
         return;
       }
-      var icons = { biologie: '🧪', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
-      var labels = { biologie: 'Biologie', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre' };
+      var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+      var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre' };
       var h = '';
       for (var i = 0; i < exams.length; i++) {
         var ex = exams[i];
@@ -1027,8 +1028,8 @@
       for (var j = 0; j < allAgents.length; j++) {
         if (allAgents[j].matricule === matricule) { agentName = allAgents[j].nomPrenom; break; }
       }
-      var icons = { biologie: '🧪', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
-      var labels = { biologie: 'Biologie', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre' };
+      var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+      var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre' };
       var h = '<div style="font-weight:700;font-size:1.1em;margin-bottom:12px;">🚨 Examens à prescrire — ' + esc(agentName) + '</div>';
       for (var i = 0; i < exams.length; i++) {
         var ex = exams[i];
@@ -1226,11 +1227,18 @@
 
     function openAddExam(matricule, type) {
       currentExamMatricule = matricule; currentExamType = type;
-      var tl = { biologie: 'Ajouter une biologie', imagerie: 'Ajouter une imagerie', avis_specialise: 'Ajouter un avis spécialisé', autre: 'Ajouter un autre examen' };
+      var tl = { biologie: 'Ajouter une biologie', automesure: 'Ajouter une automesure tensionnelle', imagerie: 'Ajouter une imagerie', avis_specialise: 'Ajouter un avis spécialisé', autre: 'Ajouter un autre examen' };
       document.getElementById('examModalTitle').textContent = tl[type] || 'Ajouter un examen';
       document.getElementById('examDetail').value = '';
-      document.getElementById('examDateDemande').value = new Date().toISOString().split('T')[0];
-      document.getElementById('examDateResultat').value = '';
+      var today = new Date();
+      document.getElementById('examDateDemande').value = today.toISOString().split('T')[0];
+      /* Auto-fill date limite selon le type */
+      var deadlineDays = { biologie: 15, automesure: 7, imagerie: 15 };
+      var dl = new Date(today);
+      if (type === 'avis_specialise') { dl.setMonth(dl.getMonth() + 2); }
+      else if (deadlineDays[type]) { dl.setDate(dl.getDate() + deadlineDays[type]); }
+      else { dl = null; }
+      document.getElementById('examDateResultat').value = dl ? dl.toISOString().split('T')[0] : '';
       document.getElementById('examCommentaire').value = '';
       document.getElementById('examGerePar').value = activePersonFilter || '';
       var agent = agentsByMatricule[matricule];
@@ -1250,7 +1258,7 @@
         commentaire: document.getElementById('examCommentaire').value,
         gerePar: document.getElementById('examGerePar').value
       };
-      if (!data.dateResultat) { alert('Veuillez saisir une date de résultat attendu.'); return; }
+      /* dateResultat auto-remplie par défaut, mais peut être modifiée */
       var btn = document.getElementById('examSubmitBtn');
       btn.disabled = true; btn.textContent = 'Enregistrement…';
       google.script.run.withSuccessHandler(function (saved) {
@@ -1412,7 +1420,7 @@
        SHARED EXAM MODAL HELPERS
        ═══════════════════════════════════════════════ */
     function examTypeLabel(type) {
-      var l = { biologie: '🧪 Biologie', imagerie: '☢️ Imagerie', avis_specialise: '🩺 Avis spécialisé', autre: '🅰️ Autre' };
+      var l = { biologie: '🧪 Biologie', automesure: '🩻 Automesure tensionnelle', imagerie: '☢️ Imagerie', avis_specialise: '🩺 Avis spécialisé', autre: '🅰️ Autre' };
       return l[type] || type;
     }
 
@@ -1520,8 +1528,8 @@
         for (var i = 0; i < exams.length; i++) {
           var e = exams[i];
           var isOv = e.dateResultatRaw && e.dateResultatRaw < now;
-          var icons = { biologie: '🧪', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
-          var labels = { biologie: 'Biologie', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre examen' };
+          var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+          var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre examen' };
 
           h += '<div class="exam-card' + (isOv ? ' exam-card-overdue' : '') + '">';
           h += '<div class="exam-card-header"><span style="font-weight:700;font-size:1.05em;">' + (icons[e.type] || '📋') + ' ' + esc(labels[e.type] || e.type) + '</span>';
@@ -3365,6 +3373,7 @@
       h += '<button class="add-exam-btn" onclick="toggleAddMenu(event,\'' + sm + '\')" title="Ajouter un examen">📄<sup style="font-size:9px;color:var(--green)">+</sup></button>';
       h += '<div class="add-exam-dropdown" id="addmenu-' + sm + '">';
       h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'biologie\')">🧪</button>';
+      h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'automesure\')">🩻</button>';
       h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'imagerie\')">☢️</button>';
       h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'avis_specialise\')">🩺</button>';
       h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'autre\')">🅰️</button>';
@@ -3377,7 +3386,7 @@
           var ex = agentExams[j];
           var isExOverdue = ex.dateResultatRaw && ex.dateResultatRaw < now;
           var cc = isExOverdue ? 'red' : 'green';
-          var icons = { biologie: '🧪', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+          var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
           h += '<span class="exam-icon-wrap"><span class="exam-badge ' + cc + '" onclick="toggleExamPopover(event,\'' + esc(ex.id) + '\')">' + (icons[ex.type] || '📋') + '</span></span>';
         }
         h += '</span>';

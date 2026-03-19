@@ -1030,6 +1030,15 @@ function saveExamen(examenData) {
   var id = Utilities.getUuid();
   var dateDemande  = examenData.dateDemande  ? new Date(examenData.dateDemande)  : new Date();
   var dateResultat = examenData.dateResultat ? new Date(examenData.dateResultat) : null;
+  /* Auto-calculer la date limite si non fournie */
+  if (!dateResultat) {
+    var dlDays = { biologie: 15, automesure: 7, imagerie: 15 };
+    var typ = (examenData.type || '').toString().trim();
+    dateResultat = new Date(dateDemande);
+    if (typ === 'avis_specialise') { dateResultat.setMonth(dateResultat.getMonth() + 2); }
+    else if (dlDays[typ]) { dateResultat.setDate(dateResultat.getDate() + dlDays[typ]); }
+    else { dateResultat = null; }
+  }
   var commentaire  = (examenData.commentaire || '').toString().trim();
   if (commentaire) {
     commentaire = formatDate_(new Date()) + ' \u2014 ' + commentaire;
