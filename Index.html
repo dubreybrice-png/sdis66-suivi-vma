@@ -457,6 +457,7 @@
     var bruleurViewActive = false;
     var bruleurExpoFilter = false;
     var bruleurDataByMatricule = {};
+    var bruleurComments = {};
 
     var SPORT_TESTS_META = [
       { key: 'LUC LEGER', label: 'Luc Léger', short: 'Luc Léger' },
@@ -519,6 +520,7 @@
       loadRowColors();
       loadSportMeta();
       loadVaccinMeta();
+      loadBruleurMeta();
       buildIndexes();
       renderMainPage();
     }
@@ -1080,7 +1082,8 @@
       btn.disabled = true; btn.textContent = 'Enregistrement…';
       google.script.run.withSuccessHandler(function (saved) {
         allExamens.push(saved); buildIndexes(); closeExamModal();
-        if (vaccinViewActive) renderVaccinPage();
+        if (bruleurViewActive) renderBruleurPage();
+        else if (vaccinViewActive) renderVaccinPage();
         else if (sportViewActive) renderSportPage();
         else renderMainPage();
         btn.disabled = false; btn.textContent = 'Enregistrer';
@@ -2965,6 +2968,21 @@
       try { localStorage.setItem('sdis66_vaccin_comments', JSON.stringify(vaccinComments)); } catch (e) { /* ignore */ }
     }
 
+    /* ═══════════════════════════════════════════════
+       BRULEUR COMMENTS (localStorage)
+       ═══════════════════════════════════════════════ */
+    function loadBruleurMeta() {
+      try {
+        var c = localStorage.getItem('sdis66_bruleur_comments');
+        if (c) bruleurComments = JSON.parse(c);
+      } catch (e) { bruleurComments = {}; }
+    }
+
+    function saveBruleurComment(matricule, value) {
+      bruleurComments[matricule] = value;
+      try { localStorage.setItem('sdis66_bruleur_comments', JSON.stringify(bruleurComments)); } catch (e) { /* ignore */ }
+    }
+
     function saveDtpChecks() {
       try { localStorage.setItem('sdis66_dtp_checks', JSON.stringify(dtpChecks)); } catch (e) { /* ignore */ }
     }
@@ -3158,9 +3176,34 @@
       var speList = (a.specialites || []).filter(function (s) { return s === 'Bruleur' || s === 'caisson'; });
       var searchStr = (a.nomPrenom + ' ' + a.centrePrincipal).toLowerCase();
 
+      var agentExams = (examensByMatricule[a.matricule] || []).filter(function (e) { return isExamVisibleForFilter(e); });
+
       var h = '<tr class="agent-row" data-search="' + esc(searchStr) + '">';
       h += '<td>' + (idx + 1) + '</td>';
-      h += '<td><strong>' + esc(a.nomPrenom) + '</strong></td>';
+
+      /* Add exam button */
+      h += '<td class="add-exam-cell no-print"><span class="add-exam-wrap">';
+      h += '<button class="add-exam-btn" onclick="toggleAddMenu(event,\'' + sm + '\')" title="Ajouter un examen">📄<sup style="font-size:9px;color:var(--green)">+</sup></button>';
+      h += '<div class="add-exam-dropdown" id="addmenu-' + sm + '">';
+      h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'biologie\')">🧪</button>';
+      h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'imagerie\')">☢️</button>';
+      h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'avis_specialise\')">🩺</button>';
+      h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'autre\')">🅰️</button>';
+      h += '</div></span></td>';
+
+      h += '<td><strong>' + esc(a.nomPrenom) + '</strong>';
+      if (agentExams.length > 0) {
+        h += '<span class="exam-icons">';
+        for (var j = 0; j < agentExams.length; j++) {
+          var ex = agentExams[j];
+          var isExOverdue = ex.dateResultatRaw && ex.dateResultatRaw < now;
+          var cc = isExOverdue ? 'red' : 'green';
+          var icons = { biologie: '🧪', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+          h += '<span class="exam-icon-wrap"><span class="exam-badge ' + cc + '" onclick="toggleExamPopover(event,\'' + esc(ex.id) + '\')">' + (icons[ex.type] || '📋') + '</span></span>';
+        }
+        h += '</span>';
+      }
+      h += '</td>';
       h += '<td>' + esc(a.centrePrincipal) + '</td>';
       h += '<td>' + esc(speList.join(', ')) + '</td>';
 
@@ -3184,6 +3227,10 @@
         h += '<span style="color:var(--text-light);">—</span>';
       }
       h += '</td>';
+
+      /* Commentaire */
+      var commentVal = bruleurComments[a.matricule] || '';
+      h += '<td class="no-print"><input type="text" class="sport-input-sm" value="' + esc(commentVal) + '" placeholder="Commentaire…" onchange="saveBruleurComment(\'' + sm + '\',this.value)"></td>';
 
       h += '</tr>';
       return h;
