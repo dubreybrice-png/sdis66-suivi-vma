@@ -17,7 +17,8 @@ var CONFIG = {
     EXAMENS:      'Examens',
     INACTIFS:     'Inactifs',
     VACCINS:      'Vaccins',
-    SERO:         'Sero'
+    SERO:         'Sero',
+    BRULEUR:      'Suivi Bruleur Caisson'
   },
 
   /* ── Colonnes onglets Copie retard / Copie a venir (0-based) ── */

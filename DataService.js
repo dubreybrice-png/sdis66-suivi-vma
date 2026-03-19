@@ -1330,6 +1330,7 @@ function getAllAgents() {
       perteYear:              perteYear,
       visitYear:              visitYear,
       isRetard:               item.source === 'retard',
+      specialites:            specialties[nomPrenom] || [],
       typeVisite:             '',
       typeVisiteRaison:       '',
       sport:                  []
@@ -1392,6 +1393,8 @@ function getPageData() {
   var sportMeta  = getSportMetaMap_();
   var programInfo = getSportProgramCatalogSafe_();
 
+  var bruleurData = getBruleurCaissonData_();
+
   // Séparer actifs / inactifs et rattacher sport
   var activeAgents   = [];
   var inactiveAgents = [];
@@ -1414,7 +1417,8 @@ function getPageData() {
     seros:          seroData,
     sportMeta:      sportMeta,
     sportPrograms:  programInfo.catalog,
-    sportProgramAuthRequired: programInfo.authRequired
+    sportProgramAuthRequired: programInfo.authRequired,
+    bruleurCaisson: bruleurData
   };
 }
 
@@ -1440,4 +1444,181 @@ function populateCisMailingSheet() {
     'Mise à jour terminée'
   );
   return cisList;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SUIVI SPÉCIALITÉ BRÛLEUR / CAISSON
+   ═══════════════════════════════════════════════════════ */
+
+/**
+ * Retourne (et crée si besoin) l'onglet "Suivi Bruleur Caisson"
+ * Colonnes : Matricule | Exposition>20ans | Scanner Statut | Scanner Date |
+ *            ECBU JSON (tableau d'entrées)
+ */
+function getBruleurSheet_() {
+  var ss = getSpreadsheet_();
+  var sheet = ss.getSheetByName(CONFIG.SHEETS.BRULEUR);
+  if (!sheet) {
+    sheet = ss.insertSheet(CONFIG.SHEETS.BRULEUR);
+    sheet.getRange(1, 1, 1, 5).setValues([[
+      'Matricule', 'Exposition>20ans', 'Scanner Statut', 'Scanner Date', 'ECBU JSON'
+    ]]);
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+/**
+ * Lit toutes les données brûleur/caisson
+ * Retourne { matricule: { exposition: bool, scanner: {statut, date}, ecbus: [{date, statut, dateVu}] } }
+ */
+function getBruleurCaissonData_() {
+  var sheet = getBruleurSheet_();
+  if (sheet.getLastRow() < 2) return {};
+  var data = sheet.getDataRange().getValues().slice(1);
+  var map = {};
+
+  data.forEach(function (row) {
+    var matricule = (row[0] || '').toString().trim();
+    if (!matricule) return;
+
+    var exposition = (row[1] || '').toString().trim().toLowerCase();
+    var scannerStatut = (row[2] || '').toString().trim();
+    var scannerDate = row[3];
+    var ecbuJson = (row[4] || '').toString().trim();
+
+    var ecbus = [];
+    if (ecbuJson) {
+      try { ecbus = JSON.parse(ecbuJson); } catch (e) { ecbus = []; }
+    }
+
+    map[matricule] = {
+      exposition: exposition === 'oui' || exposition === 'true' || exposition === '1',
+      scanner: {
+        statut: scannerStatut || '',
+        date: (scannerDate instanceof Date && !isNaN(scannerDate.getTime())) ? formatDate_(scannerDate) : (scannerDate || '').toString().trim()
+      },
+      ecbus: ecbus
+    };
+  });
+
+  return map;
+}
+
+/** Sauvegarde le flag exposition > 20 ans */
+function saveBruleurExposition(matricule, exposition) {
+  matricule = (matricule || '').toString().trim();
+  if (!matricule) throw new Error('Matricule manquant');
+
+  var sheet = getBruleurSheet_();
+  var data = sheet.getDataRange().getValues();
+  var rowIndex = -1;
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0].toString().trim() === matricule) { rowIndex = i + 1; break; }
+  }
+
+  if (rowIndex === -1) {
+    sheet.appendRow([matricule, exposition ? 'oui' : '', '', '', '[]']);
+  } else {
+    sheet.getRange(rowIndex, 2).setValue(exposition ? 'oui' : '');
+    // Si on décoche, on ne supprime pas les données existantes
+  }
+  return true;
+}
+
+/** Sauvegarde le statut scanner (prescrit / recu / vu) */
+function saveScannerStatus(matricule, statut) {
+  matricule = (matricule || '').toString().trim();
+  if (!matricule) throw new Error('Matricule manquant');
+  var validStatuts = ['', 'prescrit', 'recu', 'vu'];
+  if (validStatuts.indexOf(statut) === -1) throw new Error('Statut invalide');
+
+  var sheet = getBruleurSheet_();
+  var data = sheet.getDataRange().getValues();
+  var rowIndex = -1;
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0].toString().trim() === matricule) { rowIndex = i + 1; break; }
+  }
+
+  var now = statut ? formatDate_(new Date()) : '';
+  if (rowIndex === -1) {
+    sheet.appendRow([matricule, '', statut, now, '[]']);
+  } else {
+    sheet.getRange(rowIndex, 3).setValue(statut);
+    if (statut) sheet.getRange(rowIndex, 4).setValue(now);
+  }
+  return true;
+}
+
+/** Ajoute ou met à jour une entrée ECBU */
+function saveEcbuEntry(matricule, ecbuData) {
+  matricule = (matricule || '').toString().trim();
+  if (!matricule) throw new Error('Matricule manquant');
+
+  var sheet = getBruleurSheet_();
+  var data = sheet.getDataRange().getValues();
+  var rowIndex = -1;
+  var existingEcbus = [];
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0].toString().trim() === matricule) {
+      rowIndex = i + 1;
+      try { existingEcbus = JSON.parse(data[i][4] || '[]'); } catch (e) { existingEcbus = []; }
+      break;
+    }
+  }
+
+  // ecbuData = { id?, date, statut }
+  if (ecbuData.id) {
+    // Mise à jour
+    for (var j = 0; j < existingEcbus.length; j++) {
+      if (existingEcbus[j].id === ecbuData.id) {
+        existingEcbus[j].date = ecbuData.date || existingEcbus[j].date;
+        existingEcbus[j].statut = ecbuData.statut || existingEcbus[j].statut;
+        if (ecbuData.statut === 'vu') {
+          existingEcbus[j].dateVu = formatDate_(new Date());
+        }
+        break;
+      }
+    }
+  } else {
+    // Nouvel ECBU
+    var newId = 'ecbu_' + new Date().getTime();
+    existingEcbus.push({
+      id: newId,
+      date: ecbuData.date || formatDate_(new Date()),
+      statut: ecbuData.statut || 'prescrit',
+      dateVu: ''
+    });
+  }
+
+  var jsonStr = JSON.stringify(existingEcbus);
+  if (rowIndex === -1) {
+    sheet.appendRow([matricule, '', '', '', jsonStr]);
+  } else {
+    sheet.getRange(rowIndex, 5).setValue(jsonStr);
+  }
+  return existingEcbus;
+}
+
+/** Supprime une entrée ECBU */
+function deleteEcbuEntry(matricule, ecbuId) {
+  matricule = (matricule || '').toString().trim();
+  if (!matricule) throw new Error('Matricule manquant');
+
+  var sheet = getBruleurSheet_();
+  var data = sheet.getDataRange().getValues();
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0].toString().trim() === matricule) {
+      var ecbus = [];
+      try { ecbus = JSON.parse(data[i][4] || '[]'); } catch (e) { ecbus = []; }
+      ecbus = ecbus.filter(function (e) { return e.id !== ecbuId; });
+      sheet.getRange(i + 1, 5).setValue(JSON.stringify(ecbus));
+      return ecbus;
+    }
+  }
+  return [];
 }
