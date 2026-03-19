@@ -3282,23 +3282,24 @@
           h += '<button onclick="event.stopPropagation();updateEcbuStatus(\'' + esc(matricule) + '\',\'' + esc(e.id) + '\',\'prescrit\')">📝 Prescrit</button>';
           h += '<button onclick="event.stopPropagation();updateEcbuStatus(\'' + esc(matricule) + '\',\'' + esc(e.id) + '\',\'recu\')">📩 Reçu</button>';
           h += '<button onclick="event.stopPropagation();updateEcbuStatus(\'' + esc(matricule) + '\',\'' + esc(e.id) + '\',\'vu\')">✅ Vu par le médecin</button>';
+          h += '<button onclick="event.stopPropagation();editEcbuDate(\'' + esc(matricule) + '\',\'' + esc(e.id) + '\',\'' + esc(e.date || '') + '\')">📅 Modifier la date</button>';
           h += '<button onclick="event.stopPropagation();deleteEcbu(\'' + esc(matricule) + '\',\'' + esc(e.id) + '\')" style="color:var(--primary);">🗑️ Supprimer</button>';
           h += '</div></span>';
           h += ' <span style="font-size:0.85em;">' + esc(e.date || '') + ' — <em>' + label + '</em></span>';
           h += '</div>';
         }
 
-        /* Check last "vu" date for next ECBU scheduling */
-        var lastVuDate = null;
+        /* Check last ECBU date for next scheduling (6 mois après la date de l'ECBU) */
+        var lastEcbuDate = null;
         for (var j = ecbus.length - 1; j >= 0; j--) {
-          if (ecbus[j].statut === 'vu' && ecbus[j].dateVu) {
-            var parts = ecbus[j].dateVu.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-            if (parts) lastVuDate = new Date(parseInt(parts[3]), parseInt(parts[2]) - 1, parseInt(parts[1]));
+          if (ecbus[j].date) {
+            var parts = ecbus[j].date.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+            if (parts) lastEcbuDate = new Date(parseInt(parts[3]), parseInt(parts[2]) - 1, parseInt(parts[1]));
             break;
           }
         }
-        if (lastVuDate) {
-          var nextDate = new Date(lastVuDate.getTime() + SIX_MONTHS);
+        if (lastEcbuDate) {
+          var nextDate = new Date(lastEcbuDate.getTime() + SIX_MONTHS);
           var isOverdue = nextDate.getTime() < now;
           var dd = ('0' + nextDate.getDate()).slice(-2);
           var mm = ('0' + (nextDate.getMonth() + 1)).slice(-2);
@@ -3379,6 +3380,19 @@
         .deleteEcbuEntry(matricule, ecbuId);
     }
 
+    function editEcbuDate(matricule, ecbuId, currentDate) {
+      var newDate = prompt('Nouvelle date de l\'ECBU (JJ/MM/AAAA) :', currentDate || '');
+      if (!newDate || newDate === currentDate) return;
+      google.script.run
+        .withSuccessHandler(function (ecbus) {
+          bruleurDataByMatricule[matricule] = bruleurDataByMatricule[matricule] || { exposition: false, scanner: { statut: '', date: '' }, ecbus: [] };
+          bruleurDataByMatricule[matricule].ecbus = ecbus;
+          renderBruleurPage();
+        })
+        .withFailureHandler(function (e) { alert('Erreur: ' + e.message); })
+        .saveEcbuEntry(matricule, { id: ecbuId, date: newDate });
+    }
+
     function filterBruleurTable() {
       var q = (document.getElementById('bruleurSearch') || {}).value || '';
       q = q.toLowerCase().trim();
@@ -3404,16 +3418,16 @@
         var bd = bruleurDataByMatricule[a.matricule];
         if (!bd || !bd.exposition) return;
         var ecbus = bd.ecbus || [];
-        var lastVuDate = null;
+        var lastEcbuDate = null;
         for (var j = ecbus.length - 1; j >= 0; j--) {
-          if (ecbus[j].statut === 'vu' && ecbus[j].dateVu) {
-            var parts = ecbus[j].dateVu.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-            if (parts) lastVuDate = new Date(parseInt(parts[3]), parseInt(parts[2]) - 1, parseInt(parts[1]));
+          if (ecbus[j].date) {
+            var parts = ecbus[j].date.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+            if (parts) lastEcbuDate = new Date(parseInt(parts[3]), parseInt(parts[2]) - 1, parseInt(parts[1]));
             break;
           }
         }
-        if (lastVuDate) {
-          var nextDate = new Date(lastVuDate.getTime() + SIX_MONTHS);
+        if (lastEcbuDate) {
+          var nextDate = new Date(lastEcbuDate.getTime() + SIX_MONTHS);
           if (nextDate.getTime() < now) count++;
         }
       });
