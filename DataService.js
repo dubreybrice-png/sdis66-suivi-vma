@@ -1017,7 +1017,7 @@ function getAllExamens() {
       relance2Raw:     (rel2 instanceof Date && !isNaN(rel2.getTime())) ? rel2.getTime() : null,
       relance3Date:    formatDate_(rel3),
       relance3Raw:     (rel3 instanceof Date && !isNaN(rel3.getTime())) ? rel3.getTime() : null,
-      acquitte:        (row[CONFIG.COLS_EXAMENS.ACQUITTE] || '').toString().trim().toLowerCase() === 'oui'
+      acquitte:        (row[CONFIG.COLS_EXAMENS.ACQUITTE] || '').toString().trim().toLowerCase()
     });
   });
 
@@ -1069,7 +1069,7 @@ function saveExamen(examenData) {
     relance2Raw:     null,
     relance3Date:    '',
     relance3Raw:     null,
-    acquitte:        false
+    acquitte:        ''
   };
 }
 
@@ -1121,7 +1121,7 @@ function updateExamDateResultat(examId, dateResultat) {
   throw new Error('Examen introuvable');
 }
 
-/** Acquitte un examen (marque comme prescrit) */
+/** Met à jour la date de demande et gère l'alerte prescription */
 function updateExamDateDemande(examId, dateDemande) {
   var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   var sheet = ss.getSheetByName(CONFIG.SHEETS.EXAMENS);
@@ -1130,9 +1130,17 @@ function updateExamDateDemande(examId, dateDemande) {
     if (data[i][CONFIG.COLS_EXAMENS.ID] === examId) {
       var d = new Date(dateDemande);
       sheet.getRange(i + 1, CONFIG.COLS_EXAMENS.DATE_DEMANDE + 1).setValue(d);
+      /* Si la date est dans le futur, planifier l'alerte */
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      var dDay = new Date(d); dDay.setHours(0, 0, 0, 0);
+      var newAcquitte = dDay > today ? 'planifie' : '';
+      if (sheet.getLastColumn() < 13) sheet.getRange(1, 13).setValue('Acquitté');
+      sheet.getRange(i + 1, 13).setValue(newAcquitte);
       return {
         dateDemande: Utilities.formatDate(d, Session.getScriptTimeZone(), 'dd/MM/yyyy'),
-        dateDemandeRaw: d.getTime()
+        dateDemandeRaw: d.getTime(),
+        acquitte: newAcquitte
       };
     }
   }

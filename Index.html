@@ -609,15 +609,11 @@
     function isAgentVisibleForFilter(agent) {
       if (!activePersonFilter) return true;
       var exams = examensByMatricule[agent.matricule] || [];
-      if (exams.length === 0) return true;
-      var hasMine = false, hasOther = false, hasNone = false;
-      var other = activePersonFilter === 'Cécile' ? 'Célia' : 'Cécile';
-      exams.forEach(function (e) {
-        if (e.gerePar === activePersonFilter) hasMine = true;
-        else if (e.gerePar === other) hasOther = true;
-        else hasNone = true;
-      });
-      return hasMine || (!hasOther && hasNone) || (!hasMine && !hasOther);
+      /* Seuls les agents ayant au moins 1 examen géré par la personne sélectionnée */
+      for (var i = 0; i < exams.length; i++) {
+        if (exams[i].gerePar === activePersonFilter) return true;
+      }
+      return false;
     }
 
     function isExamVisibleForFilter(exam) {
@@ -686,7 +682,7 @@
 
       if (activePersonFilter) {
         h += '<div class="filter-banner">';
-        h += '<span>🔍 Filtre actif : <strong>Dossier de ' + esc(activePersonFilter) + '</strong> — agents suivis + non assignés</span>';
+        h += '<span>🔍 Filtre actif : <strong>Dossier de ' + esc(activePersonFilter) + '</strong> — agents avec examens suivis</span>';
         h += '<button onclick="togglePersonFilter(null)" class="btn btn-outline" style="padding:4px 12px;font-size:0.8em;">✕ Retirer le filtre</button>';
         h += '</div>';
       }
@@ -884,8 +880,8 @@
       h += renderRelanceSection(exam, null);
 
       h += '<div class="exam-pop-actions">';
-      if (!exam.acquitte && exam.dateDemandeRaw && exam.dateDemandeRaw <= now) {
-        h += '<button class="btn-acquitter" onclick="acquitterExamFromPop(\'' + esc(exam.id) + '\')">✅ Acquitter (prescrit)</button>';
+      if (exam.acquitte === 'planifie' && exam.dateDemandeRaw && exam.dateDemandeRaw <= now) {
+        h += '<button class="btn-acquitter" onclick="acquitterExamFromPop(\'' + esc(exam.id) + '\')">📝 Prescrire cet examen</button>';
       }
       h += '<button class="pop-close-btn" onclick="closeExamFromPop(\'' + esc(exam.id) + '\')">✅ Clôturer</button>';
       h += '<button class="pop-delete-btn" onclick="deleteExamFromPop(\'' + esc(exam.id) + '\')">🗑️ Supprimer</button>';
@@ -973,14 +969,14 @@
     function getExamsAPrescrire() {
       var now = Date.now();
       return allExamens.filter(function (e) {
-        return !e.acquitte && e.dateDemandeRaw && e.dateDemandeRaw <= now;
+        return e.acquitte === 'planifie' && e.dateDemandeRaw && e.dateDemandeRaw <= now;
       });
     }
 
     function getAgentExamsAPrescrire(matricule) {
       var now = Date.now();
       return (examensByMatricule[matricule] || []).filter(function (e) {
-        return !e.acquitte && e.dateDemandeRaw && e.dateDemandeRaw <= now;
+        return e.acquitte === 'planifie' && e.dateDemandeRaw && e.dateDemandeRaw <= now;
       });
     }
 
@@ -1005,9 +1001,9 @@
         h += '<div class="prescrire-card">';
         h += '<div style="display:flex;justify-content:space-between;align-items:center;">';
         h += '<div><strong>' + esc(agentName) + '</strong> <span style="color:var(--text-light);">(' + esc(ex.matricule) + ')</span></div>';
-        h += '<button class="btn-acquitter" onclick="acquitterExamFromModal(\'' + esc(ex.id) + '\',this)">✅ Acquitter</button>';
+        h += '<button class="btn-acquitter" onclick="acquitterExamFromModal(\'' + esc(ex.id) + '\',this)">📝 Prescrire cet examen</button>';
         h += '</div>';
-        h += '<div style="margin-top:6px;">' + (icons[ex.type] || '📋') + ' <strong>' + esc(labels[ex.type] || ex.type) + '</strong>';
+        h += '<div style="margin-top:6px;">' + (icons[ex.type] || '📋') + ' <strong>' + esc(labels[ex.type] || ex.type) + '</strong>';;
         if (ex.detail) h += ' — ' + esc(ex.detail);
         h += '</div>';
         h += '<div style="margin-top:4px;font-size:0.88em;color:var(--text-light);">Demandé le : ' + esc(ex.dateDemande) + '</div>';
@@ -1041,7 +1037,7 @@
         h += '<div>' + (icons[ex.type] || '📋') + ' <strong>' + esc(labels[ex.type] || ex.type) + '</strong>';
         if (ex.detail) h += ' — ' + esc(ex.detail);
         h += '</div>';
-        h += '<button class="btn-acquitter" onclick="acquitterExamFromModal(\'' + esc(ex.id) + '\',this)">✅ Acquitter</button>';
+        h += '<button class="btn-acquitter" onclick="acquitterExamFromModal(\'' + esc(ex.id) + '\',this)">📝 Prescrire cet examen</button>';
         h += '</div>';
         h += '<div style="margin-top:4px;font-size:0.88em;color:var(--text-light);">Demandé le : ' + esc(ex.dateDemande) + '</div>';
         if (ex.commentaire) h += '<div style="margin-top:2px;font-size:0.88em;color:var(--text-light);">💬 ' + esc(ex.commentaire) + '</div>';
@@ -1054,7 +1050,7 @@
     function acquitterExamFromPop(examId) {
       google.script.run.withSuccessHandler(function () {
         for (var i = 0; i < allExamens.length; i++) {
-          if (allExamens[i].id === examId) { allExamens[i].acquitte = true; break; }
+          if (allExamens[i].id === examId) { allExamens[i].acquitte = 'oui'; break; }
         }
         buildIndexes(); refreshExamPopover(examId); renderMainPage();
         updatePrescrireButton();
@@ -1068,7 +1064,7 @@
       btn.textContent = '⏳…';
       google.script.run.withSuccessHandler(function () {
         for (var i = 0; i < allExamens.length; i++) {
-          if (allExamens[i].id === examId) { allExamens[i].acquitte = true; break; }
+          if (allExamens[i].id === examId) { allExamens[i].acquitte = 'oui'; break; }
         }
         buildIndexes(); renderMainPage();
         updatePrescrireButton();
@@ -1077,7 +1073,7 @@
         if (modal.style.display === 'flex') showPrescrireModal();
       }).withFailureHandler(function (err) {
         btn.disabled = false;
-        btn.textContent = '✅ Acquitter';
+        btn.textContent = '📝 Prescrire cet examen';
         alert('Erreur : ' + (err.message || err));
       }).acquitterExamen(examId);
     }
@@ -1094,6 +1090,7 @@
       google.script.run.withSuccessHandler(function (res) {
         exam.dateDemande = res.dateDemande;
         exam.dateDemandeRaw = res.dateDemandeRaw;
+        exam.acquitte = res.acquitte || '';
         buildIndexes(); refreshExamPopover(examId); renderMainPage();
         updatePrescrireButton();
       }).withFailureHandler(function (err) {
