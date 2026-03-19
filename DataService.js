@@ -1016,7 +1016,8 @@ function getAllExamens() {
       relance2Date:    formatDate_(rel2),
       relance2Raw:     (rel2 instanceof Date && !isNaN(rel2.getTime())) ? rel2.getTime() : null,
       relance3Date:    formatDate_(rel3),
-      relance3Raw:     (rel3 instanceof Date && !isNaN(rel3.getTime())) ? rel3.getTime() : null
+      relance3Raw:     (rel3 instanceof Date && !isNaN(rel3.getTime())) ? rel3.getTime() : null,
+      acquitte:        (row[CONFIG.COLS_EXAMENS.ACQUITTE] || '').toString().trim().toLowerCase() === 'oui'
     });
   });
 
@@ -1046,6 +1047,7 @@ function saveExamen(examenData) {
     examenData.gerePar || '',
     '',
     '',
+    '',
     ''
   ]);
 
@@ -1066,7 +1068,8 @@ function saveExamen(examenData) {
     relance2Date:    '',
     relance2Raw:     null,
     relance3Date:    '',
-    relance3Raw:     null
+    relance3Raw:     null,
+    acquitte:        false
   };
 }
 
@@ -1113,6 +1116,40 @@ function updateExamDateResultat(examId, dateResultat) {
         dateResultat: formatDate_(parsedDate),
         dateResultatRaw: parsedDate ? parsedDate.getTime() : null
       };
+    }
+  }
+  throw new Error('Examen introuvable');
+}
+
+/** Acquitte un examen (marque comme prescrit) */
+function updateExamDateDemande(examId, dateDemande) {
+  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  var sheet = ss.getSheetByName(CONFIG.SHEETS.EXAMENS);
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][CONFIG.COLS_EXAMENS.ID] === examId) {
+      var d = new Date(dateDemande);
+      sheet.getRange(i + 1, CONFIG.COLS_EXAMENS.DATE_DEMANDE + 1).setValue(d);
+      return {
+        dateDemande: Utilities.formatDate(d, Session.getScriptTimeZone(), 'dd/MM/yyyy'),
+        dateDemandeRaw: d.getTime()
+      };
+    }
+  }
+  throw new Error('Examen introuvable : ' + examId);
+}
+
+function acquitterExamen(examId) {
+  var sheet = getExamensSheet_();
+  var data = sheet.getDataRange().getValues();
+  // Ensure column M exists
+  if (sheet.getLastColumn() < 13) {
+    sheet.getRange(1, 13).setValue('Acquitté');
+  }
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0].toString() === examId) {
+      sheet.getRange(i + 1, 13).setValue('oui');
+      return true;
     }
   }
   throw new Error('Examen introuvable');

@@ -61,7 +61,8 @@ var CONFIG = {
     GERE_PAR:       8,  // I — Géré par (Cécile/Célia)
     RELANCE_1:      9,  // J — Date relance 1
     RELANCE_2:      10, // K — Date relance 2
-    RELANCE_3:      11  // L — Date relance 3
+    RELANCE_3:      11, // L — Date relance 3
+    ACQUITTE:       12  // M — Acquitté (oui/'')
   },
 
   /* ── Colonnes onglet Vaccins (0-based) ── */

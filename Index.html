@@ -306,6 +306,17 @@
     .sport-day-cell.has-session { background: #d4edda; color: #087f5b; font-weight: 700; }
     .sport-day-cell.today { outline: 2px solid var(--blue); outline-offset: -2px; }
 
+    /* ═══ ALERTE PRESCRIPTION ═══ */
+    .alert-prescrire { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: #ffe0e0; border: 2px solid #e74c3c; cursor: pointer; font-size: 13px; animation: blink-red 1s infinite; margin-right: 4px; vertical-align: middle; }
+    .alert-prescrire:hover { transform: scale(1.15); }
+    .btn-alert-outline { border: 2px solid #e74c3c; color: #e74c3c; background: #fff5f5; font-weight: 600; }
+    .btn-alert-outline:hover { background: #e74c3c; color: white; }
+    .prescrire-card { background: var(--card-bg); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 10px; box-shadow: var(--shadow); border-left: 4px solid #e74c3c; }
+    .prescrire-card .agent-name { font-weight: 700; font-size: 1.05em; }
+    .prescrire-card .exam-detail { color: var(--text-light); font-size: 0.9em; margin-top: 4px; }
+    .btn-acquitter { background: #00b894; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 600; }
+    .btn-acquitter:hover { background: #00a381; }
+
     /* ═══ BRULEUR / CAISSON ═══ */
     #bruleurTable { min-width: 1100px; }
     .bc-status-wrap { position: relative; display: inline-block; }
@@ -390,6 +401,14 @@
       <div class="modal-body" style="padding:10px 14px;">
         <iframe id="programModalFrame" style="width:100%;height:72vh;border:1px solid var(--border);border-radius:8px;"></iframe>
       </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODAL : EXAMENS À PRESCRIRE ═══ -->
+  <div class="modal-overlay" id="prescrireModal" style="display:none" onclick="if(event.target===this)closeModal('prescrireModal')">
+    <div class="modal modal-large">
+      <div class="modal-header"><h3>🚨 Examens à prescrire</h3><button class="modal-close" onclick="closeModal('prescrireModal')">✕</button></div>
+      <div class="modal-body" id="prescrireContent"></div>
     </div>
   </div>
 
@@ -649,6 +668,8 @@
       if (overdueCount > 0) h += ' — <span style="color:var(--primary);font-weight:600">' + overdueCount + ' en dépassement</span>';
       h += '</div></div>';
       h += '<div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">';
+      var prescrireCount = getExamsAPrescrire().length;
+      h += '<button id="btnPrescrire" onclick="showPrescrireModal()" class="btn btn-alert-outline" style="' + (prescrireCount > 0 ? '' : 'display:none') + '">🚨 Examens à prescrire (' + prescrireCount + ')</button>';
       h += '<button onclick="showAllExams()" class="btn btn-info-outline">📋 Examens en cours (' + allExamens.length + ')</button>';
       h += '<button onclick="showOverdueExams()" class="btn btn-danger-outline">⚠️ Examens en retard (' + overdueExamCount + ')</button>';
       h += '<button onclick="showVaccinPage()" class="btn btn-info-outline">💉 Suivi vaccination</button>';
@@ -774,6 +795,11 @@
         }
         h += '</span>';
       }
+      /* Alert icon for exams à prescrire */
+      var alertExams = getAgentExamsAPrescrire(a.matricule);
+      if (alertExams.length > 0) {
+        h += '<span class="alert-prescrire" onclick="showPrescrireForAgent(event,\'' + sm + '\')" title="' + alertExams.length + ' examen(s) à prescrire">🚨</span>';
+      }
       h += '</td>';
 
       h += '<td>' + esc(a.centrePrincipal);
@@ -843,7 +869,7 @@
 
       var h = '<div style="font-weight:700;font-size:1.05em;margin-bottom:8px;">' + (icons[exam.type] || '📋') + ' ' + esc(labels[exam.type] || exam.type) + '</div>';
       if (exam.detail) h += '<div style="margin-bottom:4px;"><strong>Examen :</strong> ' + esc(exam.detail) + '</div>';
-      h += '<div style="margin-bottom:4px;"><strong>Demandé le :</strong> ' + esc(exam.dateDemande) + '</div>';
+      h += '<div class="exam-edit-line"><strong>Demandé le :</strong> <span>' + esc(exam.dateDemande) + '</span><button class="icon-edit-btn" onclick="editExamDateDemande(\'' + esc(exam.id) + '\')" title="Modifier la date de demande">✏️</button></div>';
       h += '<div class="exam-edit-line"><strong>Résultat attendu :</strong> <span style="' + (isOv ? 'color:var(--primary);font-weight:600' : '') + '">' + esc(exam.dateResultat || '—') + (isOv ? ' ⚠️' : '') + '</span><button class="icon-edit-btn" onclick="editExamDateResultat(\'' + esc(exam.id) + '\')" title="Modifier la date">✏️</button></div>';
       h += '<div class="exam-edit-line"><strong>Commentaire :</strong> <span>' + esc(exam.commentaire || '—') + '</span><button class="icon-edit-btn" onclick="editExamCommentaire(\'' + esc(exam.id) + '\')" title="Modifier le commentaire">✏️</button></div>';
       if (isOv) h += '<div style="color:var(--primary);font-weight:600;margin:6px 0;">⚠️ Résultat en retard</div>';
@@ -858,6 +884,9 @@
       h += renderRelanceSection(exam, null);
 
       h += '<div class="exam-pop-actions">';
+      if (!exam.acquitte && exam.dateDemandeRaw && exam.dateDemandeRaw <= now) {
+        h += '<button class="btn-acquitter" onclick="acquitterExamFromPop(\'' + esc(exam.id) + '\')">✅ Acquitter (prescrit)</button>';
+      }
       h += '<button class="pop-close-btn" onclick="closeExamFromPop(\'' + esc(exam.id) + '\')">✅ Clôturer</button>';
       h += '<button class="pop-delete-btn" onclick="deleteExamFromPop(\'' + esc(exam.id) + '\')">🗑️ Supprimer</button>';
       h += '</div>';
@@ -935,6 +964,153 @@
       }).withFailureHandler(function (err) {
         alert('Erreur : ' + (err.message || err));
       }).updateExamCommentaire(examId, next);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       PRESCRIPTION ALERT SYSTEM (v50)
+       ═══════════════════════════════════════════════════════════════ */
+
+    function getExamsAPrescrire() {
+      var now = Date.now();
+      return allExamens.filter(function (e) {
+        return !e.acquitte && e.dateDemandeRaw && e.dateDemandeRaw <= now;
+      });
+    }
+
+    function getAgentExamsAPrescrire(matricule) {
+      var now = Date.now();
+      return (examensByMatricule[matricule] || []).filter(function (e) {
+        return !e.acquitte && e.dateDemandeRaw && e.dateDemandeRaw <= now;
+      });
+    }
+
+    function showPrescrireModal() {
+      var exams = getExamsAPrescrire();
+      var modal = document.getElementById('prescrireModal');
+      var content = document.getElementById('prescrireContent');
+      if (!exams.length) {
+        content.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-light);">Aucun examen à prescrire pour le moment.</div>';
+        modal.style.display = 'flex';
+        return;
+      }
+      var icons = { biologie: '🧪', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+      var labels = { biologie: 'Biologie', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre' };
+      var h = '';
+      for (var i = 0; i < exams.length; i++) {
+        var ex = exams[i];
+        var agentName = ex.matricule;
+        for (var j = 0; j < allAgents.length; j++) {
+          if (allAgents[j].matricule === ex.matricule) { agentName = allAgents[j].nomPrenom; break; }
+        }
+        h += '<div class="prescrire-card">';
+        h += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+        h += '<div><strong>' + esc(agentName) + '</strong> <span style="color:var(--text-light);">(' + esc(ex.matricule) + ')</span></div>';
+        h += '<button class="btn-acquitter" onclick="acquitterExamFromModal(\'' + esc(ex.id) + '\',this)">✅ Acquitter</button>';
+        h += '</div>';
+        h += '<div style="margin-top:6px;">' + (icons[ex.type] || '📋') + ' <strong>' + esc(labels[ex.type] || ex.type) + '</strong>';
+        if (ex.detail) h += ' — ' + esc(ex.detail);
+        h += '</div>';
+        h += '<div style="margin-top:4px;font-size:0.88em;color:var(--text-light);">Demandé le : ' + esc(ex.dateDemande) + '</div>';
+        if (ex.commentaire) h += '<div style="margin-top:2px;font-size:0.88em;color:var(--text-light);">💬 ' + esc(ex.commentaire) + '</div>';
+        h += '</div>';
+      }
+      content.innerHTML = h;
+      modal.style.display = 'flex';
+    }
+
+    function showPrescrireForAgent(event, matricule) {
+      event.stopPropagation();
+      var exams = getAgentExamsAPrescrire(matricule);
+      var modal = document.getElementById('prescrireModal');
+      var content = document.getElementById('prescrireContent');
+      if (!exams.length) {
+        modal.style.display = 'none';
+        return;
+      }
+      var agentName = matricule;
+      for (var j = 0; j < allAgents.length; j++) {
+        if (allAgents[j].matricule === matricule) { agentName = allAgents[j].nomPrenom; break; }
+      }
+      var icons = { biologie: '🧪', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+      var labels = { biologie: 'Biologie', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre' };
+      var h = '<div style="font-weight:700;font-size:1.1em;margin-bottom:12px;">🚨 Examens à prescrire — ' + esc(agentName) + '</div>';
+      for (var i = 0; i < exams.length; i++) {
+        var ex = exams[i];
+        h += '<div class="prescrire-card">';
+        h += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+        h += '<div>' + (icons[ex.type] || '📋') + ' <strong>' + esc(labels[ex.type] || ex.type) + '</strong>';
+        if (ex.detail) h += ' — ' + esc(ex.detail);
+        h += '</div>';
+        h += '<button class="btn-acquitter" onclick="acquitterExamFromModal(\'' + esc(ex.id) + '\',this)">✅ Acquitter</button>';
+        h += '</div>';
+        h += '<div style="margin-top:4px;font-size:0.88em;color:var(--text-light);">Demandé le : ' + esc(ex.dateDemande) + '</div>';
+        if (ex.commentaire) h += '<div style="margin-top:2px;font-size:0.88em;color:var(--text-light);">💬 ' + esc(ex.commentaire) + '</div>';
+        h += '</div>';
+      }
+      content.innerHTML = h;
+      modal.style.display = 'flex';
+    }
+
+    function acquitterExamFromPop(examId) {
+      google.script.run.withSuccessHandler(function () {
+        for (var i = 0; i < allExamens.length; i++) {
+          if (allExamens[i].id === examId) { allExamens[i].acquitte = true; break; }
+        }
+        buildIndexes(); refreshExamPopover(examId); renderMainPage();
+        updatePrescrireButton();
+      }).withFailureHandler(function (err) {
+        alert('Erreur : ' + (err.message || err));
+      }).acquitterExamen(examId);
+    }
+
+    function acquitterExamFromModal(examId, btn) {
+      btn.disabled = true;
+      btn.textContent = '⏳…';
+      google.script.run.withSuccessHandler(function () {
+        for (var i = 0; i < allExamens.length; i++) {
+          if (allExamens[i].id === examId) { allExamens[i].acquitte = true; break; }
+        }
+        buildIndexes(); renderMainPage();
+        updatePrescrireButton();
+        /* Refresh modal content */
+        var modal = document.getElementById('prescrireModal');
+        if (modal.style.display === 'flex') showPrescrireModal();
+      }).withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = '✅ Acquitter';
+        alert('Erreur : ' + (err.message || err));
+      }).acquitterExamen(examId);
+    }
+
+    function editExamDateDemande(examId) {
+      var exam = null;
+      for (var i = 0; i < allExamens.length; i++) { if (allExamens[i].id === examId) { exam = allExamens[i]; break; } }
+      if (!exam) return;
+      var current = exam.dateDemandeRaw ? new Date(exam.dateDemandeRaw).toISOString().split('T')[0] : '';
+      var next = prompt('Nouvelle date de demande (AAAA-MM-JJ) :', current);
+      if (next === null) return;
+      next = next.trim();
+      if (!next) { alert('La date ne peut pas être vide.'); return; }
+      google.script.run.withSuccessHandler(function (res) {
+        exam.dateDemande = res.dateDemande;
+        exam.dateDemandeRaw = res.dateDemandeRaw;
+        buildIndexes(); refreshExamPopover(examId); renderMainPage();
+        updatePrescrireButton();
+      }).withFailureHandler(function (err) {
+        alert('Erreur : ' + (err.message || err));
+      }).updateExamDateDemande(examId, next);
+    }
+
+    function updatePrescrireButton() {
+      var btn = document.getElementById('btnPrescrire');
+      if (!btn) return;
+      var count = getExamsAPrescrire().length;
+      if (count > 0) {
+        btn.style.display = '';
+        btn.textContent = '🚨 Examens à prescrire (' + count + ')';
+      } else {
+        btn.style.display = 'none';
+      }
     }
 
     document.addEventListener('click', function (e) {
@@ -1403,7 +1579,7 @@
 
     function showSportPage() {
       // Close any open modals
-      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal', 'programModal'].forEach(function (id) {
+      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal', 'programModal', 'prescrireModal'].forEach(function (id) {
         document.getElementById(id).style.display = 'none';
       });
       sportViewActive = true;
@@ -2414,7 +2590,7 @@
        VACCINATION FULL PAGE
        ═══════════════════════════════════════════════ */
     function showVaccinPage() {
-      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal', 'programModal'].forEach(function (id) {
+      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal', 'programModal', 'prescrireModal'].forEach(function (id) {
         document.getElementById(id).style.display = 'none';
       });
       vaccinViewActive = true;
@@ -3066,7 +3242,7 @@
        BRÛLEUR / CAISSON — FULL PAGE VIEW
        ═══════════════════════════════════════════════ */
     function showBruleurPage() {
-      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal', 'programModal'].forEach(function (id) {
+      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal', 'programModal', 'prescrireModal'].forEach(function (id) {
         document.getElementById(id).style.display = 'none';
       });
       bruleurViewActive = true;
@@ -3208,6 +3384,11 @@
           h += '<span class="exam-icon-wrap"><span class="exam-badge ' + cc + '" onclick="toggleExamPopover(event,\'' + esc(ex.id) + '\')">' + (icons[ex.type] || '📋') + '</span></span>';
         }
         h += '</span>';
+      }
+      /* Alert icon for exams à prescrire (bruleur view) */
+      var alertExamsB = getAgentExamsAPrescrire(a.matricule);
+      if (alertExamsB.length > 0) {
+        h += '<span class="alert-prescrire" onclick="showPrescrireForAgent(event,\'' + sm + '\')" title="' + alertExamsB.length + ' examen(s) à prescrire">🚨</span>';
       }
       h += '</td>';
       h += '<td>' + esc(a.centrePrincipal) + '</td>';
