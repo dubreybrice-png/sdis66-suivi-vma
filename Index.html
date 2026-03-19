@@ -455,6 +455,7 @@
 
     /* ─── Brûleur/caisson state ─── */
     var bruleurViewActive = false;
+    var bruleurExpoFilter = false;
     var bruleurDataByMatricule = {};
 
     var SPORT_TESTS_META = [
@@ -3095,14 +3096,24 @@
         if (bd && bd.exposition) nbExpo++;
       });
 
+      /* Apply expo filter */
+      var totalAgents = agents.length;
+      if (bruleurExpoFilter) {
+        agents = agents.filter(function (a) {
+          var bd = bruleurDataByMatricule[a.matricule];
+          return bd && bd.exposition;
+        });
+      }
+
       var h = '';
       h += '<div class="sticky-subheader no-print">';
       h += '<div class="page-header">';
       h += '<div>';
       h += '<div class="page-title">🔥 Suivi spécialité Brûleur / Caisson</div>';
-      h += '<div class="page-subtitle">' + agents.length + ' agent(s) — ' + nbExpo + ' avec exposition &gt; 20 ans</div>';
+      h += '<div class="page-subtitle">' + (bruleurExpoFilter ? agents.length + ' agent(s) filtrés (expo &gt; 20 ans)' : totalAgents + ' agent(s) — ' + nbExpo + ' avec exposition &gt; 20 ans') + '</div>';
       h += '</div>';
       h += '<div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">';
+      h += '<button onclick="toggleBruleurExpoFilter()" class="btn ' + (bruleurExpoFilter ? 'btn-primary' : 'btn-outline') + '" style="font-size:0.85em;">🔥 Expo &gt; 20 ans uniquement</button>';
       h += '<button onclick="backToMainFromBruleur()" class="btn btn-outline">← Retour</button>';
       h += '</div></div>';
 
@@ -3329,6 +3340,11 @@
         var s = (row.getAttribute('data-search') || '');
         row.style.display = (!q || s.indexOf(q) !== -1) ? '' : 'none';
       });
+    }
+
+    function toggleBruleurExpoFilter() {
+      bruleurExpoFilter = !bruleurExpoFilter;
+      renderBruleurPage();
     }
 
     /* Also handle ECBU overdue icon on main page badges */
