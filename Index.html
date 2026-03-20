@@ -412,6 +412,14 @@
     </div>
   </div>
 
+  <!-- ═══ MODAL : CALENDRIER PERSONNE ═══ -->
+  <div class="modal-overlay" id="calendrierModal" style="display:none" onclick="if(event.target===this)closeModal('calendrierModal')">
+    <div class="modal modal-large">
+      <div class="modal-header"><h3 id="calendrierModalTitle">📅 Calendrier</h3><button class="modal-close" onclick="closeModal('calendrierModal')">✕</button></div>
+      <div class="modal-body" id="calendrierContent" style="max-height:75vh;overflow-y:auto;"></div>
+    </div>
+  </div>
+
   <!-- ═══ EXAM POPOVER ═══ -->
   <div class="exam-popover" id="examPopover"></div>
 
@@ -676,6 +684,8 @@
       var clCls = activePersonFilter === 'Célia'  ? ' person-active' : '';
       h += '<button onclick="togglePersonFilter(\'Cécile\')" class="btn btn-outline' + ccCls + '">👤 Dossier Cécile</button>';
       h += '<button onclick="togglePersonFilter(\'Célia\')" class="btn btn-outline' + clCls + '">👤 Dossier Célia</button>';
+      h += '<button onclick="showCalendrierModal(\'Cécile\')" class="btn btn-outline">📅 Calendrier Cécile</button>';
+      h += '<button onclick="showCalendrierModal(\'Célia\')" class="btn btn-outline">📅 Calendrier Célia</button>';
       h += '<button onclick="showArchivedAgents()" class="btn btn-inactive">👥 Archivés (' + inactiveAgents.length + ')</button>';
       h += '<button onclick="downloadPdf()" class="btn btn-primary">📥 PDF</button>';
       h += '</div></div>';
@@ -1109,6 +1119,143 @@
       } else {
         btn.style.display = 'none';
       }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       CALENDRIER PERSONNE (v53)
+       ═══════════════════════════════════════════════════════════════ */
+    function showCalendrierModal(person) {
+      var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+      var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre' };
+      var now = new Date(); now.setHours(0, 0, 0, 0);
+      var todayTs = now.getTime();
+
+      /* Collect all events for this person */
+      var events = [];
+      var personExams = allExamens.filter(function (e) { return e.gerePar === person; });
+
+      for (var i = 0; i < personExams.length; i++) {
+        var ex = personExams[i];
+        var agentName = ex.matricule;
+        for (var j = 0; j < allAgents.length; j++) {
+          if (allAgents[j].matricule === ex.matricule) { agentName = allAgents[j].nomPrenom; break; }
+        }
+
+        /* Event: date résultat attendu (deadline) */
+        if (ex.dateResultatRaw) {
+          events.push({
+            date: ex.dateResultatRaw,
+            dateStr: ex.dateResultat,
+            agent: agentName,
+            matricule: ex.matricule,
+            icon: icons[ex.type] || '📋',
+            label: labels[ex.type] || ex.type,
+            detail: ex.detail,
+            action: '📥 Récupérer résultat',
+            examId: ex.id,
+            commentaire: ex.commentaire
+          });
+        }
+
+        /* Event: prescription planifiée */
+        if (ex.acquitte === 'planifie' && ex.dateDemandeRaw) {
+          events.push({
+            date: ex.dateDemandeRaw,
+            dateStr: ex.dateDemande,
+            agent: agentName,
+            matricule: ex.matricule,
+            icon: icons[ex.type] || '📋',
+            label: labels[ex.type] || ex.type,
+            detail: ex.detail,
+            action: '📝 Prescrire examen',
+            examId: ex.id,
+            commentaire: ex.commentaire
+          });
+        }
+
+        /* Events: relances prévues */
+        for (var r = 1; r <= 3; r++) {
+          var rDate = ex['relance' + r + 'Raw'];
+          if (rDate) {
+            events.push({
+              date: rDate,
+              dateStr: ex['relance' + r + 'Date'],
+              agent: agentName,
+              matricule: ex.matricule,
+              icon: icons[ex.type] || '📋',
+              label: labels[ex.type] || ex.type,
+              detail: ex.detail,
+              action: '🔔 Relance ' + r,
+              examId: ex.id,
+              commentaire: ex.commentaire
+            });
+          }
+        }
+      }
+
+      /* Sort chronologically */
+      events.sort(function (a, b) { return a.date - b.date; });
+
+      /* Group by date */
+      var groups = {};
+      var groupOrder = [];
+      for (var i = 0; i < events.length; i++) {
+        var ev = events[i];
+        var d = new Date(ev.date);
+        var key = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+        if (!groups[key]) { groups[key] = []; groupOrder.push(key); }
+        groups[key].push(ev);
+      }
+
+      /* Render */
+      var h = '';
+      if (events.length === 0) {
+        h = '<div style="text-align:center;padding:40px;color:var(--text-light);">Aucun événement à venir pour ' + esc(person) + '.</div>';
+      } else {
+        h += '<div style="margin-bottom:12px;font-size:0.9em;color:var(--text-light);">' + events.length + ' événement(s) au total</div>';
+        for (var g = 0; g < groupOrder.length; g++) {
+          var key = groupOrder[g];
+          var dateObj = new Date(key + 'T00:00:00');
+          dateObj.setHours(0, 0, 0, 0);
+          var dateTs = dateObj.getTime();
+          var isPast = dateTs < todayTs;
+          var isToday = dateTs === todayTs;
+          var cls = isPast ? 'past' : (isToday ? 'today' : 'future');
+
+          var dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+          var dayLabel = dayNames[dateObj.getDay()] + ' ' + ('0' + dateObj.getDate()).slice(-2) + '/' + ('0' + (dateObj.getMonth() + 1)).slice(-2) + '/' + dateObj.getFullYear();
+          var tag = isPast ? '⏰ En retard' : (isToday ? '📌 Aujourd\'hui' : '');
+
+          h += '<div class="cal-section">';
+          h += '<div class="cal-date-header ' + cls + '">';
+          h += '<span>' + esc(dayLabel) + '</span>';
+          if (tag) h += '<span class="cal-badge ' + cls + '">' + tag + '</span>';
+          h += '</div>';
+
+          var items = groups[key];
+          for (var k = 0; k < items.length; k++) {
+            var ev = items[k];
+            var cardCls = isPast ? 'overdue' : (isToday ? 'today' : 'upcoming');
+            h += '<div class="cal-card ' + cardCls + '">';
+            h += '<div class="cal-card-info">';
+            h += '<div class="cal-agent">' + esc(ev.agent) + '</div>';
+            h += '<div class="cal-exam-type">' + ev.icon + ' ' + esc(ev.label);
+            if (ev.detail) h += ' — ' + esc(ev.detail);
+            h += '</div>';
+            if (ev.commentaire) h += '<div style="font-size:0.82em;color:var(--text-light);margin-top:2px;">💬 ' + esc(ev.commentaire) + '</div>';
+            h += '</div>';
+            h += '<div style="text-align:right;">';
+            h += '<div class="cal-badge ' + cardCls + '">' + ev.action + '</div>';
+            h += '</div>';
+            h += '</div>';
+          }
+          h += '</div>';
+        }
+      }
+
+      document.getElementById('calendrierModalTitle').textContent = '📅 Calendrier — ' + person;
+      document.getElementById('calendrierContent').innerHTML = h;
+      document.getElementById('calendrierModal').style.display = 'flex';
     }
 
     document.addEventListener('click', function (e) {
@@ -1584,7 +1731,7 @@
 
     function showSportPage() {
       // Close any open modals
-      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal', 'programModal', 'prescrireModal'].forEach(function (id) {
+      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal', 'programModal', 'prescrireModal', 'calendrierModal'].forEach(function (id) {
         document.getElementById(id).style.display = 'none';
       });
       sportViewActive = true;
@@ -2595,7 +2742,7 @@
        VACCINATION FULL PAGE
        ═══════════════════════════════════════════════ */
     function showVaccinPage() {
-      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal', 'programModal', 'prescrireModal'].forEach(function (id) {
+      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal', 'programModal', 'prescrireModal', 'calendrierModal'].forEach(function (id) {
         document.getElementById(id).style.display = 'none';
       });
       vaccinViewActive = true;
@@ -3247,7 +3394,7 @@
        BRÛLEUR / CAISSON — FULL PAGE VIEW
        ═══════════════════════════════════════════════ */
     function showBruleurPage() {
-      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal', 'programModal', 'prescrireModal'].forEach(function (id) {
+      ['examModal', 'overdueModal', 'allExamsModal', 'inactifsModal', 'programModal', 'prescrireModal', 'calendrierModal'].forEach(function (id) {
         document.getElementById(id).style.display = 'none';
       });
       bruleurViewActive = true;
