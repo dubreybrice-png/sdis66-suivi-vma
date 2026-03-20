@@ -317,6 +317,38 @@
     .btn-acquitter { background: #00b894; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 600; }
     .btn-acquitter:hover { background: #00a381; }
 
+    /* ═══ CALENDRIER ═══ */
+    .cal-stats { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .cal-stat { padding: 8px 16px; border-radius: var(--radius); font-weight: 600; font-size: 0.88em; }
+    .cal-stat.overdue { background: #ffebee; color: #c62828; }
+    .cal-stat.today { background: #fff3e0; color: #e65100; }
+    .cal-stat.upcoming { background: #e8f5e9; color: #2e7d32; }
+    .cal-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+    .cal-tab { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--card-bg); cursor: pointer; font-size: 0.85em; font-weight: 500; transition: all .2s; }
+    .cal-tab:hover { background: #f0f0f0; }
+    .cal-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .cal-day-block { margin-bottom: 20px; }
+    .cal-day-header { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: var(--radius); font-weight: 700; font-size: 0.95em; margin-bottom: 8px; }
+    .cal-day-header.past { background: #ffebee; color: #c62828; }
+    .cal-day-header.today { background: #fff3e0; color: #e65100; }
+    .cal-day-header.future { background: #e3f2fd; color: #1565c0; }
+    .cal-day-count { font-size: 0.78em; font-weight: 400; opacity: 0.8; }
+    .cal-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+    .cal-table tr { border-bottom: 1px solid #f0f0f0; transition: background .15s; }
+    .cal-table tr:hover { background: #fafafa; }
+    .cal-table td { padding: 8px 10px; vertical-align: middle; font-size: 0.9em; }
+    .cal-table .cal-col-action { width: 180px; }
+    .cal-table .cal-col-icon { width: 36px; text-align: center; font-size: 1.15em; }
+    .cal-table .cal-col-agent { font-weight: 600; min-width: 160px; }
+    .cal-table .cal-col-detail { color: var(--text-light); }
+    .cal-action-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 600; white-space: nowrap; }
+    .cal-action-badge.recup { background: #e3f2fd; color: #1565c0; }
+    .cal-action-badge.prescrire { background: #fce4ec; color: #c62828; }
+    .cal-action-badge.relance { background: #fff3e0; color: #e65100; }
+    .cal-action-badge.ecbu { background: #f3e5f5; color: #7b1fa2; }
+    .cal-action-badge.vma { background: #fbe9e7; color: #bf360c; }
+    .cal-comment { font-size: 0.78em; color: var(--text-light); margin-top: 1px; }
+
     /* ═══ BRULEUR / CAISSON ═══ */
     #bruleurTable { min-width: 1100px; }
     .bc-status-wrap { position: relative; display: inline-block; }
@@ -1122,73 +1154,68 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════
-       CALENDRIER PERSONNE (v53)
+       CALENDRIER PERSONNE (v54)
        ═══════════════════════════════════════════════════════════════ */
+    var calFilterCategory = 'tous';
+    var calCurrentPerson = '';
+
     function showCalendrierModal(person) {
+      calCurrentPerson = person;
+      calFilterCategory = 'tous';
+      renderCalendrierContent();
+      document.getElementById('calendrierModalTitle').textContent = '📅 Calendrier — ' + person;
+      document.getElementById('calendrierModal').style.display = 'flex';
+    }
+
+    function calSetFilter(cat) { calFilterCategory = cat; renderCalendrierContent(); }
+
+    function renderCalendrierContent() {
+      var person = calCurrentPerson;
       var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
       var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre' };
       var now = new Date(); now.setHours(0, 0, 0, 0);
       var todayTs = now.getTime();
+      var SIX_MONTHS = 6 * 30.44 * 24 * 3600000;
 
-      /* Collect all events for this person */
       var events = [];
       var personExams = allExamens.filter(function (e) { return e.gerePar === person; });
 
+      /* --- Exams: résultats attendus --- */
       for (var i = 0; i < personExams.length; i++) {
         var ex = personExams[i];
         var agentName = ex.matricule;
         for (var j = 0; j < allAgents.length; j++) {
           if (allAgents[j].matricule === ex.matricule) { agentName = allAgents[j].nomPrenom; break; }
         }
-
-        /* Event: date résultat attendu (deadline) */
         if (ex.dateResultatRaw) {
-          events.push({
-            date: ex.dateResultatRaw,
-            dateStr: ex.dateResultat,
-            agent: agentName,
-            matricule: ex.matricule,
-            icon: icons[ex.type] || '📋',
-            label: labels[ex.type] || ex.type,
-            detail: ex.detail,
-            action: '📥 Récupérer résultat',
-            examId: ex.id,
-            commentaire: ex.commentaire
-          });
+          events.push({ date: ex.dateResultatRaw, agent: agentName, icon: icons[ex.type] || '📋', type: labels[ex.type] || ex.type, detail: ex.detail, action: '📥 Récupérer résultat', actionCls: 'recup', category: 'resultat', commentaire: ex.commentaire });
         }
-
-        /* Event: prescription planifiée */
         if (ex.acquitte === 'planifie' && ex.dateDemandeRaw) {
-          events.push({
-            date: ex.dateDemandeRaw,
-            dateStr: ex.dateDemande,
-            agent: agentName,
-            matricule: ex.matricule,
-            icon: icons[ex.type] || '📋',
-            label: labels[ex.type] || ex.type,
-            detail: ex.detail,
-            action: '📝 Prescrire examen',
-            examId: ex.id,
-            commentaire: ex.commentaire
-          });
+          events.push({ date: ex.dateDemandeRaw, agent: agentName, icon: icons[ex.type] || '📋', type: labels[ex.type] || ex.type, detail: ex.detail, action: '📝 Prescrire', actionCls: 'prescrire', category: 'prescrire', commentaire: ex.commentaire });
         }
-
-        /* Events: relances prévues */
         for (var r = 1; r <= 3; r++) {
-          var rDate = ex['relance' + r + 'Raw'];
-          if (rDate) {
-            events.push({
-              date: rDate,
-              dateStr: ex['relance' + r + 'Date'],
-              agent: agentName,
-              matricule: ex.matricule,
-              icon: icons[ex.type] || '📋',
-              label: labels[ex.type] || ex.type,
-              detail: ex.detail,
-              action: '🔔 Relance ' + r,
-              examId: ex.id,
-              commentaire: ex.commentaire
-            });
+          if (ex['relance' + r + 'Raw']) {
+            events.push({ date: ex['relance' + r + 'Raw'], agent: agentName, icon: '🔔', type: labels[ex.type] || ex.type, detail: ex.detail, action: '🔔 Relance ' + r, actionCls: 'relance', category: 'relance', commentaire: ex.commentaire });
+          }
+        }
+      }
+
+      /* --- ECBU prochains (agents exposés brûleur) --- */
+      for (var i = 0; i < allAgents.length; i++) {
+        var a = allAgents[i];
+        var bd = bruleurDataByMatricule[a.matricule];
+        if (bd && bd.exposition && bd.ecbus && bd.ecbus.length > 0) {
+          var lastEcbuDate = null;
+          for (var j = bd.ecbus.length - 1; j >= 0; j--) {
+            if (bd.ecbus[j].date) {
+              var parts = bd.ecbus[j].date.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+              if (parts) lastEcbuDate = new Date(parseInt(parts[3]), parseInt(parts[2]) - 1, parseInt(parts[1]));
+              break;
+            }
+          }
+          if (lastEcbuDate) {
+            var nextEcbu = new Date(lastEcbuDate.getTime() + SIX_MONTHS);
+            events.push({ date: nextEcbu.getTime(), agent: a.nomPrenom, icon: '🧪', type: 'ECBU (brûleur)', detail: 'Prochain contrôle 6 mois', action: '🧪 ECBU à faire', actionCls: 'ecbu', category: 'ecbu', commentaire: '' });
           }
         }
       }
@@ -1196,66 +1223,98 @@
       /* Sort chronologically */
       events.sort(function (a, b) { return a.date - b.date; });
 
+      /* Filter by category */
+      var filtered = calFilterCategory === 'tous' ? events : events.filter(function (e) { return e.category === calFilterCategory; });
+
+      /* Count per category */
+      var counts = { tous: events.length, resultat: 0, prescrire: 0, relance: 0, ecbu: 0 };
+      for (var i = 0; i < events.length; i++) counts[events[i].category] = (counts[events[i].category] || 0) + 1;
+
+      /* Count per time period */
+      var pastCount = 0, todayCount = 0, futureCount = 0;
+      for (var i = 0; i < filtered.length; i++) {
+        var d = new Date(filtered[i].date); d.setHours(0,0,0,0);
+        if (d.getTime() < todayTs) pastCount++;
+        else if (d.getTime() === todayTs) todayCount++;
+        else futureCount++;
+      }
+
       /* Group by date */
-      var groups = {};
-      var groupOrder = [];
-      for (var i = 0; i < events.length; i++) {
-        var ev = events[i];
-        var d = new Date(ev.date);
+      var groups = {}, groupOrder = [];
+      for (var i = 0; i < filtered.length; i++) {
+        var d = new Date(filtered[i].date);
         var key = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
         if (!groups[key]) { groups[key] = []; groupOrder.push(key); }
-        groups[key].push(ev);
+        groups[key].push(filtered[i]);
       }
 
       /* Render */
       var h = '';
-      if (events.length === 0) {
-        h = '<div style="text-align:center;padding:40px;color:var(--text-light);">Aucun événement à venir pour ' + esc(person) + '.</div>';
+
+      /* Stats bar */
+      h += '<div class="cal-stats">';
+      if (pastCount > 0) h += '<div class="cal-stat overdue">⏰ ' + pastCount + ' en retard</div>';
+      if (todayCount > 0) h += '<div class="cal-stat today">📌 ' + todayCount + ' aujourd\'hui</div>';
+      h += '<div class="cal-stat upcoming">📆 ' + futureCount + ' à venir</div>';
+      h += '</div>';
+
+      /* Category tabs */
+      h += '<div class="cal-tabs">';
+      var tabs = [
+        { key: 'tous', label: '📋 Tout (' + counts.tous + ')' },
+        { key: 'resultat', label: '📥 Résultats (' + (counts.resultat || 0) + ')' },
+        { key: 'prescrire', label: '📝 Prescriptions (' + (counts.prescrire || 0) + ')' },
+        { key: 'relance', label: '🔔 Relances (' + (counts.relance || 0) + ')' },
+        { key: 'ecbu', label: '🧪 ECBU (' + (counts.ecbu || 0) + ')' }
+      ];
+      for (var t = 0; t < tabs.length; t++) {
+        h += '<div class="cal-tab' + (calFilterCategory === tabs[t].key ? ' active' : '') + '" onclick="calSetFilter(\'' + tabs[t].key + '\')">' + tabs[t].label + '</div>';
+      }
+      h += '</div>';
+
+      if (filtered.length === 0) {
+        h += '<div style="text-align:center;padding:40px;color:var(--text-light);">Aucun événement dans cette catégorie.</div>';
       } else {
-        h += '<div style="margin-bottom:12px;font-size:0.9em;color:var(--text-light);">' + events.length + ' événement(s) au total</div>';
         for (var g = 0; g < groupOrder.length; g++) {
           var key = groupOrder[g];
-          var dateObj = new Date(key + 'T00:00:00');
-          dateObj.setHours(0, 0, 0, 0);
+          var dateObj = new Date(key + 'T00:00:00'); dateObj.setHours(0, 0, 0, 0);
           var dateTs = dateObj.getTime();
           var isPast = dateTs < todayTs;
           var isToday = dateTs === todayTs;
           var cls = isPast ? 'past' : (isToday ? 'today' : 'future');
 
-          var dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-          var dayLabel = dayNames[dateObj.getDay()] + ' ' + ('0' + dateObj.getDate()).slice(-2) + '/' + ('0' + (dateObj.getMonth() + 1)).slice(-2) + '/' + dateObj.getFullYear();
-          var tag = isPast ? '⏰ En retard' : (isToday ? '📌 Aujourd\'hui' : '');
-
-          h += '<div class="cal-section">';
-          h += '<div class="cal-date-header ' + cls + '">';
-          h += '<span>' + esc(dayLabel) + '</span>';
-          if (tag) h += '<span class="cal-badge ' + cls + '">' + tag + '</span>';
-          h += '</div>';
+          var dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+          var monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+          var dayLabel = dayNames[dateObj.getDay()] + ' ' + dateObj.getDate() + ' ' + monthNames[dateObj.getMonth()] + ' ' + dateObj.getFullYear();
+          var badge = isPast ? '⏰ EN RETARD' : (isToday ? '📌 AUJOURD\'HUI' : '');
 
           var items = groups[key];
+          h += '<div class="cal-day-block">';
+          h += '<div class="cal-day-header ' + cls + '">';
+          h += '<span>' + esc(dayLabel) + '</span>';
+          h += '<span class="cal-day-count">' + items.length + ' tâche(s)</span>';
+          if (badge) h += '<span style="margin-left:auto;font-size:0.82em;font-weight:700;">' + badge + '</span>';
+          h += '</div>';
+
+          h += '<table class="cal-table">';
           for (var k = 0; k < items.length; k++) {
             var ev = items[k];
-            var cardCls = isPast ? 'overdue' : (isToday ? 'today' : 'upcoming');
-            h += '<div class="cal-card ' + cardCls + '">';
-            h += '<div class="cal-card-info">';
-            h += '<div class="cal-agent">' + esc(ev.agent) + '</div>';
-            h += '<div class="cal-exam-type">' + ev.icon + ' ' + esc(ev.label);
+            h += '<tr>';
+            h += '<td class="cal-col-icon">' + ev.icon + '</td>';
+            h += '<td class="cal-col-agent">' + esc(ev.agent) + '</td>';
+            h += '<td class="cal-col-detail">' + esc(ev.type);
             if (ev.detail) h += ' — ' + esc(ev.detail);
-            h += '</div>';
-            if (ev.commentaire) h += '<div style="font-size:0.82em;color:var(--text-light);margin-top:2px;">💬 ' + esc(ev.commentaire) + '</div>';
-            h += '</div>';
-            h += '<div style="text-align:right;">';
-            h += '<div class="cal-badge ' + cardCls + '">' + ev.action + '</div>';
-            h += '</div>';
-            h += '</div>';
+            if (ev.commentaire) h += '<div class="cal-comment">💬 ' + esc(ev.commentaire) + '</div>';
+            h += '</td>';
+            h += '<td class="cal-col-action"><span class="cal-action-badge ' + ev.actionCls + '">' + ev.action + '</span></td>';
+            h += '</tr>';
           }
+          h += '</table>';
           h += '</div>';
         }
       }
 
-      document.getElementById('calendrierModalTitle').textContent = '📅 Calendrier — ' + person;
       document.getElementById('calendrierContent').innerHTML = h;
-      document.getElementById('calendrierModal').style.display = 'flex';
     }
 
     document.addEventListener('click', function (e) {
