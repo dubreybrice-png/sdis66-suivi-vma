@@ -1706,3 +1706,275 @@ function saveConsentementStatus(matricule, statut) {
   }
   return true;
 }
+
+/* ═══════════════════════════════════════════════════════
+   EMAIL AUTOMATIQUE — RÉSUMÉ HEBDOMADAIRE (v55)
+   ═══════════════════════════════════════════════════════ */
+
+var EMAIL_CONTACTS = {
+  'Cécile': 'cecile.verges@sdis66.fr',
+  'Célia':  'celia.bertoncelo@sdis66.fr'
+};
+
+/**
+ * Installe les triggers pour l'envoi automatique :
+ * lundi 8h + vendredi 8h.
+ * Supprime les anciens triggers avant d'en créer de nouveaux.
+ */
+function setupEmailTriggers() {
+  removeEmailTriggers();
+  // Lundi 8h
+  ScriptApp.newTrigger('sendAllWeeklySummaries')
+    .timeBased()
+    .onWeekDay(ScriptApp.WeekDay.MONDAY)
+    .atHour(8)
+    .create();
+  // Vendredi 8h
+  ScriptApp.newTrigger('sendAllWeeklySummaries')
+    .timeBased()
+    .onWeekDay(ScriptApp.WeekDay.FRIDAY)
+    .atHour(8)
+    .create();
+  return 'Triggers installés : lundi 8h + vendredi 8h';
+}
+
+/** Supprime tous les triggers d'envoi email */
+function removeEmailTriggers() {
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'sendAllWeeklySummaries') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+  return 'Triggers supprimés';
+}
+
+/** Vérifie si les triggers sont actifs */
+function getEmailTriggersStatus() {
+  var triggers = ScriptApp.getProjectTriggers();
+  var count = 0;
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'sendAllWeeklySummaries') count++;
+  }
+  return { active: count > 0, count: count };
+}
+
+/** Point d'entrée du trigger : envoie un email à chaque personne */
+function sendAllWeeklySummaries() {
+  var persons = Object.keys(EMAIL_CONTACTS);
+  for (var i = 0; i < persons.length; i++) {
+    try {
+      sendWeeklySummaryFor_(persons[i]);
+    } catch (e) {
+      Logger.log('Erreur envoi email ' + persons[i] + ': ' + e.message);
+    }
+  }
+}
+
+/** Envoi du résumé pour une personne donnée */
+function sendWeeklySummaryFor_(person) {
+  var email = EMAIL_CONTACTS[person];
+  if (!email) return;
+
+  var allExams = getAllExamens();
+  var allAgts  = getAllAgents();
+  var bruleur  = getBruleurCaissonData_();
+  var now = new Date(); now.setHours(0, 0, 0, 0);
+  var todayTs = now.getTime();
+  var SIX_MONTHS = 6 * 30.44 * 24 * 3600000;
+
+  var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre' };
+  var icons  = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+
+  /* Map matricule → nom */
+  var nameMap = {};
+  for (var i = 0; i < allAgts.length; i++) {
+    nameMap[allAgts[i].matricule] = allAgts[i].nomPrenom;
+  }
+
+  var personExams = allExams.filter(function (e) { return e.gerePar === person; });
+
+  /* Collecter événements */
+  var overdue = [];
+  var upcoming = [];
+
+  for (var i = 0; i < personExams.length; i++) {
+    var ex = personExams[i];
+    var agentName = nameMap[ex.matricule] || ex.matricule;
+
+    /* Résultats à récupérer */
+    if (ex.dateResultatRaw) {
+      var item = {
+        date: ex.dateResultatRaw,
+        dateStr: ex.dateResultat,
+        agent: agentName,
+        type: labels[ex.type] || ex.type,
+        icon: icons[ex.type] || '📋',
+        detail: ex.detail,
+        action: 'Récupérer résultat'
+      };
+      if (ex.dateResultatRaw < todayTs) { overdue.push(item); } else { upcoming.push(item); }
+    }
+
+    /* Prescriptions planifiées */
+    if (ex.acquitte === 'planifie' && ex.dateDemandeRaw) {
+      var item2 = {
+        date: ex.dateDemandeRaw,
+        dateStr: ex.dateDemande,
+        agent: agentName,
+        type: labels[ex.type] || ex.type,
+        icon: icons[ex.type] || '📋',
+        detail: ex.detail,
+        action: 'Prescrire examen'
+      };
+      if (ex.dateDemandeRaw < todayTs) { overdue.push(item2); } else { upcoming.push(item2); }
+    }
+
+    /* Relances */
+    for (var r = 1; r <= 3; r++) {
+      if (ex['relance' + r + 'Raw']) {
+        var rDate = ex['relance' + r + 'Raw'];
+        var item3 = {
+          date: rDate,
+          dateStr: ex['relance' + r + 'Date'],
+          agent: agentName,
+          type: labels[ex.type] || ex.type,
+          icon: '🔔',
+          detail: ex.detail,
+          action: 'Relance ' + r
+        };
+        if (rDate < todayTs) { overdue.push(item3); } else { upcoming.push(item3); }
+      }
+    }
+  }
+
+  /* ECBU prochains */
+  for (var i = 0; i < allAgts.length; i++) {
+    var a = allAgts[i];
+    var bd = bruleur[a.matricule];
+    if (bd && bd.exposition && bd.ecbus && bd.ecbus.length > 0) {
+      var lastEcbuDate = null;
+      for (var j = bd.ecbus.length - 1; j >= 0; j--) {
+        if (bd.ecbus[j].date) {
+          var parts = bd.ecbus[j].date.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+          if (parts) lastEcbuDate = new Date(parseInt(parts[3]), parseInt(parts[2]) - 1, parseInt(parts[1]));
+          break;
+        }
+      }
+      if (lastEcbuDate) {
+        var nextEcbu = new Date(lastEcbuDate.getTime() + SIX_MONTHS);
+        var ecbuItem = {
+          date: nextEcbu.getTime(),
+          dateStr: formatDate_(nextEcbu),
+          agent: a.nomPrenom,
+          type: 'ECBU (brûleur)',
+          icon: '🧪',
+          detail: 'Prochain contrôle 6 mois',
+          action: 'ECBU à faire'
+        };
+        if (nextEcbu.getTime() < todayTs) { overdue.push(ecbuItem); } else { upcoming.push(ecbuItem); }
+      }
+    }
+  }
+
+  /* Tri */
+  overdue.sort(function (a, b) { return a.date - b.date; });
+  upcoming.sort(function (a, b) { return a.date - b.date; });
+
+  /* Limiter */
+  var overdueSlice  = overdue.slice(0, 20);
+  var upcomingSlice = upcoming.slice(0, 20);
+
+  if (overdueSlice.length === 0 && upcomingSlice.length === 0) return; // rien à envoyer
+
+  /* Construire le HTML */
+  var dayNames = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  var monthNames = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  var todayLabel = dayNames[now.getDay()] + ' ' + now.getDate() + ' ' + monthNames[now.getMonth()] + ' ' + now.getFullYear();
+
+  var html = '';
+  html += '<div style="font-family:\'Segoe UI\',Arial,sans-serif;max-width:650px;margin:0 auto;background:#ffffff;">';
+
+  /* Header */
+  html += '<div style="background:linear-gradient(135deg,#1e3a5f 0%,#2980b9 100%);color:white;padding:30px 24px;border-radius:12px 12px 0 0;">';
+  html += '<h1 style="margin:0;font-size:22px;">🏥 SDIS 66 — Suivi VMA</h1>';
+  html += '<p style="margin:8px 0 0;opacity:0.9;font-size:14px;">Résumé pour <strong>' + person + '</strong> — ' + todayLabel + '</p>';
+  html += '</div>';
+
+  /* Stats banner */
+  html += '<div style="display:flex;background:#f8f9fa;border-bottom:1px solid #e0e0e0;">';
+  html += '<div style="flex:1;text-align:center;padding:14px;border-right:1px solid #e0e0e0;">';
+  html += '<div style="font-size:28px;font-weight:700;color:#c62828;">' + overdue.length + '</div>';
+  html += '<div style="font-size:12px;color:#666;text-transform:uppercase;letter-spacing:0.5px;">En retard</div></div>';
+  html += '<div style="flex:1;text-align:center;padding:14px;">';
+  html += '<div style="font-size:28px;font-weight:700;color:#2e7d32;">' + upcoming.length + '</div>';
+  html += '<div style="font-size:12px;color:#666;text-transform:uppercase;letter-spacing:0.5px;">À venir</div></div>';
+  html += '</div>';
+
+  /* Section EN RETARD */
+  if (overdueSlice.length > 0) {
+    html += '<div style="padding:20px 24px;">';
+    html += '<h2 style="margin:0 0 14px;font-size:16px;color:#c62828;border-bottom:2px solid #ffcdd2;padding-bottom:8px;">⏰ Dossiers en retard (' + overdue.length + ')</h2>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<tr style="background:#fafafa;"><th style="text-align:left;padding:8px 10px;color:#666;font-weight:600;border-bottom:1px solid #eee;">Date</th>';
+    html += '<th style="text-align:left;padding:8px 10px;color:#666;font-weight:600;border-bottom:1px solid #eee;">Agent</th>';
+    html += '<th style="text-align:left;padding:8px 10px;color:#666;font-weight:600;border-bottom:1px solid #eee;">Examen</th>';
+    html += '<th style="text-align:left;padding:8px 10px;color:#666;font-weight:600;border-bottom:1px solid #eee;">Action</th></tr>';
+    for (var i = 0; i < overdueSlice.length; i++) {
+      var ev = overdueSlice[i];
+      var bg = i % 2 === 0 ? '#fff' : '#fafafa';
+      html += '<tr style="background:' + bg + ';">';
+      html += '<td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#c62828;font-weight:600;white-space:nowrap;">' + ev.dateStr + '</td>';
+      html += '<td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;font-weight:600;">' + ev.agent + '</td>';
+      html += '<td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;">' + ev.icon + ' ' + ev.type + (ev.detail ? ' — ' + ev.detail : '') + '</td>';
+      html += '<td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;"><span style="background:#ffebee;color:#c62828;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;">' + ev.action + '</span></td>';
+      html += '</tr>';
+    }
+    html += '</table>';
+    if (overdue.length > 20) {
+      html += '<p style="margin:10px 0 0;font-size:12px;color:#999;">… et ' + (overdue.length - 20) + ' autre(s) dossier(s) en retard.</p>';
+    }
+    html += '</div>';
+  }
+
+  /* Section À VENIR */
+  if (upcomingSlice.length > 0) {
+    html += '<div style="padding:20px 24px;">';
+    html += '<h2 style="margin:0 0 14px;font-size:16px;color:#1565c0;border-bottom:2px solid #bbdefb;padding-bottom:8px;">📆 Prochains dossiers à gérer (' + upcoming.length + ')</h2>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<tr style="background:#fafafa;"><th style="text-align:left;padding:8px 10px;color:#666;font-weight:600;border-bottom:1px solid #eee;">Date</th>';
+    html += '<th style="text-align:left;padding:8px 10px;color:#666;font-weight:600;border-bottom:1px solid #eee;">Agent</th>';
+    html += '<th style="text-align:left;padding:8px 10px;color:#666;font-weight:600;border-bottom:1px solid #eee;">Examen</th>';
+    html += '<th style="text-align:left;padding:8px 10px;color:#666;font-weight:600;border-bottom:1px solid #eee;">Action</th></tr>';
+    for (var i = 0; i < upcomingSlice.length; i++) {
+      var ev2 = upcomingSlice[i];
+      var bg2 = i % 2 === 0 ? '#fff' : '#fafafa';
+      html += '<tr style="background:' + bg2 + ';">';
+      html += '<td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#1565c0;font-weight:600;white-space:nowrap;">' + ev2.dateStr + '</td>';
+      html += '<td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;font-weight:600;">' + ev2.agent + '</td>';
+      html += '<td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;">' + ev2.icon + ' ' + ev2.type + (ev2.detail ? ' — ' + ev2.detail : '') + '</td>';
+      html += '<td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;"><span style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;">' + ev2.action + '</span></td>';
+      html += '</tr>';
+    }
+    html += '</table>';
+    if (upcoming.length > 20) {
+      html += '<p style="margin:10px 0 0;font-size:12px;color:#999;">… et ' + (upcoming.length - 20) + ' autre(s) dossier(s) à venir.</p>';
+    }
+    html += '</div>';
+  }
+
+  /* Footer */
+  html += '<div style="background:#f8f9fa;padding:16px 24px;border-radius:0 0 12px 12px;border-top:1px solid #e0e0e0;text-align:center;">';
+  html += '<p style="margin:0;font-size:12px;color:#999;">📧 Email automatique — SDIS 66 Suivi VMA</p>';
+  html += '<p style="margin:4px 0 0;font-size:11px;color:#bbb;">Envoyé le ' + todayLabel + ' à 8h00</p>';
+  html += '</div>';
+
+  html += '</div>';
+
+  /* Envoi */
+  MailApp.sendEmail({
+    to: email,
+    subject: '🏥 SDIS 66 — Résumé VMA ' + person + ' (' + todayLabel + ')',
+    htmlBody: html
+  });
+}

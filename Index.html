@@ -582,6 +582,7 @@
       loadBruleurMeta();
       buildIndexes();
       renderMainPage();
+      checkEmailTriggerStatus();
     }
 
     function buildIndexes() {
@@ -718,6 +719,7 @@
       h += '<button onclick="togglePersonFilter(\'Célia\')" class="btn btn-outline' + clCls + '">👤 Dossier Célia</button>';
       h += '<button onclick="showCalendrierModal(\'Cécile\')" class="btn btn-outline">📅 Calendrier Cécile</button>';
       h += '<button onclick="showCalendrierModal(\'Célia\')" class="btn btn-outline">📅 Calendrier Célia</button>';
+      h += '<button onclick="toggleEmailTriggers()" class="btn btn-outline" id="btnEmailTrigger" title="Activer/désactiver les emails automatiques lundi et vendredi 8h">📧 Emails auto</button>';
       h += '<button onclick="showArchivedAgents()" class="btn btn-inactive">👥 Archivés (' + inactiveAgents.length + ')</button>';
       h += '<button onclick="downloadPdf()" class="btn btn-primary">📥 PDF</button>';
       h += '</div></div>';
@@ -1168,6 +1170,38 @@
     }
 
     function calSetFilter(cat) { calFilterCategory = cat; renderCalendrierContent(); }
+
+    /* ═══ EMAIL TRIGGERS ═══ */
+    var emailTriggersActive = false;
+    function checkEmailTriggerStatus() {
+      google.script.run.withSuccessHandler(function (res) {
+        emailTriggersActive = res.active;
+        var btn = document.getElementById('btnEmailTrigger');
+        if (btn) {
+          btn.textContent = res.active ? '📧 Emails auto ✅' : '📧 Emails auto';
+          btn.style.background = res.active ? '#e8f5e9' : '';
+        }
+      }).getEmailTriggersStatus();
+    }
+    function toggleEmailTriggers() {
+      if (emailTriggersActive) {
+        if (!confirm('Désactiver les emails automatiques du lundi et vendredi ?')) return;
+        google.script.run.withSuccessHandler(function (msg) {
+          showToast(msg, 'info');
+          emailTriggersActive = false;
+          var btn = document.getElementById('btnEmailTrigger');
+          if (btn) { btn.textContent = '📧 Emails auto'; btn.style.background = ''; }
+        }).removeEmailTriggers();
+      } else {
+        if (!confirm('Activer les emails automatiques ?\n\n📧 Cécile recevra un résumé le lundi et vendredi à 8h\n📧 Célia recevra un résumé le lundi et vendredi à 8h')) return;
+        google.script.run.withSuccessHandler(function (msg) {
+          showToast(msg, 'success');
+          emailTriggersActive = true;
+          var btn = document.getElementById('btnEmailTrigger');
+          if (btn) { btn.textContent = '📧 Emails auto ✅'; btn.style.background = '#e8f5e9'; }
+        }).setupEmailTriggers();
+      }
+    }
 
     function renderCalendrierContent() {
       var person = calCurrentPerson;
