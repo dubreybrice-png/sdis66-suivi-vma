@@ -1219,104 +1219,87 @@ function setExamRelance(examId, relanceIndex, checked) {
    ═══════════════════════════════════════════════════════ */
 
 /**
- * Retourne le type de visite selon les règles métier :
+ * Retourne le type de visite selon les règles métier unifiées
+ * (retard et à venir = même traitement).
  *
- * 1. Spécialité Bruleur / SAV / SAL / caisson          → VMA tous les ans
- * 2. Spécialité Grimp  ET âge ≥ 43                     → VMA tous les ans
- * 3. Spécialité diabétique                              → VMA tous les ans
- * ─── Hors spécialité (ou spécialité sans match VMA) ───
- * 4. ≥ 39 ans, né en année paire                       → Visite médicale biennale
- * 5. ≥ 39 ans, né en année impaire                     → Visite prévention
- * ─── SPP < 39 ans (même logique parité que ≥ 39) ─────
- * 6. SPP < 39 ans, né en année paire                   → Visite médicale biennale
- * 7. SPP < 39 ans, né en année impaire                 → Visite prévention
- * ─── Volontaires < 39 ans ─────────────────────────────
- * 8. < 39 ans, né en année paire                       → Visite médicale biennale
- * 9. < 39 ans, né en année impaire, visite ≤ 2024      → Visite médicale 2026 (règle 2 ans)
- * 10.< 39 ans, né en année impaire, visite ≥ 2025      → Visite médicale 2027
+ * La colonne E contient la date de la dernière visite.
+ * On en extrait l'année (visitYear) et on applique :
+ *
+ * 1. Spécialité VMA → VMA tous les ans
+ * 2. visitYear ≤ 2024 (ou inconnue) → Visite médicale 2026
+ * 3. visitYear = 2025 :
+ *    a. Né année paire           → Visite médicale biennale (2026)
+ *    b. Né année impaire, ≥ 39   → Visite prévention (2026)
+ *    c. Né année impaire, < 39   → Visite médicale 2027 (rien en 2026)
+ * 4. visitYear ≥ 2026            → Déjà vu
  */
 function determineVisitType_(agent, specialties) {
   var agentSpe = specialties[agent.nomPrenom];
-  var vp = agent.visitYear ? 'Dernière VMA en ' + agent.visitYear + '. ' : '';
+  var refYear  = CONFIG.REFERENCE_YEAR; // 2026
 
-  /* ── Règles spécialité ── */
+  /* ── 1. Spécialités → VMA tous les ans ── */
   if (agentSpe && agentSpe.length > 0) {
     for (var i = 0; i < agentSpe.length; i++) {
       var spe = agentSpe[i];
       if (CONFIG.VMA_SPECIALTIES.indexOf(spe) !== -1) {
-        return { type: 'VMA tous les ans', raison: vp + 'Spécialité : ' + spe };
+        return { type: 'VMA tous les ans', raison: 'Spécialité : ' + spe };
       }
       if (spe === 'Grimp' && agent.age >= CONFIG.VMA_GRIMP_AGE) {
-        return { type: 'VMA tous les ans', raison: vp + 'Spécialité : Grimp (≥ ' + CONFIG.VMA_GRIMP_AGE + ' ans)' };
+        return { type: 'VMA tous les ans', raison: 'Spécialité : Grimp (≥ ' + CONFIG.VMA_GRIMP_AGE + ' ans)' };
       }
       if (spe.toLowerCase() === 'diabétique') {
-        return { type: 'VMA tous les ans', raison: vp + 'Spécialité : Diabétique' };
+        return { type: 'VMA tous les ans', raison: 'Spécialité : Diabétique' };
       }
     }
-    // Dans données spécialité mais aucune règle VMA matchée
-    // (ex. Grimp < 43) → on tombe dans les règles d'âge ci-dessous
   }
 
-  /* ── Règles d'âge (tous les agents non-VMA) ── */
-  var birthYear = agent.birthYear;
-  if (!birthYear) return { type: 'Non déterminé', raison: 'Date de naissance inconnue' };
-
-  var isBirthEven = birthYear % 2 === 0;
-  var pariteLabel = isBirthEven ? 'paire' : 'impaire';
-  var isSPP = agent.objetVisite && agent.objetVisite.indexOf('SPP') !== -1;
-
-  /* ── 45 ans en année de référence → visite médicale renforcée ── */
-  var ageInRefYear = CONFIG.REFERENCE_YEAR - birthYear;
-  if (ageInRefYear === 45) {
-    return { type: 'Visite médicale renforcée', raison: vp + '45 ans en ' + CONFIG.REFERENCE_YEAR + ' (né en ' + birthYear + ') → visite médicale renforcée' };
+  /* ── 2. Dernière visite ≤ 2024 ou inconnue → visite médicale obligatoire ── */
+  var visitYear = agent.visitYear;
+  if (!visitYear || visitYear <= refYear - 2) {
+    return {
+      type: 'Visite médicale ' + refYear,
+      raison: 'Dernière visite en ' + (visitYear || '?') + ' (≤ ' + (refYear - 2) + ') → visite médicale tous les 2 ans max'
+    };
   }
 
-  /* ── Agents en retard (Copie retard) : pas de date de dernière visite connue ── */
-  if (agent.isRetard) {
+  /* ── 3. Dernière visite = 2025 → parité + âge ── */
+  if (visitYear === refYear - 1) {
+    var birthYear = agent.birthYear;
+    if (!birthYear) {
+      return { type: 'Non déterminé', raison: 'Visite en ' + (refYear - 1) + ' mais date de naissance inconnue' };
+    }
+
+    var isEvenBirth = (birthYear % 2 === 0);
+
+    /* 3a. Né année paire → visite médicale biennale */
+    if (isEvenBirth) {
+      return {
+        type: 'Visite médicale biennale',
+        raison: 'Né en ' + birthYear + ' (paire), visite en ' + (refYear - 1) + ' → visite médicale en ' + refYear
+      };
+    }
+
+    /* 3c. Né année impaire + < 39 ans → visite médicale 2027 (pas de prévention en 2026) */
     if (agent.age < CONFIG.AGE_THRESHOLD) {
-      /* < 39 ans en retard → visite forcément ≤ 2024 → VMA 2026 */
-      return { type: 'Visite médicale ' + CONFIG.REFERENCE_YEAR, raison: 'En retard, < ' + CONFIG.AGE_THRESHOLD + ' ans → visite médicale obligatoire en ' + CONFIG.REFERENCE_YEAR };
-    } else {
-      /* ≥ 39 ans en retard → parité année de naissance */
-      if (isBirthEven) {
-        return { type: 'Visite médicale biennale', raison: 'En retard, ≥ ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
-      } else {
-        return { type: 'Visite prévention', raison: 'En retard, ≥ ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
-      }
+      return {
+        type: 'Visite médicale ' + (refYear + 1),
+        raison: 'Né en ' + birthYear + ' (impaire), < ' + CONFIG.AGE_THRESHOLD + ' ans, visite en ' + (refYear - 1) + ' → prochaine visite médicale en ' + (refYear + 1)
+      };
     }
+
+    /* 3b. Né année impaire + ≥ 39 ans → visite prévention */
+    return {
+      type: 'Visite prévention',
+      raison: 'Né en ' + birthYear + ' (impaire), visite en ' + (refYear - 1) + ' → prévention en ' + refYear
+    };
   }
 
-  /* ── Règle universelle : dernière visite ≤ 2024 → visite médicale 2026 ── */
-  if (agent.visitYear && agent.visitYear <= CONFIG.REFERENCE_YEAR - 2) {
-    return { type: 'Visite médicale ' + CONFIG.REFERENCE_YEAR, raison: vp + 'Dernière visite en ' + agent.visitYear + ' (≥ 2 ans) → visite médicale obligatoire en ' + CONFIG.REFERENCE_YEAR };
+  /* ── 4. Dernière visite ≥ 2026 → déjà à jour ── */
+  if (visitYear >= refYear) {
+    return { type: 'Déjà vu en ' + visitYear, raison: 'Visite effectuée en ' + visitYear };
   }
 
-  if (agent.age >= CONFIG.AGE_THRESHOLD) {
-    /* ≥ 39 ans : parité année de naissance */
-    if (isBirthEven) {
-      return { type: 'Visite médicale biennale', raison: vp + 'Maintien activité ≥ ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
-    } else {
-      return { type: 'Visite prévention', raison: vp + 'Maintien activité ≥ ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
-    }
-  } else if (isSPP) {
-    /* SPP < 39 ans : même logique parité que ≥ 39 ans */
-    if (isBirthEven) {
-      return { type: 'Visite médicale biennale', raison: vp + 'Maintien activité SPP < ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
-    } else {
-      return { type: 'Visite prévention', raison: vp + 'Maintien activité SPP < ' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
-    }
-  } else {
-    /* Volontaires < 39 ans */
-    if (isBirthEven) {
-      return { type: 'Visite médicale biennale', raison: vp + 'Volontaire de -' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
-    } else {
-      /* Année impaire : vérifier la règle des 2 ans (doit voir le médecin au moins tous les 2 ans) */
-      if (agent.visitYear && agent.visitYear <= CONFIG.REFERENCE_YEAR - 2) {
-        return { type: 'Visite médicale ' + CONFIG.REFERENCE_YEAR, raison: vp + 'Volontaire de -' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + '), dernière visite ' + agent.visitYear + ' (> 2 ans → ' + CONFIG.REFERENCE_YEAR + ')' };
-      }
-      return { type: 'Visite médicale 2027', raison: vp + 'Volontaire de -' + CONFIG.AGE_THRESHOLD + ' ans, né en année ' + pariteLabel + ' (' + birthYear + ')' };
-    }
-  }
+  return { type: 'Non déterminé', raison: 'Cas non couvert (visite ' + visitYear + ')' };
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1363,11 +1346,15 @@ function getAllAgents() {
       ? dateNaissance.getFullYear() : null;
     var perteYear = datePerteCompetence ? datePerteCompetence.getFullYear() : null;
 
-    /* Pour "Copie retard", la date est la date de perte de compétence,
-       PAS la dernière visite passée → visitYear = null */
-    var visitYear = null;
-    if (item.source === 'a_venir' && dateVisite instanceof Date && !isNaN(dateVisite.getTime())) {
-      visitYear = dateVisite.getFullYear();
+    /* La colonne E contient la date de la dernière visite médicale.
+       On en extrait l'année pour déterminer le type de visite. */
+    var visitYear = (dateVisite instanceof Date && !isNaN(dateVisite.getTime()))
+      ? dateVisite.getFullYear() : null;
+
+    /* dateProchVisite = colonne E brute (date avant laquelle l'agent doit passer) */
+    var dateProchVisite = null;
+    if (dateVisite instanceof Date && !isNaN(dateVisite.getTime())) {
+      dateProchVisite = dateVisite;
     }
 
     var agent = {
@@ -1375,6 +1362,9 @@ function getAllAgents() {
       centreSecondaire:       centreSecondaire,
       centrePrincipal:        centrePrincipal,
       dateNaissance:          formatDate_(dateNaissance),
+      dateProchVisite:        formatDate_(dateProchVisite),
+      dateProchVisiteRaw:     dateProchVisite ? dateProchVisite.getTime() : null,
+      prochVisiteYear:        dateProchVisite ? dateProchVisite.getFullYear() : null,
       datePerteCompetence:    formatDate_(datePerteCompetence),
       datePerteCompetenceRaw: datePerteCompetence ? datePerteCompetence.getTime() : null,
       nomPrenom:              nomPrenom,

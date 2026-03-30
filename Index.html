@@ -106,7 +106,7 @@
     th:first-child { border-top-left-radius: var(--radius); }
     th:last-child { border-top-right-radius: var(--radius); }
 
-    #agentTable { min-width: 1180px; }
+    #agentTable { min-width: 1320px; }
     #sportTable { min-width: 1820px; }
     #vaccinTable { min-width: 1320px; }
 
@@ -683,6 +683,7 @@
         var keyFns = {
           nomPrenom: function (a) { return a.nomPrenom || ''; },
           centre: function (a) { return a.centrePrincipal || ''; },
+          dateProchVisite: function (a) { return a.dateProchVisiteRaw; },
           datePerte: function (a) { return a.datePerteCompetenceRaw; },
           typeVisite: function (a) { return a.typeVisite || ''; }
         };
@@ -769,6 +770,7 @@
       h += '<th style="width:40px" class="no-print"></th>';
       h += thSort('main', 'nomPrenom', 'NOM Prénom');
       h += thSort('main', 'centre', 'Centre');
+      h += thSort('main', 'dateProchVisite', 'Prochaine visite');
       h += thSort('main', 'datePerte', 'Date perte compétence VMA');
       h += thSort('main', 'typeVisite', 'Type de visite');
       h += '<th style="width:35px" title="Hépatite B">HB</th>';
@@ -793,7 +795,7 @@
       var now = Date.now();
       var isOverdue = a.datePerteCompetenceRaw && a.datePerteCompetenceRaw < now;
       var agentExams = (examensByMatricule[a.matricule] || []).filter(function (e) { return isExamVisibleForFilter(e); });
-      var searchStr = (a.nomPrenom + ' ' + a.centrePrincipal + ' ' + a.centreSecondaire + ' ' + a.typeVisite + ' ' + a.datePerteCompetence).toLowerCase();
+      var searchStr = (a.nomPrenom + ' ' + a.centrePrincipal + ' ' + a.centreSecondaire + ' ' + a.typeVisite + ' ' + a.dateProchVisite + ' ' + a.datePerteCompetence).toLowerCase();
       var sm = esc(a.matricule);
       var colorClass = rowColors[a.matricule] ? ' row-color-' + rowColors[a.matricule] : '';
 
@@ -846,6 +848,8 @@
       h += '<td>' + esc(a.centrePrincipal);
       if (a.centreSecondaire && a.centreSecondaire !== a.centrePrincipal) h += ' <span style="color:var(--text-light);font-size:.8em">/ ' + esc(a.centreSecondaire) + '</span>';
       h += '</td>';
+
+      h += '<td>' + (a.dateProchVisite || '\u2014') + '</td>';
 
       h += '<td>';
       if (a.sport && a.sport.length > 0) {
