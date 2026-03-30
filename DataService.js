@@ -113,6 +113,24 @@ function getSpecialties_() {
   return map;
 }
 
+/**
+ * Charge l'onglet "derniere visite" et retourne un dictionnaire
+ * { matricule (string) → Date de dernière visite effectuée }
+ */
+function getLastVisitDates_() {
+  var data = getSheetData_(CONFIG.SHEETS.DERNIERE_VISITE);
+  var map = {};
+  data.forEach(function (row) {
+    var matricule = (row[CONFIG.COLS_DERNIERE_VISITE.MATRICULE] || '').toString().trim();
+    var dateVal   = row[CONFIG.COLS_DERNIERE_VISITE.DATE];
+    if (!matricule) return;
+    if (dateVal instanceof Date && !isNaN(dateVal.getTime())) {
+      map[matricule] = dateVal;
+    }
+  });
+  return map;
+}
+
 /* ═══════════════════════════════════════════════════════
    SPORT
    ═══════════════════════════════════════════════════════ */
@@ -1222,7 +1240,7 @@ function setExamRelance(examId, relanceIndex, checked) {
  * Retourne le type de visite selon les règles métier unifiées
  * (retard et à venir = même traitement).
  *
- * La colonne E contient la date de la dernière visite.
+ * La date de dernière visite effective vient de l'onglet "derniere visite".
  * On en extrait l'année (visitYear) et on applique :
  *
  * 1. Spécialité VMA → VMA tous les ans
@@ -1310,9 +1328,10 @@ function determineVisitType_(agent, specialties) {
  * Charge, dédoublonne et enrichit la liste complète des agents
  */
 function getAllAgents() {
-  var retardData  = getSheetData_(CONFIG.SHEETS.RETARD);
-  var aVenirData  = getSheetData_(CONFIG.SHEETS.A_VENIR);
-  var specialties = getSpecialties_();
+  var retardData      = getSheetData_(CONFIG.SHEETS.RETARD);
+  var aVenirData      = getSheetData_(CONFIG.SHEETS.A_VENIR);
+  var specialties     = getSpecialties_();
+  var lastVisitDates  = getLastVisitDates_();
 
   /* Marquer chaque ligne avec sa source */
   var allData = [];
@@ -1346,10 +1365,10 @@ function getAllAgents() {
       ? dateNaissance.getFullYear() : null;
     var perteYear = datePerteCompetence ? datePerteCompetence.getFullYear() : null;
 
-    /* La colonne E contient la date de la dernière visite médicale.
-       On en extrait l'année pour déterminer le type de visite. */
-    var visitYear = (dateVisite instanceof Date && !isNaN(dateVisite.getTime()))
-      ? dateVisite.getFullYear() : null;
+    /* La colonne E = date prévue (deadline prochaine visite), PAS la date effective.
+       La vraie date de dernière visite vient de l'onglet "derniere visite". */
+    var dateDerniereVisite = lastVisitDates[key] || null;
+    var visitYear = dateDerniereVisite ? dateDerniereVisite.getFullYear() : null;
 
     /* dateProchVisite = colonne E brute (date avant laquelle l'agent doit passer) */
     var dateProchVisite = null;

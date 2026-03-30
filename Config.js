@@ -18,7 +18,14 @@ var CONFIG = {
     INACTIFS:     'Inactifs',
     VACCINS:      'Vaccins',
     SERO:         'Sero',
-    BRULEUR:      'Suivi Bruleur Caisson'
+    BRULEUR:         'Suivi Bruleur Caisson',
+    DERNIERE_VISITE: 'derniere visite'
+  },
+
+  /* ── Colonnes onglet derniere visite (0-based) ── */
+  COLS_DERNIERE_VISITE: {
+    MATRICULE: 0,  // A
+    DATE:      1   // B
   },
 
   /* ── Colonnes onglets Copie retard / Copie a venir (0-based) ── */
