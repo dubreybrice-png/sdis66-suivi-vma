@@ -6,6 +6,13 @@
 var CONFIG = {
   SPREADSHEET_ID: '1-6759nuMIn7A_ouAoALG-oHgQiJXI15EVezLPELdpUg',
 
+  /**
+   * URL publique du dernier déploiement versionné.
+   * ScriptApp.getService().getUrl() renvoie l'URL @HEAD (inaccessible au public).
+   * Mettre à jour cette valeur après chaque `clasp deploy` (nouveau déploiement).
+   */
+  DEPLOY_URL: 'https://script.google.com/macros/s/AKfycbzmNdBnPxBnErmekLwP-VZBli0aIizAPf1RBtOti1YDgZfnDRV861SFHa-mHN8LZDLn9g/exec',
+
   /* ── Noms des onglets ── */
   SHEETS: {
     RETARD:       'Copie retard',

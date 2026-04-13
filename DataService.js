@@ -2084,6 +2084,28 @@ function getCisTokenMap_() {
 }
 
 /**
+ * Retourne l'URL publique du dernier déploiement versionné.
+ * ScriptApp.getService().getUrl() renvoie l'URL @HEAD (accessible uniquement au
+ * développeur). Pour les liens publics (chefs de centre), il faut l'URL d'un
+ * déploiement versionné.
+ *
+ * Priorité :
+ *   1. CONFIG.DEPLOY_URL (version-controlled, toujours à jour après deploy)
+ *   2. ScriptProperties DEPLOY_URL (legacy / fallback)
+ *   3. ScriptApp.getService().getUrl() (dernier recours — HEAD, non public)
+ */
+function getPublicDeployUrl_() {
+  if (CONFIG.DEPLOY_URL) return CONFIG.DEPLOY_URL;
+  var stored = PropertiesService.getScriptProperties().getProperty('DEPLOY_URL');
+  return stored || ScriptApp.getService().getUrl();
+}
+
+/** Appelée manuellement ou par un script après `clasp deploy` pour stocker l'URL publique. */
+function setDeployUrl(url) {
+  PropertiesService.getScriptProperties().setProperty('DEPLOY_URL', url);
+}
+
+/**
  * Retourne la liste des CIS avec leurs URLs pour la page admin.
  * Utilisé pour générer/consulter les liens à donner aux chefs de centre.
  */
@@ -2099,7 +2121,7 @@ function getCisViewLinks() {
   getCisTokenMap_();
 
   var data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
-  var baseUrl = ScriptApp.getService().getUrl();
+  var baseUrl = getPublicDeployUrl_();
   var result = [];
 
   for (var i = 0; i < data.length; i++) {

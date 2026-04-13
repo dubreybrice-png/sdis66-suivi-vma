@@ -76,8 +76,20 @@ if /i "%action%"=="sync" (
     echo [+] Push completed!
     echo.
     echo [*] Creating new deployment...
-    cmd /c "clasp deploy"
-    echo [+] Deployment completed!
+    for /f "tokens=2 delims= " %%A in ('cmd /c "clasp deploy" 2^>^&1 ^| findstr /i "Deployed"') do set DEPLOY_ID=%%A
+    echo [+] Deployment ID: !DEPLOY_ID!
+    echo.
+    echo [*] Storing public deploy URL...
+    set DEPLOY_URL=https://script.google.com/macros/s/!DEPLOY_ID!/exec
+    echo     URL: !DEPLOY_URL!
+    cmd /c "clasp run setDeployUrl -p [\"!DEPLOY_URL!\"]" 2>nul
+    if errorlevel 1 (
+        echo [!] Could not auto-store URL via clasp run.
+        echo [!] Run this manually in GAS editor console:
+        echo     setDeployUrl("!DEPLOY_URL!")
+    ) else (
+        echo [+] URL stored in script properties!
+    )
     echo.
     echo [+] GitHub + GAS synced AND deployed!
     pause
