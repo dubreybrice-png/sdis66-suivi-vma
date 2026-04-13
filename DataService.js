@@ -1491,19 +1491,37 @@ function populateCisMailingSheet() {
   var sheet = ss.getSheetByName(CONFIG.SHEETS.CIS_MAILING);
   if (!sheet) sheet = ss.insertSheet(CONFIG.SHEETS.CIS_MAILING);
 
-  var cisList = getCisList();
-  sheet.getRange(1, 1).setValue('CIS');
+  // Set headers
+  sheet.getRange(1, 1, 1, 3).setValues([['CIS', 'Email', 'Token']]);
 
+  // Read existing data to preserve emails & tokens
+  var existingMap = {}; // { cisName: { email, token } }
   var lastRow = sheet.getLastRow();
-  if (lastRow > 1) sheet.getRange(2, 1, lastRow - 1, 1).clearContent();
+  if (lastRow >= 2) {
+    var oldData = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+    for (var i = 0; i < oldData.length; i++) {
+      var name = (oldData[i][0] || '').toString().trim();
+      if (!name) continue;
+      existingMap[name] = {
+        email: (oldData[i][1] || '').toString().trim(),
+        token: (oldData[i][2] || '').toString().trim()
+      };
+    }
+    sheet.getRange(2, 1, lastRow - 1, 3).clearContent();
+  }
 
+  var cisList = getCisList();
   if (cisList.length > 0) {
-    var values = cisList.map(function (c) { return [c]; });
-    sheet.getRange(2, 1, values.length, 1).setValues(values);
+    var values = cisList.map(function (c) {
+      var existing = existingMap[c] || {};
+      var token = existing.token || Utilities.getUuid().replace(/-/g, '').slice(0, 16);
+      return [c, existing.email || '', token];
+    });
+    sheet.getRange(2, 1, values.length, 3).setValues(values);
   }
 
   SpreadsheetApp.getActiveSpreadsheet().toast(
-    cisList.length + ' CIS ajoutés dans l\'onglet "cis / mailing"',
+    cisList.length + ' CIS mis à jour avec tokens dans l\'onglet "cis / mailing"',
     'Mise à jour terminée'
   );
   return cisList;
@@ -1986,4 +2004,183 @@ function sendWeeklySummaryFor_(person) {
     subject: '🏥 SDIS 66 — Résumé VMA ' + person + ' (' + todayLabel + ')',
     htmlBody: html
   });
+}
+
+/* ═══════════════════════════════════════════════════════
+   PERMIS C
+   ═══════════════════════════════════════════════════════ */
+
+/**
+ * Construit { matricule: { dateLimite: "JJ/MM/AAAA", dateLimiteRaw: timestamp } }
+ */
+function getPermisData_() {
+  var data = getSheetData_(CONFIG.SHEETS.PERMIS_C);
+  var map = {};
+
+  data.forEach(function (row) {
+    var matricule = (row[CONFIG.COLS_PERMIS_C.MATRICULE] || '').toString().trim();
+    if (!matricule) return;
+
+    var dateVal = row[CONFIG.COLS_PERMIS_C.DATE_LIMITE];
+    var dateRaw = (dateVal instanceof Date && !isNaN(dateVal.getTime())) ? dateVal.getTime() : null;
+
+    // Garder la date la plus ancienne s'il y a des doublons
+    if (!map[matricule] || (dateRaw && (!map[matricule].dateLimiteRaw || dateRaw < map[matricule].dateLimiteRaw))) {
+      map[matricule] = {
+        dateLimite: formatDate_(dateVal),
+        dateLimiteRaw: dateRaw
+      };
+    }
+  });
+
+  return map;
+}
+
+/* ═══════════════════════════════════════════════════════
+   VUE CHEF DE CENTRE (CIS VIEW)
+   ═══════════════════════════════════════════════════════ */
+
+/**
+ * Lit l'onglet "cis / mailing" et retourne { token: cisName, ... }
+ * Génère automatiquement un token pour chaque CIS qui n'en a pas.
+ */
+function getCisTokenMap_() {
+  var ss = getSpreadsheet_();
+  var sheet = ss.getSheetByName(CONFIG.SHEETS.CIS_MAILING);
+  if (!sheet) return {};
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return {};
+
+  // Ensure column C header
+  var headerC = sheet.getRange(1, 3).getValue();
+  if (!headerC || headerC.toString().trim() !== 'Token') {
+    sheet.getRange(1, 3).setValue('Token');
+  }
+
+  var data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+  var map = {};
+  var needWrite = false;
+
+  for (var i = 0; i < data.length; i++) {
+    var cisName = (data[i][0] || '').toString().trim();
+    if (!cisName) continue;
+
+    var token = (data[i][2] || '').toString().trim();
+    if (!token) {
+      token = Utilities.getUuid().replace(/-/g, '').slice(0, 16);
+      data[i][2] = token;
+      needWrite = true;
+    }
+    map[token] = cisName;
+  }
+
+  // Write back auto-generated tokens
+  if (needWrite) {
+    sheet.getRange(2, 1, data.length, 3).setValues(data);
+  }
+
+  return map;
+}
+
+/**
+ * Retourne la liste des CIS avec leurs URLs pour la page admin.
+ * Utilisé pour générer/consulter les liens à donner aux chefs de centre.
+ */
+function getCisViewLinks() {
+  var ss = getSpreadsheet_();
+  var sheet = ss.getSheetByName(CONFIG.SHEETS.CIS_MAILING);
+  if (!sheet) return [];
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+
+  // Ensure tokens exist
+  getCisTokenMap_();
+
+  var data = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+  var baseUrl = ScriptApp.getService().getUrl();
+  var result = [];
+
+  for (var i = 0; i < data.length; i++) {
+    var cisName = (data[i][0] || '').toString().trim();
+    var email   = (data[i][1] || '').toString().trim();
+    var token   = (data[i][2] || '').toString().trim();
+    if (!cisName || !token) continue;
+
+    result.push({
+      cis: cisName,
+      email: email,
+      token: token,
+      url: baseUrl + '?cisToken=' + encodeURIComponent(token)
+    });
+  }
+
+  return result;
+}
+
+/**
+ * Données pour la vue chef de centre.
+ * Retourne { cisName, agents: [...], error: null } ou { error: "..." }
+ */
+function getCisViewData(token) {
+  token = (token || '').toString().trim();
+  if (!token) return { error: 'Token manquant' };
+
+  var tokenMap = getCisTokenMap_();
+  var cisName = tokenMap[token];
+  if (!cisName) return { error: 'Lien invalide ou expiré' };
+
+  var allAgents   = getAllAgents();
+  var sportData   = getSportData_();
+  var permisData  = getPermisData_();
+  var inactifs    = getInactiveMatricules_();
+
+  // Filtrer les agents du CIS (principal OU secondaire), exclure inactifs
+  var cisAgents = allAgents.filter(function (a) {
+    if (inactifs[a.matricule]) return false;
+    return a.centrePrincipal === cisName || a.centreSecondaire === cisName;
+  });
+
+  // Enrichir avec ICP et permis C
+  var now = new Date().getTime();
+  var agents = cisAgents.map(function (a) {
+    // Dernière ICP = date la plus récente parmi toutes les épreuves sportives
+    var sport = sportData[a.matricule] || [];
+    var latestIcpRaw = null;
+    for (var i = 0; i < sport.length; i++) {
+      if (sport[i].dateRaw && (!latestIcpRaw || sport[i].dateRaw > latestIcpRaw)) {
+        latestIcpRaw = sport[i].dateRaw;
+      }
+    }
+
+    var permis = permisData[a.matricule];
+
+    return {
+      nomPrenom:            a.nomPrenom,
+      centrePrincipal:      a.centrePrincipal,
+      centreSecondaire:     a.centreSecondaire,
+      datePerteCompetence:  a.datePerteCompetence,
+      datePerteCompetenceRaw: a.datePerteCompetenceRaw,
+      typeVisite:           a.typeVisite,
+      dateIcp:              latestIcpRaw ? formatDate_(new Date(latestIcpRaw)) : '',
+      dateIcpRaw:           latestIcpRaw,
+      datePermisC:          permis ? permis.dateLimite : '',
+      datePermisCRaw:       permis ? permis.dateLimiteRaw : null
+    };
+  });
+
+  // Tri par date de perte de compétence (plus proche en premier)
+  agents.sort(function (a, b) {
+    if (!a.datePerteCompetenceRaw && !b.datePerteCompetenceRaw) return 0;
+    if (!a.datePerteCompetenceRaw) return 1;
+    if (!b.datePerteCompetenceRaw) return -1;
+    return a.datePerteCompetenceRaw - b.datePerteCompetenceRaw;
+  });
+
+  return {
+    cisName: cisName,
+    agents: agents,
+    error: null
+  };
 }

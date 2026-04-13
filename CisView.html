@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <base target="_top">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #C8102E;
+      --primary-dark: #A00D24;
+      --secondary: #1D2951;
+      --secondary-light: #2a3a6a;
+      --bg: #f0f2f5;
+      --card-bg: #ffffff;
+      --text: #2d3436;
+      --text-light: #636e72;
+      --border: #dfe6e9;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+      --radius: 10px;
+      --green: #00b894;
+      --orange: #fdcb6e;
+      --red: #e74c3c;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
+    }
+
+    /* ═══ HEADER ═══ */
+    .header {
+      background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+      color: #fff; padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .header h1 { font-size: 1.15em; font-weight: 700; letter-spacing: .3px; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+
+    /* ═══ CONTAINER ═══ */
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px 18px; }
+
+    /* ═══ STATS ═══ */
+    .stats { display: flex; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
+    .stat-card { background: var(--card-bg); padding: 14px 20px; border-radius: var(--radius); box-shadow: var(--shadow); min-width: 130px; }
+    .stat-value { font-size: 1.7em; font-weight: 700; color: var(--secondary); }
+    .stat-label { font-size: 0.78em; color: var(--text-light); margin-top: 2px; }
+    .stat-card.danger .stat-value { color: var(--primary); }
+    .stat-card.warning .stat-value { color: #e67e22; }
+
+    /* ═══ TABLE ═══ */
+    .table-wrap { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--secondary); color: #fff; }
+    th { padding: 12px 16px; text-align: left; font-weight: 600; font-size: 0.82em; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+    td { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.88em; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #f8f9fa; }
+    th:first-child { border-top-left-radius: var(--radius); }
+    th:last-child { border-top-right-radius: var(--radius); }
+
+    /* Row coloring */
+    tr.overdue { background: #fff5f5; }
+    tr.overdue td:first-child { border-left: 3px solid var(--primary); padding-left: 13px; }
+    tr.soon { background: #fffbf0; }
+    tr.soon td:first-child { border-left: 3px solid var(--orange); padding-left: 13px; }
+
+    /* ═══ BADGES ═══ */
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75em; font-weight: 600; white-space: nowrap; }
+    .badge-vma        { background: #ff6b6b; color: #fff; }
+    .badge-biennale   { background: #00b894; color: #fff; }
+    .badge-prevention { background: #0984e3; color: #fff; }
+    .badge-2027       { background: #a29bfe; color: #fff; }
+    .badge-default    { background: #dfe6e9; color: #636e72; }
+
+    .date-warn { color: var(--red); font-weight: 600; }
+    .date-ok   { color: var(--green); }
+
+    /* ═══ BUTTONS ═══ */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.84em; font-weight: 600; transition: all .2s; text-decoration: none; }
+    .btn-outline { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.5); }
+    .btn-outline:hover { background: rgba(255,255,255,0.15); border-color: #fff; }
+
+    /* ═══ SEARCH ═══ */
+    .search-box {
+      width: 100%; max-width: 400px; padding: 10px 16px 10px 40px;
+      border: 2px solid var(--border); border-radius: var(--radius); font-size: 0.9em;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23636e72' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") 12px center no-repeat;
+      transition: border-color .2s;
+    }
+    .search-box:focus { outline: none; border-color: var(--primary); }
+
+    /* ═══ LOADING ═══ */
+    .loading { text-align: center; padding: 80px 20px; color: var(--text-light); }
+    .spinner { display: inline-block; width: 44px; height: 44px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-box { text-align: center; padding: 60px 20px; }
+    .error-box h2 { color: var(--primary); margin-bottom: 8px; }
+
+    /* ═══ LAST UPDATE ═══ */
+    .last-update { font-size: 0.78em; color: var(--text-light); text-align: right; margin-top: 12px; }
+
+    /* ═══ PRINT ═══ */
+    .no-print {}
+    @media print {
+      .header, .no-print { display: none !important; }
+      .container { padding: 0; max-width: 100%; }
+      .table-wrap { box-shadow: none; border-radius: 0; }
+      .stat-card { box-shadow: none; border: 1px solid #ccc; }
+    }
+    .pdf-header { text-align: center; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 2px solid var(--secondary); display: none; }
+    .pdf-header h2 { color: var(--secondary); font-size: 1.3em; }
+    .pdf-header p  { color: var(--text-light); font-size: 0.85em; margin-top: 4px; }
+
+    /* ═══ RESPONSIVE ═══ */
+    @media (max-width: 768px) {
+      .header { flex-direction: column; gap: 8px; text-align: center; }
+      .container { padding: 16px; }
+      th, td { padding: 8px 10px; font-size: 0.8em; }
+      .stats { gap: 8px; }
+      .stat-card { min-width: 100px; padding: 10px 14px; }
+    }
+
+    /* ═══ AFFECTATION MARKER ═══ */
+    .affectation-tag { font-size: 0.7em; color: var(--text-light); font-weight: 400; margin-left: 6px; }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1 id="headerTitle">🏥 SDIS 66 — Suivi VMA</h1>
+    <div class="header-right">
+      <button class="btn btn-outline no-print" onclick="exportPdf()">📄 Export PDF</button>
+    </div>
+  </div>
+
+  <div class="container" id="app">
+    <div class="loading"><div class="spinner"></div><div>Chargement des données…</div></div>
+  </div>
+
+  <!-- html2pdf.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <script>
+    var CIS_TOKEN = <?!= JSON.stringify(cisToken) ?>;
+    var cisName = '';
+    var cisAgents = [];
+
+    function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    function formatDateFr(s) { return s || '—'; }
+
+    function getBadgeClass(type) {
+      if (!type) return 'badge-default';
+      var t = type.toLowerCase();
+      if (t.indexOf('vma') !== -1) return 'badge-vma';
+      if (t.indexOf('biennale') !== -1) return 'badge-biennale';
+      if (t.indexOf('prévention') !== -1 || t.indexOf('prevention') !== -1) return 'badge-prevention';
+      if (t.indexOf('2027') !== -1) return 'badge-2027';
+      return 'badge-default';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      google.script.run
+        .withSuccessHandler(onDataLoaded)
+        .withFailureHandler(showError)
+        .getCisViewData(CIS_TOKEN);
+    });
+
+    function showError(err) {
+      document.getElementById('app').innerHTML =
+        '<div class="error-box"><h2>❌ Erreur</h2><p>' + esc(err.message || err) + '</p></div>';
+    }
+
+    function onDataLoaded(data) {
+      if (data.error) {
+        document.getElementById('app').innerHTML =
+          '<div class="error-box"><h2>🔒 Accès refusé</h2><p>' + esc(data.error) + '</p></div>';
+        return;
+      }
+
+      cisName = data.cisName;
+      cisAgents = data.agents || [];
+
+      document.getElementById('headerTitle').textContent = '🏥 ' + cisName + ' — Suivi VMA';
+      document.title = cisName + ' — Suivi VMA';
+
+      renderPage();
+    }
+
+    function renderPage() {
+      var now = new Date().getTime();
+      var totalAgents = cisAgents.length;
+      var overdueCount = 0;
+      var soonCount = 0; // dans les 3 prochains mois
+      var threeMonths = now + 90 * 24 * 3600 * 1000;
+
+      cisAgents.forEach(function (a) {
+        if (a.datePerteCompetenceRaw && a.datePerteCompetenceRaw < now) overdueCount++;
+        else if (a.datePerteCompetenceRaw && a.datePerteCompetenceRaw < threeMonths) soonCount++;
+      });
+
+      var searchVal = '';
+      var searchEl = document.getElementById('searchInput');
+      if (searchEl) searchVal = searchEl.value;
+
+      var h = '';
+
+      // PDF header (hidden, shown only during export)
+      h += '<div class="pdf-header" id="pdfHeader">';
+      h += '<h2>🏥 ' + esc(cisName) + ' — Suivi VMA</h2>';
+      h += '<p>Généré le ' + new Date().toLocaleDateString('fr-FR') + '</p>';
+      h += '</div>';
+
+      // Stats
+      h += '<div class="stats">';
+      h += '<div class="stat-card"><div class="stat-value">' + totalAgents + '</div><div class="stat-label">Agents</div></div>';
+      h += '<div class="stat-card danger"><div class="stat-value">' + overdueCount + '</div><div class="stat-label">VMA expirées</div></div>';
+      h += '<div class="stat-card warning"><div class="stat-value">' + soonCount + '</div><div class="stat-label">VMA < 3 mois</div></div>';
+      h += '</div>';
+
+      // Search
+      h += '<div class="no-print" style="margin-bottom:16px;">';
+      h += '<input type="text" class="search-box" id="searchInput" placeholder="Rechercher un agent…" value="' + esc(searchVal) + '" oninput="filterTable()">';
+      h += '</div>';
+
+      // Table
+      h += '<div class="table-wrap"><table id="cisTable">';
+      h += '<thead><tr>';
+      h += '<th>Identité</th>';
+      h += '<th>Fin VMA</th>';
+      h += '<th>Type de visite</th>';
+      h += '<th>Fin Permis C</th>';
+      h += '<th>Dernier ICP</th>';
+      h += '</tr></thead>';
+      h += '<tbody id="cisTableBody">';
+
+      cisAgents.forEach(function (a) {
+        var rowClass = '';
+        if (a.datePerteCompetenceRaw && a.datePerteCompetenceRaw < now) rowClass = ' class="overdue"';
+        else if (a.datePerteCompetenceRaw && a.datePerteCompetenceRaw < threeMonths) rowClass = ' class="soon"';
+
+        // Affectation tag
+        var affTag = '';
+        if (a.centrePrincipal !== cisName && a.centreSecondaire === cisName) {
+          affTag = '<span class="affectation-tag">(secondaire)</span>';
+        }
+
+        // Permis C coloring
+        var permisHtml = '—';
+        if (a.datePermisC) {
+          if (a.datePermisCRaw && a.datePermisCRaw < now) {
+            permisHtml = '<span class="date-warn">' + esc(a.datePermisC) + '</span>';
+          } else if (a.datePermisCRaw && a.datePermisCRaw < threeMonths) {
+            permisHtml = '<span style="color:#e67e22;font-weight:600;">' + esc(a.datePermisC) + '</span>';
+          } else {
+            permisHtml = esc(a.datePermisC);
+          }
+        }
+
+        // ICP coloring (> 1 an = warning)
+        var icpHtml = '—';
+        if (a.dateIcp) {
+          var oneYearAgo = now - 365 * 24 * 3600 * 1000;
+          if (a.dateIcpRaw && a.dateIcpRaw < oneYearAgo) {
+            icpHtml = '<span class="date-warn">' + esc(a.dateIcp) + '</span>';
+          } else {
+            icpHtml = esc(a.dateIcp);
+          }
+        }
+
+        h += '<tr' + rowClass + ' data-name="' + esc(a.nomPrenom).toLowerCase() + '">';
+        h += '<td><strong>' + esc(a.nomPrenom) + '</strong>' + affTag + '</td>';
+        h += '<td style="white-space:nowrap;">' + formatDateFr(a.datePerteCompetence) + '</td>';
+        h += '<td><span class="badge ' + getBadgeClass(a.typeVisite) + '">' + esc(a.typeVisite || 'Non déterminé') + '</span></td>';
+        h += '<td style="white-space:nowrap;">' + permisHtml + '</td>';
+        h += '<td style="white-space:nowrap;">' + icpHtml + '</td>';
+        h += '</tr>';
+      });
+
+      h += '</tbody></table></div>';
+
+      // Last update
+      h += '<div class="last-update">Dernière mise à jour : ' + new Date().toLocaleString('fr-FR') + '</div>';
+
+      document.getElementById('app').innerHTML = h;
+    }
+
+    function filterTable() {
+      var query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+      var rows = document.querySelectorAll('#cisTableBody tr');
+      for (var i = 0; i < rows.length; i++) {
+        var name = rows[i].getAttribute('data-name') || '';
+        rows[i].style.display = (!query || name.indexOf(query) !== -1) ? '' : 'none';
+      }
+    }
+
+    function exportPdf() {
+      var pdfHeader = document.getElementById('pdfHeader');
+      if (pdfHeader) pdfHeader.style.display = 'block';
+
+      var el = document.getElementById('app');
+      var opt = {
+        margin: [8, 8, 8, 8],
+        filename: cisName + ' - Suivi VMA.pdf',
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      };
+
+      html2pdf().set(opt).from(el).save().then(function () {
+        if (pdfHeader) pdfHeader.style.display = 'none';
+      });
+    }
+  </script>
+</body>
+</html>

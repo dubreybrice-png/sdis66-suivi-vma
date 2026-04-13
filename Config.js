@@ -19,7 +19,8 @@ var CONFIG = {
     VACCINS:      'Vaccins',
     SERO:         'Sero',
     BRULEUR:         'Suivi Bruleur Caisson',
-    DERNIERE_VISITE: 'derniere visite'
+    DERNIERE_VISITE: 'derniere visite',
+    PERMIS_C:     'permis c'
   },
 
   /* ── Colonnes onglet derniere visite (0-based) ── */
@@ -87,6 +88,19 @@ var CONFIG = {
     MATRICULE:  3,  // D
     RESULTAT:   4,  // E
     TYPE:       5   // F — type de sérologie
+  },
+
+  /* ── Colonnes onglet permis c (0-based) ── */
+  COLS_PERMIS_C: {
+    MATRICULE:    2,  // C
+    DATE_LIMITE:  9   // J — date limite du permis C
+  },
+
+  /* ── Colonnes onglet cis / mailing (0-based) ── */
+  COLS_CIS_MAILING: {
+    CIS:    0,  // A — nom du CIS
+    EMAIL:  1,  // B — email(s) du chef de centre
+    TOKEN:  2   // C — token d'accès unique (auto-généré)
   },
 
   /* ── Épreuves sportives reconnues ── */
