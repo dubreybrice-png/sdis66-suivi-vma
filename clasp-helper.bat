@@ -79,17 +79,20 @@ if /i "%action%"=="sync" (
     for /f "tokens=2 delims= " %%A in ('cmd /c "clasp deploy" 2^>^&1 ^| findstr /i "Deployed"') do set DEPLOY_ID=%%A
     echo [+] Deployment ID: !DEPLOY_ID!
     echo.
-    echo [*] Storing public deploy URL...
+    echo [*] Updating Config.js DEPLOY_URL...
     set DEPLOY_URL=https://script.google.com/macros/s/!DEPLOY_ID!/exec
     echo     URL: !DEPLOY_URL!
-    cmd /c "clasp run setDeployUrl -p [\"!DEPLOY_URL!\"]" 2>nul
-    if errorlevel 1 (
-        echo [!] Could not auto-store URL via clasp run.
-        echo [!] Run this manually in GAS editor console:
-        echo     setDeployUrl("!DEPLOY_URL!")
-    ) else (
-        echo [+] URL stored in script properties!
-    )
+    REM Update Config.js with new deploy URL (replace the DEPLOY_URL line)
+    powershell -Command "(Get-Content 'Config.js') -replace \"DEPLOY_URL: '.*'\", \"DEPLOY_URL: '!DEPLOY_URL!'\" | Set-Content 'Config.js'"
+    echo [+] Config.js updated!
+    echo.
+    echo [*] Re-pushing updated Config.js to GAS...
+    cmd /c "clasp push --force"
+    echo.
+    echo [*] Committing URL update to git...
+    git add Config.js
+    git commit -m "update DEPLOY_URL to !DEPLOY_ID!"
+    git push
     echo.
     echo [+] GitHub + GAS synced AND deployed!
     pause
