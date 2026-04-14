@@ -11,7 +11,7 @@ var CONFIG = {
    * ScriptApp.getService().getUrl() renvoie l'URL @HEAD (inaccessible au public).
    * Mettre à jour cette valeur après chaque `clasp deploy` (nouveau déploiement).
    */
-  DEPLOY_URL: 'https://script.google.com/macros/s/AKfycbzmNdBnPxBnErmekLwP-VZBli0aIizAPf1RBtOti1YDgZfnDRV861SFHa-mHN8LZDLn9g/exec',
+  DEPLOY_URL: 'https://script.google.com/macros/s/AKfycbwCSuVmSelwnBQS-PwD37yDWXpHzQBaOkcJXs2q2BHPoRWTI1Woee5unVwhGAp0_Be2_Q/exec',
 
   /* ── Noms des onglets ── */
   SHEETS: {
