@@ -123,5 +123,19 @@ var CONFIG = {
   VMA_GRIMP_AGE:   43,
   AGE_THRESHOLD:   39,
   MONTHS_TO_ADD:   3,
-  REFERENCE_YEAR:  2026
+  REFERENCE_YEAR:  2026,
+
+  /* ── Contrôle qualité (spreadsheet externe) ── */
+  CONTROLE_SPREADSHEET_ID: '1awbdV97XKqqop3E_oqqRD75bLnZzhMKU7YHfqtVdSbA',
+  COLS_CONTROLE: {
+    DATE:       0,  // A — date+heure de clôture
+    IDENTITE:   1,  // B — nom/prénom de l'agent
+    OBJET:      2,  // C — type d'examen
+    VERIFIE_PAR: 3  // D — "Eve" ou "David" (menu déroulant)
+  },
+  CONTROLE_EMAILS: [
+    'david.aranega@sdis66.fr',
+    'brice.dubrey@sdis66.fr',
+    'eve.laparra@sdis66.fr'
+  ]
 };

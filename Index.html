@@ -933,6 +933,7 @@
         h += '<button class="btn-acquitter" onclick="acquitterExamFromPop(\'' + esc(exam.id) + '\')">📝 Prescrire cet examen</button>';
       }
       h += '<button class="pop-close-btn" onclick="closeExamFromPop(\'' + esc(exam.id) + '\')">✅ Clôturer</button>';
+      h += '<button class="pop-close-btn" style="background:#e67e22;border-color:#e67e22;" onclick="closeAndControleFromPop(\'' + esc(exam.id) + '\')">📋 Clôturer et faire contrôler</button>';
       h += '<button class="pop-delete-btn" onclick="deleteExamFromPop(\'' + esc(exam.id) + '\')">🗑️ Supprimer</button>';
       h += '</div>';
 
@@ -960,6 +961,15 @@
         allExamens = allExamens.filter(function (e) { return e.id !== examId; });
         buildIndexes(); renderMainPage();
       }).withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); }).closeExamen(examId);
+    }
+
+    function closeAndControleFromPop(examId) {
+      if (!confirm('Clôturer cet examen et l\'envoyer au contrôle ?')) return;
+      hideExamPopover();
+      google.script.run.withSuccessHandler(function () {
+        allExamens = allExamens.filter(function (e) { return e.id !== examId; });
+        buildIndexes(); renderMainPage();
+      }).withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); }).closeExamenAndControle(examId);
     }
 
     function deleteExamFromPop(examId) {
@@ -1528,6 +1538,14 @@
       }).withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); }).closeExamen(examId);
     }
 
+    function closeAndControleAction(examId, callback) {
+      if (!confirm('Clôturer cet examen et l\'envoyer au contrôle ?')) return;
+      google.script.run.withSuccessHandler(function () {
+        allExamens = allExamens.filter(function (e) { return e.id !== examId; });
+        buildIndexes(); if (callback) callback();
+      }).withFailureHandler(function (err) { alert('Erreur : ' + (err.message || err)); }).closeExamenAndControle(examId);
+    }
+
     function deleteExamAction(examId, callback) {
       if (!confirm('Supprimer définitivement cet examen ?')) return;
       google.script.run.withSuccessHandler(function () {
@@ -1779,6 +1797,7 @@
           h += '<div class="exam-card-header"><span style="font-weight:700;font-size:1.05em;">' + (icons[e.type] || '📋') + ' ' + esc(labels[e.type] || e.type) + '</span>';
           h += '<div style="display:flex;gap:6px;">';
           h += '<button class="btn btn-primary" style="padding:4px 10px;font-size:0.78em;" onclick="closeExamAction(\'' + esc(e.id) + '\',' + refreshFn + ')">✅ Clôturer</button>';
+          h += '<button class="btn btn-primary" style="padding:4px 10px;font-size:0.78em;background:#e67e22;border-color:#e67e22;" onclick="closeAndControleAction(\'' + esc(e.id) + '\',' + refreshFn + ')">📋 Contrôler</button>';
           h += '<button class="btn btn-danger-outline" style="padding:4px 10px;font-size:0.78em;" onclick="deleteExamAction(\'' + esc(e.id) + '\',' + refreshFn + ')">🗑️</button>';
           h += '</div></div>';
           if (e.detail) h += '<div class="exam-card-line"><strong>Examen :</strong> ' + esc(e.detail) + '</div>';

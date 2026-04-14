@@ -42,6 +42,7 @@ function onOpen() {
     .addItem('🔗 Afficher les URLs chefs de centre', 'showCisViewLinks')
     .addSeparator()
     .addItem('🧰 Initialiser Drive + programmes sport', 'initializeSportProgramResources')
+    .addItem('📋 Installer triggers contrôle qualité', 'setupControleTriggers')
     .addItem('🌐 Ouvrir l\'application web', 'openWebApp')
     .addToUi();
 }

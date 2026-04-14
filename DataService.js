@@ -2206,3 +2206,150 @@ function getCisViewData(token) {
     error: null
   };
 }
+
+/* ═══════════════════════════════════════════════════════
+   CONTRÔLE QUALITÉ — Spreadsheet externe
+   ═══════════════════════════════════════════════════════ */
+
+/**
+ * Clôture un examen ET inscrit une ligne dans la feuille de contrôle.
+ * Colonne A = date/heure, B = identité agent, C = type d'examen.
+ */
+function closeExamenAndControle(examenId) {
+  var sheet = getExamensSheet_();
+  var data  = sheet.getDataRange().getValues();
+  var matricule = '';
+  var typeExam  = '';
+  var detail    = '';
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][CONFIG.COLS_EXAMENS.ID].toString() === examenId) {
+      matricule = (data[i][CONFIG.COLS_EXAMENS.MATRICULE] || '').toString().trim();
+      typeExam  = (data[i][CONFIG.COLS_EXAMENS.TYPE] || '').toString().trim();
+      detail    = (data[i][CONFIG.COLS_EXAMENS.DETAIL] || '').toString().trim();
+      sheet.getRange(i + 1, CONFIG.COLS_EXAMENS.STATUT + 1).setValue('cloture');
+      break;
+    }
+  }
+  if (!matricule) throw new Error('Examen introuvable : ' + examenId);
+
+  /* Résolution du nom de l'agent */
+  var agentName = matricule;
+  var allAgts = getAllAgents();
+  for (var j = 0; j < allAgts.length; j++) {
+    if (allAgts[j].matricule === matricule) { agentName = allAgts[j].nomPrenom; break; }
+  }
+
+  /* Libellé lisible du type d'examen */
+  var typeLabels = {
+    biologie: 'Biologie',
+    automesure: 'Automesure tensionnelle',
+    imagerie: 'Imagerie',
+    avis_specialise: 'Avis spécialisé',
+    autre: 'Autre examen'
+  };
+  var objet = typeLabels[typeExam] || typeExam;
+  if (detail) objet += ' — ' + detail;
+
+  /* Écriture dans le spreadsheet de contrôle */
+  var ctrlSs    = SpreadsheetApp.openById(CONFIG.CONTROLE_SPREADSHEET_ID);
+  var ctrlSheet = ctrlSs.getSheets()[0]; // 1er onglet
+  ctrlSheet.appendRow([new Date(), agentName, objet]);
+
+  return true;
+}
+
+/**
+ * Appelée par un trigger installable onEdit sur le spreadsheet de contrôle.
+ * Si la colonne D (Vérifié par) est remplie → masquer la ligne.
+ */
+function onControleEdit(e) {
+  if (!e || !e.range) return;
+  var sheet = e.range.getSheet();
+  var col   = e.range.getColumn();
+  var row   = e.range.getRow();
+
+  // Colonne D = 4, et pas la ligne d'en-tête
+  if (col !== 4 || row < 2) return;
+
+  var val = (e.range.getValue() || '').toString().trim();
+  if (val) {
+    sheet.hideRows(row);
+  }
+}
+
+/**
+ * Envoie un mail de rappel s'il reste des lignes non contrôlées.
+ * Programmé chaque jour à 17h via un trigger time-based.
+ */
+function sendControleReminder() {
+  var ctrlSs    = SpreadsheetApp.openById(CONFIG.CONTROLE_SPREADSHEET_ID);
+  var ctrlSheet = ctrlSs.getSheets()[0];
+  var lastRow   = ctrlSheet.getLastRow();
+  if (lastRow < 2) return; // rien à contrôler
+
+  var count = 0;
+  var data = ctrlSheet.getRange(2, 1, lastRow - 1, 4).getValues();
+  for (var i = 0; i < data.length; i++) {
+    var verif = (data[i][3] || '').toString().trim();
+    if (!verif && !ctrlSheet.isRowHiddenByUser(i + 2)) {
+      count++;
+    }
+  }
+
+  if (count === 0) return; // tout est contrôlé
+
+  var url = 'https://docs.google.com/spreadsheets/d/' + CONFIG.CONTROLE_SPREADSHEET_ID + '/edit';
+  var subject = '📋 Contrôle VMA — ' + count + ' dossier' + (count > 1 ? 's' : '') + ' à vérifier';
+  var body = 'Bonjour,\n\n'
+    + 'Il reste ' + count + ' dossier' + (count > 1 ? 's' : '') + ' à contrôler.\n\n'
+    + 'Cliquez ici pour les voir :\n' + url + '\n\n'
+    + 'Bonne fin de journée,\n'
+    + 'Suivi VMA automatique';
+
+  var htmlBody = '<p>Bonjour,</p>'
+    + '<p>Il reste <strong>' + count + ' dossier' + (count > 1 ? 's' : '') + '</strong> à contrôler.</p>'
+    + '<p><a href="' + url + '" style="display:inline-block;padding:10px 20px;background:#1D2951;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">📋 Voir les dossiers à contrôler</a></p>'
+    + '<p>Bonne fin de journée,<br>Suivi VMA automatique</p>';
+
+  var recipients = CONFIG.CONTROLE_EMAILS.join(',');
+  MailApp.sendEmail({
+    to: recipients,
+    subject: subject,
+    body: body,
+    htmlBody: htmlBody
+  });
+}
+
+/**
+ * Installe les triggers pour le contrôle qualité :
+ * 1. onEdit sur le spreadsheet de contrôle (masquer lignes vérifiées)
+ * 2. Trigger quotidien à 17h pour le rappel email
+ *
+ * À exécuter UNE FOIS manuellement depuis l'éditeur ou le menu.
+ */
+function setupControleTriggers() {
+  /* Supprimer les anciens triggers de contrôle */
+  var existing = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < existing.length; i++) {
+    var fname = existing[i].getHandlerFunction();
+    if (fname === 'onControleEdit' || fname === 'sendControleReminder') {
+      ScriptApp.deleteTrigger(existing[i]);
+    }
+  }
+
+  /* Trigger onEdit sur le spreadsheet de contrôle */
+  ScriptApp.newTrigger('onControleEdit')
+    .forSpreadsheet(CONFIG.CONTROLE_SPREADSHEET_ID)
+    .onEdit()
+    .create();
+
+  /* Trigger quotidien 17h pour le rappel email */
+  ScriptApp.newTrigger('sendControleReminder')
+    .timeBased()
+    .everyDays(1)
+    .atHour(17)
+    .create();
+
+  return 'Triggers contrôle installés : onEdit + quotidien 17h';
+}
