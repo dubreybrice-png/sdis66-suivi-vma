@@ -97,17 +97,17 @@ function getSportDocsFolder_() {
    ═══════════════════════════════════════════════════════ */
 
 /**
- * Construit un dictionnaire { "NOM Prénom": ["Bruleur", "Grimp", …] }
+ * Construit un dictionnaire { matricule: ["Bruleur", "Grimp", …] }
  */
 function getSpecialties_() {
   var data = getSheetData_(CONFIG.SHEETS.SPECIALITE);
   var map = {};
   data.forEach(function (row) {
-    var nom  = (row[CONFIG.COLS_SPE.NOM]  || '').toString().trim();
-    var type = (row[CONFIG.COLS_SPE.TYPE] || '').toString().trim();
-    if (nom && type) {
-      if (!map[nom]) map[nom] = [];
-      map[nom].push(type);
+    var matricule = (row[CONFIG.COLS_SPE.MATRICULE] || '').toString().trim();
+    var type      = (row[CONFIG.COLS_SPE.TYPE] || '').toString().trim();
+    if (matricule && type) {
+      if (!map[matricule]) map[matricule] = [];
+      map[matricule].push(type);
     }
   });
   return map;
@@ -1252,7 +1252,7 @@ function setExamRelance(examId, relanceIndex, checked) {
  * 4. visitYear ≥ 2026            → Déjà vu
  */
 function determineVisitType_(agent, specialties) {
-  var agentSpe = specialties[agent.nomPrenom];
+  var agentSpe = specialties[agent.matricule];
   var refYear  = CONFIG.REFERENCE_YEAR; // 2026
 
   /* ── 1. Spécialités → VMA tous les ans ── */
@@ -1393,7 +1393,7 @@ function getAllAgents() {
       perteYear:              perteYear,
       visitYear:              visitYear,
       isRetard:               item.source === 'retard',
-      specialites:            specialties[nomPrenom] || [],
+      specialites:            specialties[matricule] || [],
       typeVisite:             '',
       typeVisiteRaison:       '',
       sport:                  []
@@ -2291,6 +2291,8 @@ function sendControleReminder() {
   var count = 0;
   var data = ctrlSheet.getRange(2, 1, lastRow - 1, 4).getValues();
   for (var i = 0; i < data.length; i++) {
+    var dateVal  = (data[i][0] || '').toString().trim();
+    if (!dateVal) continue; // ignorer les lignes sans date en colonne A
     var verif = (data[i][3] || '').toString().trim();
     if (!verif && !ctrlSheet.isRowHiddenByUser(i + 2)) {
       count++;

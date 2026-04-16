@@ -51,8 +51,9 @@ var CONFIG = {
 
   /* ── Colonnes onglet données spécialité (0-based) ── */
   COLS_SPE: {
-    TYPE: 1,  // B — type de spécialité
-    NOM:  2   // C — NOM Prénom
+    MATRICULE: 0,  // A — matricule
+    TYPE:      1,  // B — type de spécialité
+    NOM:       2   // C — NOM Prénom (legacy, on utilise matricule)
   },
 
   /* ── Colonnes onglet Sport (0-based) ── */
