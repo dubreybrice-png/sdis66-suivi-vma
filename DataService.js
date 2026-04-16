@@ -2261,7 +2261,9 @@ function closeExamenAndControle(examenId) {
 
 /**
  * Appelée par un trigger installable onEdit sur le spreadsheet de contrôle.
- * Si la colonne D (Vérifié par) est remplie → masquer la ligne.
+ * Colonnes : A=Date, B=Agent, C=Objet, D=Vérifié par, E=RAS (checkbox), F=Dossier à voir (checkbox)
+ * La ligne est masquée quand D est rempli ET (E coché OU F coché).
+ * Si F est coché → mail à Brice + Célia.
  */
 function onControleEdit(e) {
   if (!e || !e.range) return;
@@ -2269,22 +2271,39 @@ function onControleEdit(e) {
   var col   = e.range.getColumn();
   var row   = e.range.getRow();
 
-  // Colonne D = 4, et pas la ligne d'en-tête
-  if (col !== 4 || row < 2) return;
+  // Réagir uniquement sur colonnes D(4), E(5) ou F(6), pas l'en-tête
+  if (col < 4 || col > 6 || row < 2) return;
 
-  var val = (e.range.getValue() || '').toString().trim();
-  if (val) {
-    // Envoyer un mail de notification
-    var agent = (sheet.getRange(row, 2).getValue() || '').toString().trim();
-    var subject = '✅ Contrôle VMA — ' + agent + ' vérifié par ' + val;
+  var verifPar   = (sheet.getRange(row, 4).getValue() || '').toString().trim();  // D
+  var ras        = sheet.getRange(row, 5).getValue() === true;                   // E checkbox
+  var dossierAVoir = sheet.getRange(row, 6).getValue() === true;                 // F checkbox
+
+  // Condition pour masquer : D rempli ET (E ou F coché)
+  if (!verifPar || (!ras && !dossierAVoir)) return;
+
+  var agent = (sheet.getRange(row, 2).getValue() || '').toString().trim();
+
+  // Si F coché → mail spécifique à Brice + Célia
+  if (dossierAVoir) {
+    var subject = '📋 Contrôle VMA — Dossier à voir : ' + agent;
     var body = 'Bonjour,\n\n'
-      + "L'agent " + agent + ' (ligne ' + row + ') a été vu par ' + val + '.\n\n'
+      + 'Le dossier de l\'agent ' + agent + ' a été vu par ' + verifPar
+      + ' et il a été demandé quelque chose, voir médisap.\n\n'
       + 'Lien vers le tableau :\nhttps://docs.google.com/spreadsheets/d/' + CONFIG.CONTROLE_SPREADSHEET_ID + '/edit\n\n'
       + 'Suivi VMA automatique';
     MailApp.sendEmail('brice.dubrey@sdis66.fr', subject, body);
-
-    sheet.hideRows(row);
+    MailApp.sendEmail('celia.bertoncello@sdis66.fr', subject, body);
+  } else {
+    // E coché (RAS) → mail simple à Brice
+    var subject = '✅ Contrôle VMA — ' + agent + ' vérifié par ' + verifPar;
+    var body = 'Bonjour,\n\n'
+      + 'L\'agent ' + agent + ' (ligne ' + row + ') a été vu par ' + verifPar + '. RAS.\n\n'
+      + 'Lien vers le tableau :\nhttps://docs.google.com/spreadsheets/d/' + CONFIG.CONTROLE_SPREADSHEET_ID + '/edit\n\n'
+      + 'Suivi VMA automatique';
+    MailApp.sendEmail('brice.dubrey@sdis66.fr', subject, body);
   }
+
+  sheet.hideRows(row);
 }
 
 /**
