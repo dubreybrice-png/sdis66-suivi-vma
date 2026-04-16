@@ -2274,6 +2274,15 @@ function onControleEdit(e) {
 
   var val = (e.range.getValue() || '').toString().trim();
   if (val) {
+    // Envoyer un mail de notification
+    var agent = (sheet.getRange(row, 2).getValue() || '').toString().trim();
+    var subject = '✅ Contrôle VMA — ' + agent + ' vérifié par ' + val;
+    var body = 'Bonjour,\n\n'
+      + "L'agent " + agent + ' (ligne ' + row + ') a été vu par ' + val + '.\n\n'
+      + 'Lien vers le tableau :\nhttps://docs.google.com/spreadsheets/d/' + CONFIG.CONTROLE_SPREADSHEET_ID + '/edit\n\n'
+      + 'Suivi VMA automatique';
+    MailApp.sendEmail('brice.dubrey@sdis66.fr', subject, body);
+
     sheet.hideRows(row);
   }
 }
