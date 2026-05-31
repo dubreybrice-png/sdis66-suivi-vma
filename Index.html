@@ -475,6 +475,7 @@
     var agentsByMatricule = {};
     var currentExamMatricule = '';
     var currentExamType = '';
+    var currentExamSousType = '';
 
     var activePersonFilter = null;
     var sortStates = {};
@@ -589,12 +590,16 @@
     function buildIndexes() {
       examensByMatricule = {};
       allExamens.forEach(function (e) {
-        if (!examensByMatricule[e.matricule]) examensByMatricule[e.matricule] = [];
-        examensByMatricule[e.matricule].push(e);
+        // Clé = matricule si non vide, sinon on cherche l'agent correspondant par son agentKey
+        var key = e.matricule || '';
+        if (!examensByMatricule[key]) examensByMatricule[key] = [];
+        examensByMatricule[key].push(e);
+        // Double-index : si la clé ressemble à __nom__*, ajouter aussi une entrée vide
+        // pour que les lookups par agentKey fonctionnent
       });
       agentsByMatricule = {};
-      allAgents.forEach(function (a) { agentsByMatricule[a.matricule] = a; });
-      inactiveAgents.forEach(function (a) { agentsByMatricule[a.matricule] = a; });
+      allAgents.forEach(function (a) { agentsByMatricule[a.matricule] = a; if (a.agentKey) agentsByMatricule[a.agentKey] = a; });
+      inactiveAgents.forEach(function (a) { agentsByMatricule[a.matricule] = a; if (a.agentKey) agentsByMatricule[a.agentKey] = a; });
     }
 
     /* ═══════════════════════════════════════════════
@@ -650,7 +655,7 @@
 
     function isAgentVisibleForFilter(agent) {
       if (!activePersonFilter) return true;
-      var exams = examensByMatricule[agent.matricule] || [];
+      var exams = examensByMatricule[agent.agentKey || agent.matricule] || [];
       /* Seuls les agents ayant au moins 1 examen géré par la personne sélectionnée */
       for (var i = 0; i < exams.length; i++) {
         if (exams[i].gerePar === activePersonFilter) return true;
@@ -795,17 +800,18 @@
     function renderAgentRow(a, index) {
       var now = Date.now();
       var isOverdue = a.datePerteCompetenceRaw && a.datePerteCompetenceRaw < now;
-      var agentExams = (examensByMatricule[a.matricule] || []).filter(function (e) { return isExamVisibleForFilter(e); });
+      var agentKey = a.agentKey || a.matricule;
+      var agentExams = (examensByMatricule[agentKey] || []).filter(function (e) { return isExamVisibleForFilter(e); });
       var searchStr = (a.nomPrenom + ' ' + a.centrePrincipal + ' ' + a.centreSecondaire + ' ' + a.typeVisite + ' ' + a.dateProchVisite + ' ' + a.datePerteCompetence).toLowerCase();
-      var sm = esc(a.matricule);
-      var colorClass = rowColors[a.matricule] ? ' row-color-' + rowColors[a.matricule] : '';
+      var sm = esc(a.agentKey || a.matricule);
+      var colorClass = rowColors[sm] ? ' row-color-' + rowColors[sm] : '';
 
       var h = '<tr class="agent-row' + (isOverdue ? ' overdue' : '') + colorClass + '" data-search="' + esc(searchStr) + '" data-matricule="' + sm + '" id="row-' + sm + '">';
       h += '<td class="row-num">' + (index + 1) + '</td>';
 
       /* Color picker */
       h += '<td class="no-print" style="text-align:center;"><span class="color-picker-wrap">';
-      var currentColor = rowColors[a.matricule] || '';
+      var currentColor = rowColors[sm] || '';
       var dotBg = currentColor ? getColorHex(currentColor) : '#fff';
       h += '<span class="color-dot" style="background:' + dotBg + '" onclick="toggleColorMenu(event,\'' + sm + '\')" title="Couleur de ligne"></span>';
       h += '<div class="color-dropdown" id="colormenu-' + sm + '">';
@@ -825,6 +831,8 @@
       h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'imagerie\')">☢️</button>';
       h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'avis_specialise\')">🩺</button>';
       h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'autre\')">🅰️</button>';
+      h += '<button class="add-exam-btn" onclick="event.stopPropagation();quickCreateEapExam(\'' + sm + '\',\'suivi_eap\')" title="Ajouter Suivi EAP" style="border-left:1.5px solid var(--border);">🏋️ Suivi</button>';
+      h += '<button class="add-exam-btn" onclick="event.stopPropagation();quickCreateEapExam(\'' + sm + '\',\'pao\')" title="Ajouter PAO">PAO</button>';
       h += '</div></span></td>';
 
       h += '<td><strong>' + esc(a.nomPrenom) + '</strong>';
@@ -834,7 +842,7 @@
           var ex = agentExams[j];
           var isExOverdue = ex.dateResultatRaw && ex.dateResultatRaw < now;
           var cc = isExOverdue ? 'red' : 'green';
-          var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+          var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️', eap: '🏋️' };
           h += '<span class="exam-icon-wrap"><span class="exam-badge ' + cc + '" onclick="toggleExamPopover(event,\'' + esc(ex.id) + '\')">' + (icons[ex.type] || '📋') + '</span></span>';
         }
         h += '</span>';
@@ -910,8 +918,8 @@
     function renderExamPopoverContent(exam) {
       var now = Date.now();
       var isOv = exam.dateResultatRaw && exam.dateResultatRaw < now;
-      var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
-      var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre examen' };
+      var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️', eap: '🏋️' };
+      var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre examen', eap: 'EAP' };
 
       var h = '<div style="font-weight:700;font-size:1.05em;margin-bottom:8px;">' + (icons[exam.type] || '📋') + ' ' + esc(labels[exam.type] || exam.type) + '</div>';
       if (exam.detail) h += '<div style="margin-bottom:4px;"><strong>Examen :</strong> ' + esc(exam.detail) + '</div>';
@@ -1049,8 +1057,8 @@
         modal.style.display = 'flex';
         return;
       }
-      var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
-      var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre' };
+      var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️', eap: '🏋️' };
+      var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre', eap: 'EAP' };
       var h = '';
       for (var i = 0; i < exams.length; i++) {
         var ex = exams[i];
@@ -1087,8 +1095,8 @@
       for (var j = 0; j < allAgents.length; j++) {
         if (allAgents[j].matricule === matricule) { agentName = allAgents[j].nomPrenom; break; }
       }
-      var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
-      var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre' };
+      var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️', eap: '🏋️' };
+      var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre', eap: 'EAP' };
       var h = '<div style="font-weight:700;font-size:1.1em;margin-bottom:12px;">🚨 Examens à prescrire — ' + esc(agentName) + '</div>';
       for (var i = 0; i < exams.length; i++) {
         var ex = exams[i];
@@ -1220,8 +1228,8 @@
 
     function renderCalendrierContent() {
       var person = calCurrentPerson;
-      var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
-      var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre' };
+      var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️', eap: '🏋️' };
+      var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre', eap: 'EAP' };
       var now = new Date(); now.setHours(0, 0, 0, 0);
       var todayTs = now.getTime();
       var SIX_MONTHS = 6 * 30.44 * 24 * 3600000;
@@ -1480,9 +1488,21 @@
       if (t && !open) t.style.display = 'flex';
     }
 
-    function openAddExam(matricule, type) {
-      currentExamMatricule = matricule; currentExamType = type;
-      var tl = { biologie: 'Ajouter une biologie', automesure: 'Ajouter une automesure tensionnelle', imagerie: 'Ajouter une imagerie', avis_specialise: 'Ajouter un avis spécialisé', autre: 'Ajouter un autre examen' };
+    function toggleEapSubMenu(event, matricule) {
+      event.stopPropagation();
+      /* Function no longer needed - EAP exams are created instantly */
+    }
+
+    function openAddExam(matricule, type, sousType) {
+      currentExamMatricule = matricule; currentExamType = type; currentExamSousType = sousType || '';
+      var tl = { 
+        biologie: 'Ajouter une biologie', 
+        automesure: 'Ajouter une automesure tensionnelle', 
+        imagerie: 'Ajouter une imagerie', 
+        avis_specialise: 'Ajouter un avis spécialisé', 
+        autre: 'Ajouter un autre examen',
+        eap: sousType === 'suivi_eap' ? 'Ajouter un suivi EAP' : 'Ajouter un PAO'
+      };
       document.getElementById('examModalTitle').textContent = tl[type] || 'Ajouter un examen';
       document.getElementById('examDetail').value = '';
       var today = new Date();
@@ -1511,13 +1531,15 @@
         dateDemande: document.getElementById('examDateDemande').value,
         dateResultat: document.getElementById('examDateResultat').value,
         commentaire: document.getElementById('examCommentaire').value,
-        gerePar: document.getElementById('examGerePar').value
+        gerePar: document.getElementById('examGerePar').value,
+        sousType: currentExamSousType || null
       };
       /* dateResultat auto-remplie par défaut, mais peut être modifiée */
       var btn = document.getElementById('examSubmitBtn');
       btn.disabled = true; btn.textContent = 'Enregistrement…';
       google.script.run.withSuccessHandler(function (saved) {
-        allExamens.push(saved); buildIndexes(); closeExamModal();
+        var savedItems = Array.isArray(saved) ? saved : [saved];
+        allExamens = allExamens.concat(savedItems); buildIndexes(); closeExamModal();
         if (bruleurViewActive) renderBruleurPage();
         else if (vaccinViewActive) renderVaccinPage();
         else if (sportViewActive) renderSportPage();
@@ -1525,6 +1547,31 @@
         btn.disabled = false; btn.textContent = 'Enregistrer';
       }).withFailureHandler(function (err) {
         alert('Erreur : ' + (err.message || err)); btn.disabled = false; btn.textContent = 'Enregistrer';
+      }).saveExamen(data);
+    }
+
+    function quickCreateEapExam(matricule, sousType) {
+      var today = new Date();
+      var detailText = sousType === 'suivi_eap' ? 'Suivi EAP' : 'PAO';
+      var data = {
+        matricule: matricule,
+        type: 'eap',
+        detail: detailText,
+        dateDemande: today.toISOString().split('T')[0],
+        dateResultat: null, /* sera auto-calculée */
+        commentaire: '',
+        gerePar: 'Brice',
+        sousType: sousType
+      };
+      google.script.run.withSuccessHandler(function (saved) {
+        var savedItems = Array.isArray(saved) ? saved : [saved];
+        allExamens = allExamens.concat(savedItems); buildIndexes();
+        if (bruleurViewActive) renderBruleurPage();
+        else if (vaccinViewActive) renderVaccinPage();
+        else if (sportViewActive) renderSportPage();
+        else renderMainPage();
+      }).withFailureHandler(function (err) {
+        alert('Erreur : ' + (err.message || err));
       }).saveExamen(data);
     }
 
@@ -1740,14 +1787,16 @@
 
     function renderExamFilterBar(activeType, fnName, sourceExams) {
       var src = sourceExams || allExamens;
-      var counts = { biologie: 0, imagerie: 0, avis_specialise: 0, autre: 0 };
+      var counts = { biologie: 0, automesure: 0, imagerie: 0, avis_specialise: 0, autre: 0, eap: 0 };
       src.forEach(function (e) { if (counts.hasOwnProperty(e.type)) counts[e.type]++; });
       var h = '<div class="filter-bar">';
       h += '<button class="filter-btn' + (activeType === 'all' ? ' active' : '') + '" onclick="' + fnName + '(\'all\')">📋 Tous (' + src.length + ')</button>';
       h += '<button class="filter-btn' + (activeType === 'biologie' ? ' active' : '') + '" onclick="' + fnName + '(\'biologie\')">🧪 Biologie (' + counts.biologie + ')</button>';
+      h += '<button class="filter-btn' + (activeType === 'automesure' ? ' active' : '') + '" onclick="' + fnName + '(\'automesure\')">🩻 Automesure (' + counts.automesure + ')</button>';
       h += '<button class="filter-btn' + (activeType === 'imagerie' ? ' active' : '') + '" onclick="' + fnName + '(\'imagerie\')">☢️ Imagerie (' + counts.imagerie + ')</button>';
       h += '<button class="filter-btn' + (activeType === 'avis_specialise' ? ' active' : '') + '" onclick="' + fnName + '(\'avis_specialise\')">🩺 Avis spécialisé (' + counts.avis_specialise + ')</button>';
       h += '<button class="filter-btn' + (activeType === 'autre' ? ' active' : '') + '" onclick="' + fnName + '(\'autre\')">🅰️ Autre (' + counts.autre + ')</button>';
+      h += '<button class="filter-btn' + (activeType === 'eap' ? ' active' : '') + '" onclick="' + fnName + '(\'eap\')">🏋️ EAP (' + counts.eap + ')</button>';
       h += '</div>';
       return h;
     }
@@ -1791,8 +1840,8 @@
         for (var i = 0; i < exams.length; i++) {
           var e = exams[i];
           var isOv = e.dateResultatRaw && e.dateResultatRaw < now;
-          var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
-          var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre examen' };
+          var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️', eap: '🏋️' };
+          var labels = { biologie: 'Biologie', automesure: 'Automesure tensionnelle', imagerie: 'Imagerie', avis_specialise: 'Avis spécialisé', autre: 'Autre examen', eap: 'EAP' };
 
           h += '<div class="exam-card' + (isOv ? ' exam-card-overdue' : '') + '">';
           h += '<div class="exam-card-header"><span style="font-weight:700;font-size:1.05em;">' + (icons[e.type] || '📋') + ' ' + esc(labels[e.type] || e.type) + '</span>';
@@ -3014,7 +3063,7 @@
       for (var i = 0; i < list.length; i++) {
         var x = list[i];
         var a = x.agent;
-        var sm = esc(a.matricule);
+        var sm = esc(a.agentKey || a.matricule);
         var searchStr = (a.nomPrenom + ' ' + a.centrePrincipal).toLowerCase();
 
         var rowBg = '';
@@ -3177,7 +3226,7 @@
       for (var i = 0; i < list.length; i++) {
         var x = list[i];
         var a = x.agent;
-        var sm = esc(a.matricule);
+        var sm = esc(a.agentKey || a.matricule);
         var searchStr = (a.nomPrenom + ' ' + a.centrePrincipal).toLowerCase();
 
         var rowBg = '';
@@ -3621,13 +3670,13 @@
     }
 
     function renderBruleurRow(a, idx) {
-      var sm = esc(a.matricule);
-      var bd = bruleurDataByMatricule[a.matricule] || { exposition: false, scanner: { statut: '', date: '' }, consentement: '', ecbus: [] };
+      var sm = esc(a.agentKey || a.matricule);
+      var bd = bruleurDataByMatricule[a.agentKey || a.matricule] || { exposition: false, scanner: { statut: '', date: '' }, consentement: '', ecbus: [] };
       var now = Date.now();
       var speList = (a.specialites || []).filter(function (s) { return s === 'Bruleur' || s === 'caisson'; });
       var searchStr = (a.nomPrenom + ' ' + a.centrePrincipal).toLowerCase();
 
-      var agentExams = (examensByMatricule[a.matricule] || []).filter(function (e) { return isExamVisibleForFilter(e); });
+      var agentExams = (examensByMatricule[a.agentKey || a.matricule] || []).filter(function (e) { return isExamVisibleForFilter(e); });
 
       var h = '<tr class="agent-row" data-search="' + esc(searchStr) + '">';
       h += '<td>' + (idx + 1) + '</td>';
@@ -3641,6 +3690,8 @@
       h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'imagerie\')">☢️</button>';
       h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'avis_specialise\')">🩺</button>';
       h += '<button onclick="event.stopPropagation();openAddExam(\'' + sm + '\',\'autre\')">🅰️</button>';
+      h += '<button class="add-exam-btn" onclick="event.stopPropagation();quickCreateEapExam(\'' + sm + '\',\'suivi_eap\')" title="Ajouter Suivi EAP" style="border-left:1.5px solid var(--border);">🏋️ Suivi</button>';
+      h += '<button class="add-exam-btn" onclick="event.stopPropagation();quickCreateEapExam(\'' + sm + '\',\'pao\')" title="Ajouter PAO">PAO</button>';
       h += '</div></span></td>';
 
       h += '<td><strong>' + esc(a.nomPrenom) + '</strong>';
@@ -3650,7 +3701,7 @@
           var ex = agentExams[j];
           var isExOverdue = ex.dateResultatRaw && ex.dateResultatRaw < now;
           var cc = isExOverdue ? 'red' : 'green';
-          var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️' };
+          var icons = { biologie: '🧪', automesure: '🩻', imagerie: '☢️', avis_specialise: '🩺', autre: '🅰️', eap: '🏋️' };
           h += '<span class="exam-icon-wrap"><span class="exam-badge ' + cc + '" onclick="toggleExamPopover(event,\'' + esc(ex.id) + '\')">' + (icons[ex.type] || '📋') + '</span></span>';
         }
         h += '</span>';

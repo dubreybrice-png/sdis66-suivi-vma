@@ -101,7 +101,7 @@ var CONFIG = {
   /* ── Colonnes onglet permis c (0-based) ── */
   COLS_PERMIS_C: {
     MATRICULE:    2,  // C
-    DATE_LIMITE:  9   // J — date limite du permis C
+    DATE_LIMITE:  7   // H — date limite du permis C
   },
 
   /* ── Colonnes onglet cis / mailing (0-based) ── */

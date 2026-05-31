@@ -43,6 +43,24 @@ function formatIsoDate_(date) {
   return date.getFullYear() + '-' + mm + '-' + dd;
 }
 
+function normalizeMatriculeKey_(value) {
+  var s = (value || '')
+    .toString()
+    .replace(/\u00A0/g, ' ')
+    .trim()
+    .replace(/^'/, '')
+    .toUpperCase();
+
+  if (!s) return '';
+
+  // Cas fréquent: matricule numérique formaté (ex: "19 097", "19097.0")
+  var digitsOnly = s.replace(/[\s.,]/g, '');
+  if (/^\d+$/.test(digitsOnly)) return digitsOnly;
+
+  // Normalisation générale des identifiants alphanumériques
+  return s.replace(/\s+/g, '');
+}
+
 function parseAnyDateToIso_(value) {
   if (!value) return '';
   if (value instanceof Date && !isNaN(value.getTime())) return formatIsoDate_(value);
@@ -702,14 +720,11 @@ function getSportProgramCatalogSafe_() {
       authRequired: false
     };
   } catch (e) {
-    var msg = (e && e.message) ? e.message : e;
-    if (msg && msg.toString().indexOf('DriveApp') !== -1) {
-      return {
-        catalog: {},
-        authRequired: true
-      };
-    }
-    throw e;
+    Logger.log('getSportProgramCatalogSafe_ error: ' + e);
+    return {
+      catalog: {},
+      authRequired: false
+    };
   }
 }
 
@@ -1045,16 +1060,63 @@ function getAllExamens() {
 /** Enregistre un nouvel examen et retourne l'objet complet */
 function saveExamen(examenData) {
   var sheet = getExamensSheet_();
-  var id = Utilities.getUuid();
   var dateDemande  = examenData.dateDemande  ? new Date(examenData.dateDemande)  : new Date();
   var dateResultat = examenData.dateResultat ? new Date(examenData.dateResultat) : null;
+  var type = (examenData.type || '').toString().trim();
+  var sousType = (examenData.sousType || '').toString().trim();
+  var matricule = (examenData.matricule || '').toString().trim();
+  var detail = (examenData.detail || '').toString().trim();
+  var gerePar = (examenData.gerePar || '').toString().trim();
+
+  function buildExamResult_(id, examType, examDetail, examDateResultat, examCommentaire) {
+    return {
+      id:              id,
+      matricule:       matricule,
+      type:            examType,
+      detail:          examDetail,
+      dateDemande:     formatDate_(dateDemande),
+      dateDemandeRaw:  dateDemande ? dateDemande.getTime() : null,
+      dateResultat:    formatDate_(examDateResultat),
+      dateResultatRaw: examDateResultat ? examDateResultat.getTime() : null,
+      commentaire:     examCommentaire,
+      statut:          'ouvert',
+      gerePar:         gerePar,
+      relance1Date:    '',
+      relance1Raw:     null,
+      relance2Date:    '',
+      relance2Raw:     null,
+      relance3Date:    '',
+      relance3Raw:     null,
+      acquitte:        ''
+    };
+  }
+
+  function appendExamRow_(examType, examDetail, examDateResultat, examCommentaire) {
+    var examId = Utilities.getUuid();
+    sheet.appendRow([
+      examId,
+      matricule,
+      examType,
+      examDetail,
+      dateDemande,
+      examDateResultat,
+      examCommentaire,
+      'ouvert',
+      gerePar,
+      '',
+      '',
+      '',
+      ''
+    ]);
+    return buildExamResult_(examId, examType, examDetail, examDateResultat, examCommentaire);
+  }
+
   /* Auto-calculer la date limite si non fournie */
   if (!dateResultat) {
     var dlDays = { biologie: 15, automesure: 7, imagerie: 15 };
-    var typ = (examenData.type || '').toString().trim();
     dateResultat = new Date(dateDemande);
-    if (typ === 'avis_specialise') { dateResultat.setMonth(dateResultat.getMonth() + 2); }
-    else if (dlDays[typ]) { dateResultat.setDate(dateResultat.getDate() + dlDays[typ]); }
+    if (type === 'avis_specialise') { dateResultat.setMonth(dateResultat.getMonth() + 2); }
+    else if (dlDays[type]) { dateResultat.setDate(dateResultat.getDate() + dlDays[type]); }
     else { dateResultat = null; }
   }
   var commentaire  = (examenData.commentaire || '').toString().trim();
@@ -1062,42 +1124,28 @@ function saveExamen(examenData) {
     commentaire = formatDate_(new Date()) + ' \u2014 ' + commentaire;
   }
 
-  sheet.appendRow([
-    id,
-    examenData.matricule || '',
-    examenData.type || '',
-    examenData.detail || '',
-    dateDemande,
-    dateResultat,
-    commentaire,
-    'ouvert',
-    examenData.gerePar || '',
-    '',
-    '',
-    '',
-    ''
-  ]);
+  if (type === 'eap') {
+    var eapResults = [];
 
-  return {
-    id:              id,
-    matricule:       (examenData.matricule || '').toString().trim(),
-    type:            (examenData.type || '').toString().trim(),
-    detail:          (examenData.detail || '').toString().trim(),
-    dateDemande:     formatDate_(dateDemande),
-    dateDemandeRaw:  dateDemande ? dateDemande.getTime() : null,
-    dateResultat:    formatDate_(dateResultat),
-    dateResultatRaw: dateResultat ? dateResultat.getTime() : null,
-    commentaire:     commentaire,
-    statut:          'ouvert',
-    gerePar:         (examenData.gerePar || '').toString().trim(),
-    relance1Date:    '',
-    relance1Raw:     null,
-    relance2Date:    '',
-    relance2Raw:     null,
-    relance3Date:    '',
-    relance3Raw:     null,
-    acquitte:        ''
-  };
+    if (sousType === 'suivi_eap') {
+      var dateUnMois = new Date(dateDemande);
+      dateUnMois.setMonth(dateUnMois.getMonth() + 1);
+      eapResults.push(appendExamRow_('eap', 'Suivi EAP démarré', dateUnMois, commentaire));
+
+      var dateTroisMois = new Date(dateDemande);
+      dateTroisMois.setMonth(dateTroisMois.getMonth() + 3);
+      eapResults.push(appendExamRow_('eap', 'Suivi EAP 3 mois', dateTroisMois, commentaire));
+      return eapResults;
+    }
+
+    if (sousType === 'pao') {
+      var datePao = new Date(dateDemande);
+      datePao.setMonth(datePao.getMonth() + 1);
+      return appendExamRow_('eap', 'PAO', datePao, commentaire);
+    }
+  }
+
+  return appendExamRow_(type, detail, dateResultat, commentaire);
 }
 
 /** Clôture un examen par son ID */
@@ -1343,9 +1391,13 @@ function getAllAgents() {
   allData.forEach(function (item) {
     var row = item.row;
     var matricule = row[CONFIG.COLS.MATRICULE];
-    if (!matricule || matricule.toString().trim() === '') return;
+    var nomPrenomRaw = (row[CONFIG.COLS.NOM_PRENOM] || '').toString().trim();
+    var hasMatricule = matricule && matricule.toString().trim() !== '';
 
-    var key = matricule.toString().trim();
+    // Clé = matricule si disponible, sinon NOM Prénom
+    var key = hasMatricule ? matricule.toString().trim() : ('__nom__' + nomPrenomRaw);
+    if (!key || key === '__nom__') return; // ni matricule ni nom = ignorer
+
     if (agentsMap[key]) return;
 
     var age              = parseInt(row[CONFIG.COLS.AGE]) || 0;
@@ -1387,13 +1439,14 @@ function getAllAgents() {
       datePerteCompetence:    formatDate_(datePerteCompetence),
       datePerteCompetenceRaw: datePerteCompetence ? datePerteCompetence.getTime() : null,
       nomPrenom:              nomPrenom,
-      matricule:              key,
+      matricule:              hasMatricule ? key : '',
+      agentKey:               key,
       objetVisite:            objetVisite,
       birthYear:              birthYear,
       perteYear:              perteYear,
       visitYear:              visitYear,
       isRetard:               item.source === 'retard',
-      specialites:            specialties[matricule] || [],
+      specialites:            specialties[key] || specialties[nomPrenom] || [],
       typeVisite:             '',
       typeVisiteRaison:       '',
       sport:                  []
@@ -1463,7 +1516,7 @@ function getPageData() {
   var inactiveAgents = [];
 
   agents.forEach(function (a) {
-    a.sport = sportData[a.matricule] || [];
+    a.sport = sportData[a.matricule] || sportData['__nom__' + a.nomPrenom] || [];
     if (inactifs[a.matricule]) {
       inactiveAgents.push(a);
     } else {
@@ -2014,24 +2067,61 @@ function sendWeeklySummaryFor_(person) {
  * Construit { matricule: { dateLimite: "JJ/MM/AAAA", dateLimiteRaw: timestamp } }
  */
 function getPermisData_() {
-  var data = getSheetData_(CONFIG.SHEETS.PERMIS_C);
+  var ss = getSpreadsheet_();
+  var sheet = ss.getSheetByName(CONFIG.SHEETS.PERMIS_C);
+  if (!sheet || sheet.getLastRow() < 2) return {};
+
+  var width = Math.max(8, sheet.getLastColumn()); // au moins jusqu'à H
+  var range = sheet.getRange(2, 1, sheet.getLastRow() - 1, width);
+  var displayData = range.getDisplayValues(); // texte tel qu'affiché
+  var rawData = range.getValues();            // valeurs natives pour dateRaw
   var map = {};
 
-  data.forEach(function (row) {
-    var matricule = (row[CONFIG.COLS_PERMIS_C.MATRICULE] || '').toString().trim();
-    if (!matricule) return;
+  function parsePermisDate_(value) {
+    if (value instanceof Date && !isNaN(value.getTime())) return value;
+    if (typeof value === 'number' && !isNaN(value)) {
+      // Série date Google Sheets (base 1899-12-30)
+      return new Date(Math.round((value - 25569) * 86400 * 1000));
+    }
+    var s = (value || '').toString().replace(/\u00A0/g, ' ').trim();
+    if (!s) return null;
+    var m = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+    if (m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+    var d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
 
-    var dateVal = row[CONFIG.COLS_PERMIS_C.DATE_LIMITE];
-    var dateRaw = (dateVal instanceof Date && !isNaN(dateVal.getTime())) ? dateVal.getTime() : null;
+  for (var r = 0; r < displayData.length; r++) {
+    var rowDisplay = displayData[r];
+    var rowRaw = rawData[r];
 
-    // Garder la date la plus ancienne s'il y a des doublons
-    if (!map[matricule] || (dateRaw && (!map[matricule].dateLimiteRaw || dateRaw < map[matricule].dateLimiteRaw))) {
-      map[matricule] = {
-        dateLimite: formatDate_(dateVal),
+    var matriculeRaw = (rowDisplay[CONFIG.COLS_PERMIS_C.MATRICULE] || rowRaw[CONFIG.COLS_PERMIS_C.MATRICULE] || '')
+      .toString().replace(/\u00A0/g, ' ').trim();
+    var matriculeNorm = normalizeMatriculeKey_(matriculeRaw);
+    // Fallback: NOM Prénom en colonne D (index 3)
+    var nomPrenomPermis = (rowDisplay[3] || rowRaw[3] || '').toString().replace(/\u00A0/g, ' ').trim();
+    if (!matriculeRaw && !matriculeNorm && !nomPrenomPermis) continue;
+
+    var rawDateCell = rowRaw[CONFIG.COLS_PERMIS_C.DATE_LIMITE];
+    var displayDateCell = rowDisplay[CONFIG.COLS_PERMIS_C.DATE_LIMITE];
+
+    // Priorité au format affiché en feuille (ce que l'utilisateur voit), puis fallback brut
+    var parsedDate = parsePermisDate_(displayDateCell) || parsePermisDate_(rawDateCell);
+    var dateRaw = parsedDate ? parsedDate.getTime() : null;
+    var rawDateText = (displayDateCell || rawDateCell || '').toString().replace(/\u00A0/g, ' ').trim();
+
+    var existing = map[matriculeRaw] || map[matriculeNorm];
+    // Garder la date la plus récente s'il y a des doublons
+    if (!existing || (dateRaw && (!existing.dateLimiteRaw || dateRaw > existing.dateLimiteRaw))) {
+      var entry = {
+        dateLimite: parsedDate ? formatDate_(parsedDate) : rawDateText,
         dateLimiteRaw: dateRaw
       };
+      if (matriculeRaw) map[matriculeRaw] = entry;
+      if (matriculeNorm) map[matriculeNorm] = entry;
+      if (nomPrenomPermis) map[nomPrenomPermis] = entry;
     }
-  });
+  }
 
   return map;
 }
@@ -2141,6 +2231,212 @@ function getCisViewLinks() {
   return result;
 }
 
+function parseCisMailRecipients_(rawValue) {
+  return (rawValue || '')
+    .toString()
+    .split(/[;,]/)
+    .map(function (item) { return item.toString().trim(); })
+    .filter(function (item) { return !!item; });
+}
+
+function buildCisMailMessage_(cisLink) {
+  var subject = 'SDIS 66 — Accès suivi VMA / ICP / permis C — ' + cisLink.cis;
+  var body = 'Bonjour,\n\n'
+    + 'Nous avons modifié la présentation du suivi des VMA, ICP et date de permis C. '
+    + 'Vous trouverez désormais également le type de la prochaine visite prévue (visite médicale ou prévention).\n\n'
+    + 'Cliquez sur le lien suivant pour y accéder :\n'
+    + cisLink.url + '\n\n'
+    + 'Si vous souhaitez modifier les personnes qui réceptionnent ce mail, merci de m\'en informer.\n\n'
+    + 'En cas de besoin ou d\'informations complémentaires, contactez brice.dubrey@sdis66.fr';
+
+  var htmlBody = '<p>Bonjour,</p>'
+    + '<p>Nous avons modifié la présentation du suivi des VMA, ICP et date de permis C. '
+    + 'Vous trouverez désormais également le type de la prochaine visite prévue (visite médicale ou prévention).</p>'
+    + '<p><a href="' + cisLink.url + '">' + cisLink.url + '</a></p>'
+    + '<p>Si vous souhaitez modifier les personnes qui réceptionnent ce mail, merci de m\'en informer.</p>'
+    + '<p>En cas de besoin ou d\'informations complémentaires, contactez '
+    + '<a href="mailto:brice.dubrey@sdis66.fr">brice.dubrey@sdis66.fr</a></p>';
+
+  return {
+    subject: subject,
+    body: body,
+    htmlBody: htmlBody
+  };
+}
+
+function sendCisViewLinkEmail(cisName) {
+  cisName = (cisName || '').toString().trim();
+  if (!cisName) throw new Error('CIS manquant');
+
+  var links = getCisViewLinks();
+  var cisLink = null;
+  for (var i = 0; i < links.length; i++) {
+    if ((links[i].cis || '').toString().trim() === cisName) {
+      cisLink = links[i];
+      break;
+    }
+  }
+
+  if (!cisLink) throw new Error('CIS introuvable : ' + cisName);
+
+  var recipients = parseCisMailRecipients_(cisLink.email);
+  if (recipients.length === 0) {
+    throw new Error('Aucun email renseigné pour ' + cisName + ' dans l\'onglet "cis / mailing"');
+  }
+
+  var message = buildCisMailMessage_(cisLink);
+  MailApp.sendEmail({
+    to: recipients.join(','),
+    subject: message.subject,
+    body: message.body,
+    htmlBody: message.htmlBody
+  });
+
+  return {
+    cis: cisName,
+    recipients: recipients,
+    count: recipients.length,
+    url: cisLink.url
+  };
+}
+
+function sendAllCisViewLinkEmails() {
+  var links = getCisViewLinks();
+  var sent = [];
+  var skipped = [];
+
+  for (var i = 0; i < links.length; i++) {
+    var cisLink = links[i];
+    var recipients = parseCisMailRecipients_(cisLink.email);
+    if (recipients.length === 0) {
+      skipped.push(cisLink.cis);
+      continue;
+    }
+
+    var message = buildCisMailMessage_(cisLink);
+    MailApp.sendEmail({
+      to: recipients.join(','),
+      subject: message.subject,
+      body: message.body,
+      htmlBody: message.htmlBody
+    });
+
+    sent.push({
+      cis: cisLink.cis,
+      recipients: recipients,
+      count: recipients.length
+    });
+  }
+
+  return {
+    sent: sent,
+    skipped: skipped,
+    sentCount: sent.length,
+    skippedCount: skipped.length
+  };
+}
+
+function getGroupedCisWeeklyTargets_() {
+  return [
+    'CODIS',
+    'DIRECTION',
+    'DPTPO',
+    'Ecole Départementale',
+    'G. Admin Gén RH',
+    'G. Compétence Op.',
+    'G. Moe Opérationnelle',
+    'G. Techn. Log',
+    'Group. Terri. NORD',
+    'Group. Terri. OUEST',
+    'Group. Terri. SUD',
+    'S. Prévention Inves Incendie',
+    'S. Santé Trav Méd Aptitude',
+    'S.M. Méd Form Sec',
+    'S.S.S.M.',
+    'SDIS',
+    'UDSP66'
+  ];
+}
+
+function getWeeklyGroupedCisToken_() {
+  var props = PropertiesService.getScriptProperties();
+  var token = (props.getProperty('WEEKLY_GROUPED_CIS_TOKEN') || '').toString().trim();
+  if (!token) {
+    token = Utilities.getUuid().replace(/-/g, '').slice(0, 20);
+    props.setProperty('WEEKLY_GROUPED_CIS_TOKEN', token);
+  }
+  return token;
+}
+
+function getWeeklyGroupedCisLink_() {
+  var baseUrl = getPublicDeployUrl_();
+  var token = getWeeklyGroupedCisToken_();
+  return baseUrl + '?cisToken=' + encodeURIComponent(token);
+}
+
+function sendWeeklyGroupedCisEmail() {
+  var targets = getGroupedCisWeeklyTargets_();
+  var groupedLink = getWeeklyGroupedCisLink_();
+
+  var today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy');
+  var subject = 'SDIS 66 — Lien unique CIS groupés (hebdomadaire) — ' + today;
+  var body = 'Bonjour,\n\n'
+    + 'Voici le lien unique pour consulter tous les agents des CIS/services groupés :\n\n'
+    + groupedLink + '\n\n'
+    + 'CIS/services inclus : ' + targets.join(', ') + '\n\n'
+    + 'En cas de besoin, contactez brice.dubrey@sdis66.fr';
+
+  var htmlBody = '<p>Bonjour,</p>'
+    + '<p>Voici le <strong>lien unique</strong> pour consulter tous les agents des CIS/services groupés :</p>'
+    + '<p><a href="' + groupedLink + '">' + groupedLink + '</a></p>'
+    + '<p><strong>CIS/services inclus :</strong><br>' + targets.join(', ') + '</p>'
+    + '<p>En cas de besoin, contactez <a href="mailto:brice.dubrey@sdis66.fr">brice.dubrey@sdis66.fr</a></p>';
+
+  MailApp.sendEmail({
+    to: 'brice.dubrey@sdis66.fr',
+    subject: subject,
+    body: body,
+    htmlBody: htmlBody
+  });
+
+  return {
+    sentTo: 'brice.dubrey@sdis66.fr',
+    cisCount: targets.length,
+    groupedLink: groupedLink,
+    date: today
+  };
+}
+
+function setupWeeklyGroupedCisEmailTrigger() {
+  var existing = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < existing.length; i++) {
+    if (existing[i].getHandlerFunction() === 'sendWeeklyGroupedCisEmail') {
+      ScriptApp.deleteTrigger(existing[i]);
+    }
+  }
+
+  var weekDays = [
+    ScriptApp.WeekDay.SUNDAY,
+    ScriptApp.WeekDay.MONDAY,
+    ScriptApp.WeekDay.TUESDAY,
+    ScriptApp.WeekDay.WEDNESDAY,
+    ScriptApp.WeekDay.THURSDAY,
+    ScriptApp.WeekDay.FRIDAY,
+    ScriptApp.WeekDay.SATURDAY
+  ];
+
+  sendWeeklyGroupedCisEmail();
+
+  ScriptApp.newTrigger('sendWeeklyGroupedCisEmail')
+    .timeBased()
+    .everyWeeks(1)
+    .onWeekDay(weekDays[new Date().getDay()])
+    .atHour(9)
+    .create();
+
+  return 'Envoi hebdomadaire CIS installé (1er envoi effectué maintenant, puis chaque semaine à 09h).';
+}
+
 /**
  * Données pour la vue chef de centre.
  * Retourne { cisName, agents: [...], error: null } ou { error: "..." }
@@ -2151,16 +2447,21 @@ function getCisViewData(token) {
 
   var tokenMap = getCisTokenMap_();
   var cisName = tokenMap[token];
-  if (!cisName) return { error: 'Lien invalide ou expiré' };
+  var groupedTargets = getGroupedCisWeeklyTargets_();
+  var isGroupedToken = token === getWeeklyGroupedCisToken_();
+  if (!cisName && !isGroupedToken) return { error: 'Lien invalide ou expiré' };
 
   var allAgents   = getAllAgents();
   var sportData   = getSportData_();
   var permisData  = getPermisData_();
   var inactifs    = getInactiveMatricules_();
 
-  // Filtrer les agents du CIS (principal OU secondaire), exclure inactifs
+  // Filtrer les agents du CIS (ou du groupe de CIS), exclure inactifs
   var cisAgents = allAgents.filter(function (a) {
     if (inactifs[a.matricule]) return false;
+    if (isGroupedToken) {
+      return groupedTargets.indexOf(a.centrePrincipal) !== -1 || groupedTargets.indexOf(a.centreSecondaire) !== -1;
+    }
     return a.centrePrincipal === cisName || a.centreSecondaire === cisName;
   });
 
@@ -2168,7 +2469,7 @@ function getCisViewData(token) {
   var now = new Date().getTime();
   var agents = cisAgents.map(function (a) {
     // Dernière ICP = date la plus récente parmi toutes les épreuves sportives
-    var sport = sportData[a.matricule] || [];
+    var sport = sportData[a.matricule] || sportData['__nom__' + a.nomPrenom] || [];
     var latestIcpRaw = null;
     for (var i = 0; i < sport.length; i++) {
       if (sport[i].dateRaw && (!latestIcpRaw || sport[i].dateRaw > latestIcpRaw)) {
@@ -2176,7 +2477,9 @@ function getCisViewData(token) {
       }
     }
 
-    var permis = permisData[a.matricule];
+    var permis = permisData[a.matricule]
+      || permisData[normalizeMatriculeKey_(a.matricule)]
+      || permisData[a.nomPrenom];
 
     return {
       nomPrenom:            a.nomPrenom,
@@ -2201,7 +2504,7 @@ function getCisViewData(token) {
   });
 
   return {
-    cisName: cisName,
+    cisName: isGroupedToken ? 'CIS / Services groupés' : cisName,
     agents: agents,
     error: null
   };
@@ -2382,4 +2685,65 @@ function setupControleTriggers() {
     .create();
 
   return 'Triggers contrôle installés : onEdit + quotidien 17h';
+}
+
+/* ============================================================
+   BILAN SEMAINE — statistiques 20-26 avril 2026
+   ============================================================ */
+function getBilanSemaine() {
+  var now = new Date();
+  var day = now.getDay();
+  var diffToMon = (day === 0 ? -6 : 1 - day);
+  var mon = new Date(now); mon.setDate(now.getDate() + diffToMon); mon.setHours(0,0,0,0);
+  var sun = new Date(mon); sun.setDate(mon.getDate() + 6); sun.setHours(23,59,59,999);
+  var START = mon, END = sun;
+  var TODAY = new Date();
+
+  var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  var sh = ss.getSheetByName(CONFIG.SHEETS.EXAMENS);
+  if (!sh) return { error: 'Feuille Examens introuvable' };
+
+  var lastRow = sh.getLastRow();
+  if (lastRow < 2) return { error: 'Aucune donnée' };
+
+  var data = sh.getRange(2, 1, lastRow - 1, 13).getValues();
+
+  var creeesSemaine = 0;
+  var recupereesSemaine = 0; // dateResultat dans la semaine + statut cloture
+  var enRetard = 0; // statut ouvert et dateResultat < aujourd'hui
+
+  for (var i = 0; i < data.length; i++) {
+    if (!data[i][CONFIG.COLS_EXAMENS.ID]) continue;
+    var statut = String(data[i][CONFIG.COLS_EXAMENS.STATUT] || '').trim().toLowerCase();
+    var dateDemande = data[i][CONFIG.COLS_EXAMENS.DATE_DEMANDE];
+    var dateResultat = data[i][CONFIG.COLS_EXAMENS.DATE_RESULTAT];
+
+    var dDemande = dateDemande instanceof Date ? dateDemande : (dateDemande ? new Date(dateDemande) : null);
+    var dResultat = dateResultat instanceof Date ? dateResultat : (dateResultat ? new Date(dateResultat) : null);
+
+    // Créés cette semaine = date_demande dans la plage
+    if (dDemande && dDemande >= START && dDemande <= END) {
+      creeesSemaine++;
+    }
+    // Récupérés = cloturés dont date_resultat tombe dans la semaine
+    if (statut === 'cloture' && dResultat && dResultat >= START && dResultat <= END) {
+      recupereesSemaine++;
+    }
+    // En retard = ouverts dont date_resultat est dépassée
+    if (statut === 'ouvert' && dResultat && dResultat < TODAY) {
+      enRetard++;
+    }
+  }
+
+  var fmt = function(d){ return d.toLocaleDateString('fr-FR', {day:'numeric',month:'long'}); };
+  var result = {
+    periode: fmt(START) + ' au ' + fmt(END),
+    examens: {
+      creeesSemaine: creeesSemaine,
+      recupereesSemaine: recupereesSemaine,
+      enRetard: enRetard
+    }
+  };
+  Logger.log(JSON.stringify(result, null, 2));
+  return result;
 }
